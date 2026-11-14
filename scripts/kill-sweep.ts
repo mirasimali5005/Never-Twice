@@ -27,7 +27,7 @@ import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { pathToFileURL } from "node:url";
-import type { Intent } from "../packages/contracts/src/index.ts";
+import { allowedTransition, type Intent, type IntentState } from "../packages/contracts/src/index.ts";
 import { auditRun, type Audit } from "../tests/helpers/evaluator.ts";
 import { runNode, sleep, tail } from "../tests/helpers/proc.ts";
 import { PATHS, REPO, reconcilerEntry, startWorld, stripeMode, type World } from "../tests/helpers/world.ts";
@@ -176,6 +176,26 @@ function checkRequestLog(intents: Intent[], log: LogEntry[]): string[] {
 const EXPECTED_PAYMENTS = [/\.P11\./, /\.P13\./, /\.P02\./, /\.P03\./, /\.P03\./];
 const ALLOWED = new Set(["CONFIRMED", "FAILED_NO_EFFECT", "QUARANTINED"]);
 
+// mongodb-memory-server picks its port at random and two parallel starts can collide ("Port already in use"): worlds start one at a time, with retries.
+let startChain: Promise<unknown> = Promise.resolve();
+function startWorldSerialized(): Promise<World> {
+  const attempt = async (): Promise<World> => {
+    let last: unknown;
+    for (let i = 0; i < 4; i++) {
+      try {
+        return await startWorld();
+      } catch (e) {
+        last = e;
+        await sleep(500 * (i + 1));
+      }
+    }
+    throw last;
+  };
+  const p = startChain.then(attempt, attempt);
+  startChain = p.catch(() => undefined);
+  return p;
+}
+
 async function runCell(cell: Cell): Promise<CellRecord> {
   const t0 = Date.now();
   const { ks, fault, pos } = cell;
@@ -192,7 +212,7 @@ async function runCell(cell: Cell): Promise<CellRecord> {
   let world: World | undefined;
   let tmp: string | undefined;
   try {
-    world = await startWorld(); // fresh in-memory replica set and a fresh simulator process
+    world = await startWorldSerialized(); // fresh in-memory replica set and a fresh simulator process
     tmp = mkdtempSync(join(tmpdir(), "nt-sweep-"));
     const db = await world.openDb();
     const seedEnv = world.procEnv("seed");
@@ -258,6 +278,7 @@ async function runCell(cell: Cell): Promise<CellRecord> {
       if (audit.exitCode !== 0 || audit.certificate.safety !== "PASS") failing.push(`auditor ${audit.certificate.safety} (exit ${audit.exitCode}): ${failedChecks.join(" ") || "no failing check listed"}`);
       phases.audit = { safety: audit.certificate.safety, ledger: audit.certificate.ledger, failed_checks: failedChecks, findings: audit.certificate.findings.slice(0, 8), completion: audit.certificate.completion };
 
+      const intents = await db.intents.find({ run_id: runId }).toArray();
       const scan = await runNode([SELF, "--scan", runId], reconEnv(false), { cwd: REPO, timeoutMs: MIN, label: "invariant scan" }).catch((e: Error) => ({ code: -1, stdout: "", stderr: e.message }));
       type Scan = { ok: boolean; intents: number; violations: { code: string; intent_id: string | null; detail: string }[] };
       const parseScan = (text: string): Scan | null => {
@@ -273,10 +294,28 @@ async function runCell(cell: Cell): Promise<CellRecord> {
         failing.push("invariant scan did not run");
       } else {
         for (const v of scanned.violations) rec.scan_findings.push(`${v.code} ${v.intent_id ?? "-"} ${v.detail}`.slice(0, 300));
-        if (!scanned.ok) failing.push(`invariant scan found ${scanned.violations.length} violation(s)`);
+        if (!scanned.ok) {
+          failing.push(`invariant scan found ${scanned.violations.length} violation(s)`);
+          // Evidence for triage: the audit events of the offending intents, in _id order (the scan's replay order) with their own timestamps.
+          const ids = [...new Set(scanned.violations.map((v) => v.intent_id).filter((x): x is string => x !== null))];
+          const ev = await db.audit.find({ run_id: runId, intent_id: { $in: ids }, to_state: { $ne: null } }).sort({ _id: 1 }).toArray();
+          // Triage only (the verdict stays FAIL): is the chain valid when replayed in event-time order instead of _id order? ObjectIds made by two
+          // different processes inside one second do not sort in creation order, which is what a kill and restart produce.
+          const byTime = [...ev].sort((x, y) => x.at.getTime() - y.at.getTime() || x._id.toHexString().localeCompare(y._id.toHexString()));
+          const chainOk = (list: typeof ev, id: string) => {
+            let st: IntentState | null = null;
+            for (const e of list.filter((x) => x.intent_id === id)) {
+              if (e.from_state !== st || e.to_state === null || allowedTransition(e.from_state, e.to_state) === null) return false;
+              st = e.to_state;
+            }
+            return st === intents.find((i) => i._id === id)?.state;
+          };
+          const onlyP9 = scanned.violations.every((v) => v.code.startsWith("P9_"));
+          phases.p9_replay_clean_in_event_time_order = onlyP9 && ids.every((id) => chainOk(byTime, id));
+          phases.audit_events_in_scan_order = ev.map((e) => ({ id: e._id.toHexString(), at: e.at.toISOString(), type: e.type, from: e.from_state, to: e.to_state, actor: `${e.actor.kind}:${e.actor.id}` }));
+        }
       }
 
-      const intents = await db.intents.find({ run_id: runId }).toArray();
       const objects = await listObjects(world, run.sim_account);
       const log = await requestLog(world, seedEnv.NT_SIM_ADMIN_KEY!, run.sim_account);
       const posts = log.filter((e) => e.method === "POST" && e.path.startsWith("/v1/payouts"));
@@ -348,6 +387,7 @@ function summarize(records: CellRecord[]) {
     NOT_RUN: count("NOT_RUN"),
     kills_fired: records.filter((r) => r.kill_fired).length,
     prediction_mismatch: records.filter((r) => r.prediction_match === false).length,
+    fail_scan_p9_order_artefact: records.filter((r) => r.outcome === "FAIL" && r.detail["p9_replay_clean_in_event_time_order"] === true && r.failing_checks.length === 1).length,
     unpredicted_not_reached: records.filter((r) => r.outcome === "NOT_REACHED" && r.predicted_outcome !== "NOT_REACHED").length,
     predicted_not_reached_but_fired: records.filter((r) => r.predicted_outcome === "NOT_REACHED" && r.kill_fired).length,
   };
@@ -383,7 +423,7 @@ function markdown(records: CellRecord[], meta: Record<string, unknown>, sum: Ret
   const bad = records.filter((r) => r.outcome === "FAIL" || r.outcome === "TIMEOUT" || r.outcome === "NOT_RUN");
   if (bad.length > 0) {
     L.push("## Cells that did not pass", "");
-    for (const r of bad) L.push(`- **${r.id}** ${r.outcome} (run ${r.run_id ?? "-"}, kill fired: ${r.kill_fired ? "yes" : "no"}): ${r.failing_checks.join("; ") || "see kill-sweep.json"}${r.scan_findings.length ? ` | scan: ${r.scan_findings.join("; ")}` : ""}`);
+    for (const r of bad) L.push(`- **${r.id}** ${r.outcome}${r.detail["p9_replay_clean_in_event_time_order"] === true ? " [the only failing check is the scan's P9 replay, which is clean when ordered by event time: ObjectId order across the killed and the restarted process]" : ""} (run ${r.run_id ?? "-"}, kill fired: ${r.kill_fired ? "yes" : "no"}): ${r.failing_checks.join("; ") || "see kill-sweep.json"}${r.scan_findings.length ? ` | scan: ${r.scan_findings.join("; ")}` : ""}`);
     L.push("");
   }
   L.push("## What this supports", "");
