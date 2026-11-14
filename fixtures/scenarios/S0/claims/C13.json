@@ -1,0 +1,16 @@
+{
+  "form": "nt-compensation-request@1",
+  "submitted_via": "northern-tern web form",
+  "fields": {
+    "full_name": "Oliver Grant",
+    "email": "oliver.grant@example.net",
+    "booking_reference": "KS2R9B",
+    "flight_number": "NT880",
+    "flight_date": "2026-11-10",
+    "route": "Paris CDG to Toronto YYZ",
+    "disruption_type": "Delayed",
+    "passengers_on_this_request": ["Oliver Grant"],
+    "description": "NT880 from Paris was delayed; the crew told us at the gate it was a crew scheduling problem. We landed in Toronto just over six hours late. Requesting APPR compensation.",
+    "preferred_contact": "email"
+  }
+}

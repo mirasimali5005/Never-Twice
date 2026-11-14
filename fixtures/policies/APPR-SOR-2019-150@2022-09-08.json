@@ -1,0 +1,139 @@
+{
+  "_id": "APPR-SOR-2019-150@2022-09-08",
+  "policy_id": "APPR-SOR-2019-150",
+  "version": "2022-09-08",
+  "kind": "STATUTORY",
+  "currency": "CAD",
+  "delay": {
+    "citation": "s. 19(1)",
+    "applies_to_disruption_kinds": [
+      "CANCELLATION",
+      "DELAY"
+    ],
+    "measured_by": "arrival_delay_minutes at final destination; lower bound inclusive, upper bound exclusive",
+    "LARGE": [
+      {
+        "min_minutes": 180,
+        "max_minutes_exclusive": 360,
+        "amount_minor": 40000,
+        "citation": "s. 19(1)(a)(i)"
+      },
+      {
+        "min_minutes": 360,
+        "max_minutes_exclusive": 540,
+        "amount_minor": 70000,
+        "citation": "s. 19(1)(a)(ii)"
+      },
+      {
+        "min_minutes": 540,
+        "max_minutes_exclusive": null,
+        "amount_minor": 100000,
+        "citation": "s. 19(1)(a)(iii)"
+      }
+    ],
+    "SMALL": [
+      {
+        "min_minutes": 180,
+        "max_minutes_exclusive": 360,
+        "amount_minor": 12500,
+        "citation": "s. 19(1)(b)(i)"
+      },
+      {
+        "min_minutes": 360,
+        "max_minutes_exclusive": 540,
+        "amount_minor": 25000,
+        "citation": "s. 19(1)(b)(ii)"
+      },
+      {
+        "min_minutes": 540,
+        "max_minutes_exclusive": null,
+        "amount_minor": 50000,
+        "citation": "s. 19(1)(b)(iii)"
+      }
+    ]
+  },
+  "refund_comp": {
+    "citation": "s. 19(2)",
+    "related": "s. 17(2)",
+    "LARGE": 40000,
+    "SMALL": 12500,
+    "note": "Owed when the ticket is refunded instead of rebooking, in addition to the refund itself (TICKET_REFUND)."
+  },
+  "denied_boarding": {
+    "citation": "s. 20(1)",
+    "bands": [
+      {
+        "min_minutes": 0,
+        "max_minutes_exclusive": 360,
+        "amount_minor": 90000,
+        "citation": "s. 20(1)(a)"
+      },
+      {
+        "min_minutes": 360,
+        "max_minutes_exclusive": 540,
+        "amount_minor": 180000,
+        "citation": "s. 20(1)(b)"
+      },
+      {
+        "min_minutes": 540,
+        "max_minutes_exclusive": null,
+        "amount_minor": 240000,
+        "citation": "s. 20(1)(c)"
+      }
+    ]
+  },
+  "preconditions": {
+    "citation": "ss. 12, 19",
+    "control_class_required": "WITHIN_CONTROL",
+    "safety_required_excluded": true,
+    "notice_max_minutes": 20160,
+    "notice_rule": "compensation only if the passenger was informed 14 days (20160 minutes) or less before scheduled departure"
+  },
+  "notice_max_minutes": 20160,
+  "claim_window_years": 1,
+  "claim_window_citation": "s. 19(3)",
+  "pay_within_days": 30,
+  "pay_within_citation": "s. 19(4)",
+  "denied_boarding_pay_within_hours": 48,
+  "denied_boarding_pay_within_citation": "s. 20(2)",
+  "form": {
+    "citation": "s. 21",
+    "rule": "money, unless a higher-value alternative is accepted in writing and does not expire"
+  },
+  "no_compensation": [
+    {
+      "control_class": "OUTSIDE_CONTROL",
+      "citation": "s. 10",
+      "examples": [
+        "weather",
+        "air traffic control",
+        "labour disruption external to the carrier",
+        "security"
+      ]
+    },
+    {
+      "control_class": "SAFETY_REQUIRED",
+      "citation": "s. 11"
+    }
+  ],
+  "other_regime": {
+    "citation": "regulator guidance",
+    "rule": "no APPR payment where the same event was already compensated under another regime"
+  },
+  "payee": {
+    "citation": "regulator guidance",
+    "rule": "compensation is owed to the passenger, whoever bought the ticket"
+  },
+  "boundaries_minutes": {
+    "179": "under 3 h",
+    "180": "3 h band",
+    "360": "6 h band",
+    "540": "9 h band"
+  },
+  "assumptions": [
+    "Small-carrier deeming rule not verified; the fixture carrier is LARGE.",
+    "Whether a minor's compensation may go to a guardian is not verified; the fixture pays the payee the booking record designates.",
+    "Per-band subparagraph citations other than s. 19(1)(a)(ii) were filled in by task A3 from the structure of the regulation and should be checked against the consolidated text."
+  ],
+  "source": "SOR/2019-150, consolidation current to 2026-10-19, last amended 2022-09-08"
+}

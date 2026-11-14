@@ -1,0 +1,16 @@
+{
+  "form": "nt-compensation-request@1",
+  "submitted_via": "northern-tern web form",
+  "fields": {
+    "full_name": "Priya Raman",
+    "email": "priya.raman@example.org",
+    "booking_reference": "DX3F7Q",
+    "flight_number": "NT101",
+    "flight_date": "2026-11-10",
+    "route": "Toronto Pearson to Vancouver",
+    "disruption_type": "Cancelled",
+    "passengers_on_this_request": ["Priya Raman"],
+    "description": "Flight cancelled 50 minutes before departure. I was rebooked and arrived in Vancouver a little over four hours late. Requesting compensation under the Air Passenger Protection Regulations.",
+    "preferred_contact": "email"
+  }
+}

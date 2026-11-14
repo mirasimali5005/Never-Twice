@@ -1,0 +1,104 @@
+[
+  {
+    "claim_id": "C01",
+    "channel": "web_form",
+    "received_at": "2026-11-11T09:12:00Z",
+    "file": "C01.json"
+  },
+  {
+    "claim_id": "C02",
+    "channel": "email",
+    "received_at": "2026-11-11T10:40:00Z",
+    "file": "C02.txt"
+  },
+  {
+    "claim_id": "C03",
+    "channel": "letter",
+    "received_at": "2026-11-12T15:20:00Z",
+    "file": "C03.txt"
+  },
+  {
+    "claim_id": "C04",
+    "channel": "email",
+    "received_at": "2026-11-11T11:20:00Z",
+    "file": "C04.txt"
+  },
+  {
+    "claim_id": "C05",
+    "channel": "web_form",
+    "received_at": "2026-11-11T12:02:00Z",
+    "file": "C05.json"
+  },
+  {
+    "claim_id": "C06",
+    "channel": "email",
+    "received_at": "2026-11-11T13:15:00Z",
+    "file": "C06.txt"
+  },
+  {
+    "claim_id": "C07",
+    "channel": "web_form",
+    "received_at": "2026-11-11T16:45:00Z",
+    "file": "C07.json"
+  },
+  {
+    "claim_id": "C08",
+    "channel": "email",
+    "received_at": "2026-11-13T09:00:00Z",
+    "file": "C08.txt"
+  },
+  {
+    "claim_id": "C09",
+    "channel": "letter",
+    "received_at": "2026-11-12T08:30:00Z",
+    "file": "C09.txt"
+  },
+  {
+    "claim_id": "C10",
+    "channel": "email",
+    "received_at": "2026-11-11T14:10:00Z",
+    "file": "C10.txt"
+  },
+  {
+    "claim_id": "C11",
+    "channel": "web_form",
+    "received_at": "2026-11-11T15:30:00Z",
+    "file": "C11.json"
+  },
+  {
+    "claim_id": "C12",
+    "channel": "email",
+    "received_at": "2026-11-12T09:10:00Z",
+    "file": "C12.txt"
+  },
+  {
+    "claim_id": "C13",
+    "channel": "web_form",
+    "received_at": "2026-11-11T08:05:00Z",
+    "file": "C13.json"
+  },
+  {
+    "claim_id": "C14",
+    "channel": "email",
+    "received_at": "2026-11-12T10:25:00Z",
+    "file": "C14.txt"
+  },
+  {
+    "claim_id": "C15",
+    "channel": "email",
+    "received_at": "2026-11-12T11:40:00Z",
+    "file": "C15.txt"
+  },
+  {
+    "claim_id": "C16",
+    "channel": "web_form",
+    "received_at": "2026-11-12T13:05:00Z",
+    "file": "C16.json"
+  },
+  {
+    "claim_id": "C17",
+    "channel": "email",
+    "received_at": "2026-11-13T10:30:00Z",
+    "file": "C17.txt"
+  }
+]

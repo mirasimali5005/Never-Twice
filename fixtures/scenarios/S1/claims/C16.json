@@ -1,0 +1,16 @@
+{
+  "form": "nt-compensation-request@1",
+  "submitted_via": "northern-tern web form",
+  "fields": {
+    "full_name": "Isabelle Roy",
+    "email": "isabelle.roy@example.org",
+    "booking_reference": "MV3X1C",
+    "flight_number": "NT455",
+    "flight_date": "2026-11-10",
+    "route": "Halifax (YHZ) to Toronto (YYZ)",
+    "disruption_type": "Delayed",
+    "passengers_on_this_request": ["Isabelle Roy"],
+    "description": "My flight from Halifax was delayed and I arrived in Toronto about five and a half hours late. Please review my claim for compensation.",
+    "preferred_contact": "email"
+  }
+}

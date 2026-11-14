@@ -1,0 +1,14 @@
+{
+  "id": "F-IN-PROGRESS",
+  "description": "First payout request: 409 request_in_progress once (n: 1; an ordinal match can only ever match one request), then served normally.",
+  "faults": [
+    {
+      "match": {
+        "ordinal": 1
+      },
+      "fault": "IN_PROGRESS",
+      "n": 1,
+      "times": 1
+    }
+  ]
+}

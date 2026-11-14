@@ -1,0 +1,642 @@
+{
+  "scenario": "S1",
+  "policy_ids": [
+    "APPR-SOR-2019-150@2022-09-08",
+    "NT-GOODWILL@1"
+  ],
+  "carrier": {
+    "code": "NT",
+    "name": "Northern Tern Airlines",
+    "size": "LARGE",
+    "fictional": true
+  },
+  "goodwill_pool": {
+    "grant_minor": 50000,
+    "currency": "CAD",
+    "policy_version": "NT-GOODWILL@1"
+  },
+  "flights": [
+    {
+      "flight_no": "NT101",
+      "scheduled_departure_local_date": "2026-11-10",
+      "origin": "YYZ",
+      "destination": "YVR",
+      "disruption": {
+        "disruption_id": "NT101-20261110",
+        "flight_no": "NT101",
+        "scheduled_departure": "2026-11-10T13:15:00Z",
+        "kind": "CANCELLATION",
+        "cause_code": "CREW_SCHED",
+        "control_class": "WITHIN_CONTROL",
+        "notice_minutes_before_departure": 50
+      }
+    },
+    {
+      "flight_no": "NT212",
+      "scheduled_departure_local_date": "2026-11-10",
+      "origin": "YUL",
+      "destination": "YYC",
+      "disruption": {
+        "disruption_id": "NT212-20261110",
+        "flight_no": "NT212",
+        "scheduled_departure": "2026-11-10T12:00:00Z",
+        "kind": "DENIED_BOARDING",
+        "cause_code": "OVERSALE",
+        "control_class": "WITHIN_CONTROL",
+        "notice_minutes_before_departure": 0
+      }
+    },
+    {
+      "flight_no": "NT330",
+      "scheduled_departure_local_date": "2026-11-10",
+      "origin": "YOW",
+      "destination": "YYZ",
+      "disruption": {
+        "disruption_id": "NT330-20261110",
+        "flight_no": "NT330",
+        "scheduled_departure": "2026-11-10T11:30:00Z",
+        "kind": "CANCELLATION",
+        "cause_code": "SCHEDULE_CHANGE",
+        "control_class": "WITHIN_CONTROL",
+        "notice_minutes_before_departure": 30240
+      }
+    },
+    {
+      "flight_no": "NT455",
+      "scheduled_departure_local_date": "2026-11-10",
+      "origin": "YHZ",
+      "destination": "YYZ",
+      "disruption": {
+        "disruption_id": "NT455-20261110",
+        "flight_no": "NT455",
+        "scheduled_departure": "2026-11-10T10:45:00Z",
+        "kind": "DELAY",
+        "cause_code": "WX_THEN_CREW_TIMEOUT",
+        "control_class": "UNDETERMINED",
+        "notice_minutes_before_departure": 120
+      }
+    },
+    {
+      "flight_no": "NT880",
+      "scheduled_departure_local_date": "2026-11-10",
+      "origin": "CDG",
+      "destination": "YYZ",
+      "disruption": {
+        "disruption_id": "NT880-20261110",
+        "flight_no": "NT880",
+        "scheduled_departure": "2026-11-10T09:30:00Z",
+        "kind": "DELAY",
+        "cause_code": "CREW_SCHED",
+        "control_class": "WITHIN_CONTROL",
+        "notice_minutes_before_departure": 180
+      }
+    }
+  ],
+  "bookings": [
+    {
+      "booking_ref": "QK7R2M",
+      "passenger_id": "P01",
+      "carrier_code": "NT",
+      "carrier_size": "LARGE",
+      "flight_no": "NT101",
+      "ticket_price_minor": null,
+      "ticket_payment_ref": null,
+      "passenger": {
+        "passenger_id": "P01",
+        "name": "Amara Okafor",
+        "is_minor": false,
+        "arrival_delay_minutes": 440,
+        "payee_ref": "payee_P01",
+        "payout_rail": "instant",
+        "hardship_flags": [
+          "MOBILITY_ASSIST"
+        ],
+        "refund_elected": false,
+        "other_regime_compensation": null,
+        "alternative_accepted_in_writing": null,
+        "denied_boarding": false
+      },
+      "disruption": {
+        "disruption_id": "NT101-20261110",
+        "flight_no": "NT101",
+        "scheduled_departure": "2026-11-10T13:15:00Z",
+        "kind": "CANCELLATION",
+        "cause_code": "CREW_SCHED",
+        "control_class": "WITHIN_CONTROL",
+        "notice_minutes_before_departure": 50
+      }
+    },
+    {
+      "booking_ref": "ZT4H9X",
+      "passenger_id": "P02",
+      "carrier_code": "NT",
+      "carrier_size": "LARGE",
+      "flight_no": "NT101",
+      "ticket_price_minor": null,
+      "ticket_payment_ref": null,
+      "passenger": {
+        "passenger_id": "P02",
+        "name": "Daniel Whitlock",
+        "is_minor": false,
+        "arrival_delay_minutes": 532,
+        "payee_ref": "payee_P02",
+        "payout_rail": "instant",
+        "hardship_flags": [],
+        "refund_elected": false,
+        "other_regime_compensation": null,
+        "alternative_accepted_in_writing": null,
+        "denied_boarding": false
+      },
+      "disruption": {
+        "disruption_id": "NT101-20261110",
+        "flight_no": "NT101",
+        "scheduled_departure": "2026-11-10T13:15:00Z",
+        "kind": "CANCELLATION",
+        "cause_code": "CREW_SCHED",
+        "control_class": "WITHIN_CONTROL",
+        "notice_minutes_before_departure": 50
+      }
+    },
+    {
+      "booking_ref": "LM2P8D",
+      "passenger_id": "P03",
+      "carrier_code": "NT",
+      "carrier_size": "LARGE",
+      "flight_no": "NT101",
+      "ticket_price_minor": 41260,
+      "ticket_payment_ref": null,
+      "passenger": {
+        "passenger_id": "P03",
+        "name": "Sofia Marchetti",
+        "is_minor": false,
+        "arrival_delay_minutes": null,
+        "payee_ref": "payee_P03",
+        "payout_rail": "instant",
+        "hardship_flags": [],
+        "refund_elected": true,
+        "other_regime_compensation": null,
+        "alternative_accepted_in_writing": null,
+        "denied_boarding": false
+      },
+      "disruption": {
+        "disruption_id": "NT101-20261110",
+        "flight_no": "NT101",
+        "scheduled_departure": "2026-11-10T13:15:00Z",
+        "kind": "CANCELLATION",
+        "cause_code": "CREW_SCHED",
+        "control_class": "WITHIN_CONTROL",
+        "notice_minutes_before_departure": 50
+      }
+    },
+    {
+      "booking_ref": "HV9C3T",
+      "passenger_id": "P04",
+      "carrier_code": "NT",
+      "carrier_size": "LARGE",
+      "flight_no": "NT101",
+      "ticket_price_minor": null,
+      "ticket_payment_ref": null,
+      "passenger": {
+        "passenger_id": "P04",
+        "name": "Grace Liu",
+        "is_minor": false,
+        "arrival_delay_minutes": 130,
+        "payee_ref": "payee_P04",
+        "payout_rail": "instant",
+        "hardship_flags": [],
+        "refund_elected": false,
+        "other_regime_compensation": null,
+        "alternative_accepted_in_writing": null,
+        "denied_boarding": false
+      },
+      "disruption": {
+        "disruption_id": "NT101-20261110",
+        "flight_no": "NT101",
+        "scheduled_departure": "2026-11-10T13:15:00Z",
+        "kind": "CANCELLATION",
+        "cause_code": "CREW_SCHED",
+        "control_class": "WITHIN_CONTROL",
+        "notice_minutes_before_departure": 50
+      }
+    },
+    {
+      "booking_ref": "RW6N1K",
+      "passenger_id": "P05",
+      "carrier_code": "NT",
+      "carrier_size": "LARGE",
+      "flight_no": "NT101",
+      "ticket_price_minor": null,
+      "ticket_payment_ref": null,
+      "passenger": {
+        "passenger_id": "P05",
+        "name": "Tomasz Nowak",
+        "is_minor": false,
+        "arrival_delay_minutes": 580,
+        "payee_ref": "payee_P05",
+        "payout_rail": "instant",
+        "hardship_flags": [
+          "OVERNIGHT_STRANDED"
+        ],
+        "refund_elected": false,
+        "other_regime_compensation": null,
+        "alternative_accepted_in_writing": null,
+        "denied_boarding": false
+      },
+      "disruption": {
+        "disruption_id": "NT101-20261110",
+        "flight_no": "NT101",
+        "scheduled_departure": "2026-11-10T13:15:00Z",
+        "kind": "CANCELLATION",
+        "cause_code": "CREW_SCHED",
+        "control_class": "WITHIN_CONTROL",
+        "notice_minutes_before_departure": 50
+      }
+    },
+    {
+      "booking_ref": "RW6N1K",
+      "passenger_id": "P06",
+      "carrier_code": "NT",
+      "carrier_size": "LARGE",
+      "flight_no": "NT101",
+      "ticket_price_minor": null,
+      "ticket_payment_ref": null,
+      "passenger": {
+        "passenger_id": "P06",
+        "name": "Ewa Nowak",
+        "is_minor": false,
+        "arrival_delay_minutes": 580,
+        "payee_ref": "payee_P06",
+        "payout_rail": "instant",
+        "hardship_flags": [
+          "OVERNIGHT_STRANDED"
+        ],
+        "refund_elected": false,
+        "other_regime_compensation": null,
+        "alternative_accepted_in_writing": null,
+        "denied_boarding": false
+      },
+      "disruption": {
+        "disruption_id": "NT101-20261110",
+        "flight_no": "NT101",
+        "scheduled_departure": "2026-11-10T13:15:00Z",
+        "kind": "CANCELLATION",
+        "cause_code": "CREW_SCHED",
+        "control_class": "WITHIN_CONTROL",
+        "notice_minutes_before_departure": 50
+      }
+    },
+    {
+      "booking_ref": "RW6N1K",
+      "passenger_id": "P07",
+      "carrier_code": "NT",
+      "carrier_size": "LARGE",
+      "flight_no": "NT101",
+      "ticket_price_minor": null,
+      "ticket_payment_ref": null,
+      "passenger": {
+        "passenger_id": "P07",
+        "name": "Jan Nowak",
+        "is_minor": true,
+        "arrival_delay_minutes": 580,
+        "payee_ref": "payee_P07_guardian",
+        "payout_rail": "instant",
+        "hardship_flags": [
+          "OVERNIGHT_STRANDED"
+        ],
+        "refund_elected": false,
+        "other_regime_compensation": null,
+        "alternative_accepted_in_writing": null,
+        "denied_boarding": false
+      },
+      "disruption": {
+        "disruption_id": "NT101-20261110",
+        "flight_no": "NT101",
+        "scheduled_departure": "2026-11-10T13:15:00Z",
+        "kind": "CANCELLATION",
+        "cause_code": "CREW_SCHED",
+        "control_class": "WITHIN_CONTROL",
+        "notice_minutes_before_departure": 50
+      }
+    },
+    {
+      "booking_ref": "DX3F7Q",
+      "passenger_id": "P08",
+      "carrier_code": "NT",
+      "carrier_size": "LARGE",
+      "flight_no": "NT101",
+      "ticket_price_minor": null,
+      "ticket_payment_ref": null,
+      "passenger": {
+        "passenger_id": "P08",
+        "name": "Priya Raman",
+        "is_minor": false,
+        "arrival_delay_minutes": 245,
+        "payee_ref": "payee_P08",
+        "payout_rail": "instant",
+        "hardship_flags": [],
+        "refund_elected": false,
+        "other_regime_compensation": null,
+        "alternative_accepted_in_writing": null,
+        "denied_boarding": false
+      },
+      "disruption": {
+        "disruption_id": "NT101-20261110",
+        "flight_no": "NT101",
+        "scheduled_departure": "2026-11-10T13:15:00Z",
+        "kind": "CANCELLATION",
+        "cause_code": "CREW_SCHED",
+        "control_class": "WITHIN_CONTROL",
+        "notice_minutes_before_departure": 50
+      }
+    },
+    {
+      "booking_ref": "NB5J2W",
+      "passenger_id": "P09",
+      "carrier_code": "NT",
+      "carrier_size": "LARGE",
+      "flight_no": "NT330",
+      "ticket_price_minor": null,
+      "ticket_payment_ref": null,
+      "passenger": {
+        "passenger_id": "P09",
+        "name": "Henrik Solberg",
+        "is_minor": false,
+        "arrival_delay_minutes": 300,
+        "payee_ref": "payee_P09",
+        "payout_rail": "instant",
+        "hardship_flags": [],
+        "refund_elected": false,
+        "other_regime_compensation": null,
+        "alternative_accepted_in_writing": null,
+        "denied_boarding": false
+      },
+      "disruption": {
+        "disruption_id": "NT330-20261110",
+        "flight_no": "NT330",
+        "scheduled_departure": "2026-11-10T11:30:00Z",
+        "kind": "CANCELLATION",
+        "cause_code": "SCHEDULE_CHANGE",
+        "control_class": "WITHIN_CONTROL",
+        "notice_minutes_before_departure": 30240
+      }
+    },
+    {
+      "booking_ref": "GT8K4S",
+      "passenger_id": "P10",
+      "carrier_code": "NT",
+      "carrier_size": "LARGE",
+      "flight_no": "NT212",
+      "ticket_price_minor": null,
+      "ticket_payment_ref": null,
+      "passenger": {
+        "passenger_id": "P10",
+        "name": "Marcus Bell",
+        "is_minor": false,
+        "arrival_delay_minutes": 390,
+        "payee_ref": "payee_P10",
+        "payout_rail": "instant",
+        "hardship_flags": [
+          "OVERNIGHT_STRANDED"
+        ],
+        "refund_elected": false,
+        "other_regime_compensation": null,
+        "alternative_accepted_in_writing": null,
+        "denied_boarding": true
+      },
+      "disruption": {
+        "disruption_id": "NT212-20261110",
+        "flight_no": "NT212",
+        "scheduled_departure": "2026-11-10T12:00:00Z",
+        "kind": "DENIED_BOARDING",
+        "cause_code": "OVERSALE",
+        "control_class": "WITHIN_CONTROL",
+        "notice_minutes_before_departure": 0
+      }
+    },
+    {
+      "booking_ref": "PC1D6V",
+      "passenger_id": "P11",
+      "carrier_code": "NT",
+      "carrier_size": "LARGE",
+      "flight_no": "NT212",
+      "ticket_price_minor": null,
+      "ticket_payment_ref": null,
+      "passenger": {
+        "passenger_id": "P11",
+        "name": "Leila Haddad",
+        "is_minor": false,
+        "arrival_delay_minutes": 195,
+        "payee_ref": "payee_P11",
+        "payout_rail": "legacy",
+        "hardship_flags": [],
+        "refund_elected": false,
+        "other_regime_compensation": null,
+        "alternative_accepted_in_writing": null,
+        "denied_boarding": true
+      },
+      "disruption": {
+        "disruption_id": "NT212-20261110",
+        "flight_no": "NT212",
+        "scheduled_departure": "2026-11-10T12:00:00Z",
+        "kind": "DENIED_BOARDING",
+        "cause_code": "OVERSALE",
+        "control_class": "WITHIN_CONTROL",
+        "notice_minutes_before_departure": 0
+      }
+    },
+    {
+      "booking_ref": "YE7M3A",
+      "passenger_id": "P12",
+      "carrier_code": "NT",
+      "carrier_size": "LARGE",
+      "flight_no": "NT880",
+      "ticket_price_minor": null,
+      "ticket_payment_ref": null,
+      "passenger": {
+        "passenger_id": "P12",
+        "name": "Camille Laurent",
+        "is_minor": false,
+        "arrival_delay_minutes": 370,
+        "payee_ref": "payee_P12",
+        "payout_rail": "instant",
+        "hardship_flags": [],
+        "refund_elected": false,
+        "other_regime_compensation": {
+          "regime": "EU261",
+          "amount_minor": 60000,
+          "currency": "EUR"
+        },
+        "alternative_accepted_in_writing": null,
+        "denied_boarding": false
+      },
+      "disruption": {
+        "disruption_id": "NT880-20261110",
+        "flight_no": "NT880",
+        "scheduled_departure": "2026-11-10T09:30:00Z",
+        "kind": "DELAY",
+        "cause_code": "CREW_SCHED",
+        "control_class": "WITHIN_CONTROL",
+        "notice_minutes_before_departure": 180
+      }
+    },
+    {
+      "booking_ref": "KS2R9B",
+      "passenger_id": "P13",
+      "carrier_code": "NT",
+      "carrier_size": "LARGE",
+      "flight_no": "NT880",
+      "ticket_price_minor": null,
+      "ticket_payment_ref": null,
+      "passenger": {
+        "passenger_id": "P13",
+        "name": "Oliver Grant",
+        "is_minor": false,
+        "arrival_delay_minutes": 370,
+        "payee_ref": "payee_P13",
+        "payout_rail": "instant",
+        "hardship_flags": [],
+        "refund_elected": false,
+        "other_regime_compensation": null,
+        "alternative_accepted_in_writing": null,
+        "denied_boarding": false
+      },
+      "disruption": {
+        "disruption_id": "NT880-20261110",
+        "flight_no": "NT880",
+        "scheduled_departure": "2026-11-10T09:30:00Z",
+        "kind": "DELAY",
+        "cause_code": "CREW_SCHED",
+        "control_class": "WITHIN_CONTROL",
+        "notice_minutes_before_departure": 180
+      }
+    },
+    {
+      "booking_ref": "UF4T8N",
+      "passenger_id": "P14",
+      "carrier_code": "NT",
+      "carrier_size": "LARGE",
+      "flight_no": "NT880",
+      "ticket_price_minor": null,
+      "ticket_payment_ref": null,
+      "passenger": {
+        "passenger_id": "P14",
+        "name": "Hannah Weiss",
+        "is_minor": false,
+        "arrival_delay_minutes": 370,
+        "payee_ref": "payee_P14",
+        "payout_rail": "instant",
+        "hardship_flags": [],
+        "refund_elected": false,
+        "other_regime_compensation": null,
+        "alternative_accepted_in_writing": {
+          "description": "Signed acceptance of a Northern Tern travel credit of 900.00 CAD that does not expire",
+          "value_minor": 90000,
+          "expires": false
+        },
+        "denied_boarding": false
+      },
+      "disruption": {
+        "disruption_id": "NT880-20261110",
+        "flight_no": "NT880",
+        "scheduled_departure": "2026-11-10T09:30:00Z",
+        "kind": "DELAY",
+        "cause_code": "CREW_SCHED",
+        "control_class": "WITHIN_CONTROL",
+        "notice_minutes_before_departure": 180
+      }
+    },
+    {
+      "booking_ref": "AJ6W5L",
+      "passenger_id": "P15",
+      "carrier_code": "NT",
+      "carrier_size": "LARGE",
+      "flight_no": "NT455",
+      "ticket_price_minor": null,
+      "ticket_payment_ref": null,
+      "passenger": {
+        "passenger_id": "P15",
+        "name": "Noah Fraser",
+        "is_minor": false,
+        "arrival_delay_minutes": 330,
+        "payee_ref": "payee_P15",
+        "payout_rail": "instant",
+        "hardship_flags": [],
+        "refund_elected": false,
+        "other_regime_compensation": null,
+        "alternative_accepted_in_writing": null,
+        "denied_boarding": false
+      },
+      "disruption": {
+        "disruption_id": "NT455-20261110",
+        "flight_no": "NT455",
+        "scheduled_departure": "2026-11-10T10:45:00Z",
+        "kind": "DELAY",
+        "cause_code": "WX_THEN_CREW_TIMEOUT",
+        "control_class": "UNDETERMINED",
+        "notice_minutes_before_departure": 120
+      }
+    },
+    {
+      "booking_ref": "MV3X1C",
+      "passenger_id": "P16",
+      "carrier_code": "NT",
+      "carrier_size": "LARGE",
+      "flight_no": "NT455",
+      "ticket_price_minor": null,
+      "ticket_payment_ref": null,
+      "passenger": {
+        "passenger_id": "P16",
+        "name": "Isabelle Roy",
+        "is_minor": false,
+        "arrival_delay_minutes": 330,
+        "payee_ref": "payee_P16",
+        "payout_rail": "instant",
+        "hardship_flags": [],
+        "refund_elected": false,
+        "other_regime_compensation": null,
+        "alternative_accepted_in_writing": null,
+        "denied_boarding": false
+      },
+      "disruption": {
+        "disruption_id": "NT455-20261110",
+        "flight_no": "NT455",
+        "scheduled_departure": "2026-11-10T10:45:00Z",
+        "kind": "DELAY",
+        "cause_code": "WX_THEN_CREW_TIMEOUT",
+        "control_class": "UNDETERMINED",
+        "notice_minutes_before_departure": 120
+      }
+    },
+    {
+      "booking_ref": "EH5B2Z",
+      "passenger_id": "P17",
+      "carrier_code": "NT",
+      "carrier_size": "LARGE",
+      "flight_no": "NT101",
+      "ticket_price_minor": null,
+      "ticket_payment_ref": null,
+      "passenger": {
+        "passenger_id": "P17",
+        "name": "Victor Lang",
+        "is_minor": false,
+        "arrival_delay_minutes": 500,
+        "payee_ref": "payee_P17",
+        "payout_rail": "instant",
+        "hardship_flags": [],
+        "refund_elected": false,
+        "other_regime_compensation": null,
+        "alternative_accepted_in_writing": null,
+        "denied_boarding": false
+      },
+      "disruption": {
+        "disruption_id": "NT101-20261110",
+        "flight_no": "NT101",
+        "scheduled_departure": "2026-11-10T13:15:00Z",
+        "kind": "CANCELLATION",
+        "cause_code": "CREW_SCHED",
+        "control_class": "WITHIN_CONTROL",
+        "notice_minutes_before_departure": 50
+      }
+    }
+  ]
+}

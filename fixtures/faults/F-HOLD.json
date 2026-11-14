@@ -1,0 +1,14 @@
+{
+  "id": "F-HOLD",
+  "description": "First payout request: committed at once, 201 held for 20000 ms.",
+  "faults": [
+    {
+      "match": {
+        "ordinal": 1
+      },
+      "fault": "HOLD_RESPONSE_MS",
+      "ms": 20000,
+      "times": 1
+    }
+  ]
+}

@@ -1,0 +1,16 @@
+{
+  "form": "nt-compensation-request@1",
+  "submitted_via": "northern-tern web form",
+  "fields": {
+    "full_name": "Grace Liu",
+    "email": "grace.liu@example.net",
+    "booking_reference": "HV9C3T",
+    "flight_number": "NT101",
+    "flight_date": "2026-11-10",
+    "route": "YYZ-YVR",
+    "disruption_type": "Cancelled",
+    "passengers_on_this_request": ["Grace Liu"],
+    "description": "NT101 cancelled at the last minute. You moved me onto another flight that left soon after and I landed in Vancouver about 2 hours 10 minutes later than my original arrival time. Missed the start of a client dinner. Please process whatever compensation applies.",
+    "preferred_contact": "email"
+  }
+}
