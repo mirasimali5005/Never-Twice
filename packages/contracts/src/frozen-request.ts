@@ -7,7 +7,9 @@ import { Minor } from "./money.ts";
 import { ProviderId, Rail } from "./reasons.ts";
 
 export const FrozenRequestMetadata = z
-  .object({ nt_marker: z.string(), nt_effect_key: z.string(), nt_run_id: z.string(), nt_type: z.string() })
+  // nt_authority (Tier 3, CP-AUTH-1): the grant node a goodwill payment drew on, present only under hierarchical authority, so the
+  // default single-pool requests (and their hashes) are unchanged.
+  .object({ nt_marker: z.string(), nt_effect_key: z.string(), nt_run_id: z.string(), nt_type: z.string(), nt_authority: z.string().optional() })
   .strict();
 export type FrozenRequestMetadata = z.infer<typeof FrozenRequestMetadata>;
 

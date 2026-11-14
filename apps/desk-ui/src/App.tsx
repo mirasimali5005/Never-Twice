@@ -7,6 +7,7 @@ import { ErrorBoundary } from "./components/ErrorBoundary";
 import { Header } from "./components/Header";
 import { ChoiceStrip } from "./components/ChoiceStrip";
 import { HowItWorks } from "./components/HowItWorks";
+import { Timeline } from "./components/Timeline";
 import certNt from "./mocks/certificate.nt.json";
 import { mockElapsed, restartMock } from "./mocks/engine";
 import type { ApiResult } from "./api";
@@ -122,6 +123,9 @@ export function App() {
           <ChoiceStrip scenario={groupKept?.scenario ?? null} />
         </ErrorBoundary>
       )}
+      <ErrorBoundary name="timeline" resetKey={ntData.trail}>
+        <Timeline trail={ntData.trail} summary={ntData.summary} />
+      </ErrorBoundary>
       <main className="cols">
         <ErrorBoundary name="control column" resetKey={controlData}>
           <ArmColumn title="Ordinary agent (control)" kind="control" run={control} data={controlData} selectedKey={selectedKey} onSelect={setPicked} groupReady={groupKept !== null} />

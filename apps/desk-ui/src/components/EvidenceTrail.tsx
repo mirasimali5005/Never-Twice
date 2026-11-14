@@ -1,8 +1,23 @@
+import { CircleCheck, FileCheck, Gavel, Hourglass, KeyRound, Lightbulb, Lock, Scale, Search, Send, UserRound } from "lucide-react";
 import { formatClock } from "../format";
 import { isBaseline, trailSteps } from "../trailSteps";
 import { COLOUR_LABEL, CONFIRMED_MEANS, quarantineWords, stateColour, stateLabel } from "../stateColour";
 import type { ApiResult } from "../api";
 import type { AnyTrail, BaselineTrail } from "../types";
+import type { StepKind } from "../trailSteps";
+
+const STEP_ICON: Record<StepKind, typeof Send> = {
+  reserved: Lock,
+  sent: Send,
+  hypothesis: Lightbulb,
+  query: Search,
+  matcher: Scale,
+  licence: KeyRound,
+  decision: Gavel,
+  evidence: FileCheck,
+  pending: Hourglass,
+  done: CircleCheck,
+};
 
 function BaselineTrailView({ t }: { t: BaselineTrail }) {
   return (
@@ -53,12 +68,17 @@ export function EvidenceTrail(props: { trail: ApiResult<AnyTrail> | null; select
         {t.intent.state === "QUARANTINED" && t.intent.quarantine && <span className="trail__reason"> · {quarantineWords(t.intent.quarantine.reason)}</span>}
       </div>
       <ol className="steps">
-        {steps.map((s, i) => (
+        {steps.map((s, i) => {
+          const Icon = s.label === "Parked" ? UserRound : STEP_ICON[s.kind] ?? CircleCheck;
+          return (
           <li key={i} className={`step step--${s.tone ?? "plain"} step--${s.kind}`}>
-            <span className="step__label">{s.label}</span>
+            <span className="step__label">
+              <Icon size={14} aria-hidden /> {s.label}
+            </span>
             <span className="step__text">{s.text}</span>
           </li>
-        ))}
+          );
+        })}
       </ol>
     </div>
   );

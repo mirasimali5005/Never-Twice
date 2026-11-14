@@ -1,3 +1,4 @@
+import { ArmHero } from "./ArmHero";
 import { ErrorBoundary } from "./ErrorBoundary";
 import { EvidenceTrail } from "./EvidenceTrail";
 import { PaymentChips } from "./PaymentChips";
@@ -33,6 +34,7 @@ export function ArmColumn(props: {
         )}
         {isControl && <span className="muted small">no write-ahead record, no investigation; a 2xx counts as paid</span>}
       </header>
+      {run && <ArmHero statement={data.statement} payments={data.payments} certificate={data.certificate} isControl={isControl} />}
       {!run ? (
         <div className="cards cards--note">
           {props.groupReady ? `This group has no ${isControl ? "control" : "Never Twice"} run.` : "Waiting for the group: unavailable, not zero."}

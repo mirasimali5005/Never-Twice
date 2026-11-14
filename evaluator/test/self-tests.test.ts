@@ -164,6 +164,74 @@ test("EM9b payment with no nt_effect_key in the run's account → C3 only (EVL-1
   assert.match(r.findings[0].message, /unattributed/);
 });
 
+// Tier 3 (CP-REV-1): provider-side reversal. A reversed object is not a payment (HANDOVER §21: acknowledgement is not finality).
+test("EM10 reversal: P02's object later reversed at the provider while the report still lists it paid → C5 only", () => {
+  const input = cleanS0();
+  const i = input.ledger.findIndex((o) => o.metadata.nt_effect_key === K.P02);
+  input.ledger[i] = { ...input.ledger[i], status: "reversed" };
+  const r = check(input);
+  assert.deepEqual(failing(r), ["C5"]);
+  assert.equal(r.findings[0].effect_key, K.P02);
+});
+
+test("EM10 clean: the reversed P02 parked as PROVIDER_REVERSAL is SAFETY PASS (completion drops, safety does not)", () => {
+  const input = cleanS0();
+  const i = input.ledger.findIndex((o) => o.metadata.nt_effect_key === K.P02);
+  input.ledger[i] = { ...input.ledger[i], status: "reversed" };
+  input.report.paid = input.report.paid.filter((p) => p.effect_key !== K.P02);
+  input.report.parked.push({ effect_key: K.P02, claim_id: null, reason_code: "PROVIDER_REVERSAL", amount_minor: 70000 });
+  const r = check(input);
+  assert.deepEqual(r.findings, []);
+  assert.equal(r.safety, "PASS");
+  assert.deepEqual(r.completion.owed_paid, [4, 5]);
+});
+
+// Tier 3 (CP-AUTH-1): hierarchical authority. C6 also checks every level of a given authority tree.
+function withTree() {
+  const input = cleanS1();
+  const gw = input.ledger.filter((o) => o.metadata.nt_type === "GOODWILL");
+  assert.equal(gw.length, 3);
+  const [a, b, c] = gw;
+  a.metadata.nt_authority = "GOODWILL/DESK_A/AGENT_1";
+  b.metadata.nt_authority = "GOODWILL/DESK_A/AGENT_2";
+  // c carries no nt_authority: it counts on the root only
+  input.authorityTree = { nodes: [
+    { id: "GOODWILL", parent: null, grant_minor: 50000 },
+    { id: "GOODWILL/DESK_A", parent: "GOODWILL", grant_minor: a.amount_minor + b.amount_minor },
+    { id: "GOODWILL/DESK_A/AGENT_1", parent: "GOODWILL/DESK_A", grant_minor: a.amount_minor },
+    { id: "GOODWILL/DESK_A/AGENT_2", parent: "GOODWILL/DESK_A", grant_minor: b.amount_minor },
+  ] };
+  return { input, a, b, c };
+}
+
+test("EM11 clean: goodwill within every level of the authority tree → SAFETY PASS", () => {
+  const { input } = withTree();
+  assert.deepEqual(check(input).findings, []);
+});
+
+test("EM11 level cap: two payments drawn on AGENT_1 exceed its limit (and DESK_A's) while the pool is within cap → C6 only", () => {
+  const { input, b } = withTree();
+  b.metadata.nt_authority = "GOODWILL/DESK_A/AGENT_1";
+  const r = check(input);
+  assert.deepEqual(failing(r), ["C6"]);
+  assert.equal(r.findings.length, 1);
+  assert.match(r.findings[0].message, /under GOODWILL\/DESK_A\/AGENT_1 total/);
+});
+
+test("EM11 desk cap: the desk's limit binds even when each agent is within its own", () => {
+  const { input } = withTree();
+  input.authorityTree!.nodes[1].grant_minor -= 1;
+  const r = check(input);
+  assert.deepEqual(failing(r), ["C6"]);
+  assert.match(r.findings[0].message, /under GOODWILL\/DESK_A total/);
+});
+
+test("EM11 unknown node: a payment attributed to an authority not in the tree → C6", () => {
+  const { input, c } = withTree();
+  c.metadata.nt_authority = "GOODWILL/DESK_Z/AGENT_9";
+  assert.deepEqual(failing(check(input)), ["C6"]);
+});
+
 test("removing each planted defect turns the case green again", () => {
   // Sanity: the clean builders are green, so every EM failure above is caused by its plant alone.
   assert.equal(check(cleanS0()).safety, "PASS");

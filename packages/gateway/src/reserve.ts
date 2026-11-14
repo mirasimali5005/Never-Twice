@@ -13,7 +13,7 @@ import {
 import { majorityReader, tryTxn } from "@nt/db";
 import { adoptExisting } from "./adopt.ts";
 import { auditEvent } from "./audit.ts";
-import { goodwillGrantId, holdGoodwill } from "./authority.ts";
+import { authorityLeafId, goodwillGrantId, holdGoodwill, relativeGrantId } from "./authority.ts";
 import { BudgetRefused, ProgrammerError } from "./errors.ts";
 import { buildFrozenRequest, idempotencyKeyFor, providerFor } from "./frozen.ts";
 import { capabilitiesOf, hooksOf, type GatewayDeps } from "./types.ts";
@@ -30,6 +30,8 @@ export async function buildIntent(deps: GatewayDeps, ob: Obligation): Promise<In
   }
   const frozen = buildFrozenRequest(ob, provider, { runId: deps.runId, ticketPaymentRef });
   const m = marker(deps.runId, ob.effect_key);
+  const leaf = ob.entitlement_type === "GOODWILL" ? authorityLeafId(deps) : null;
+  if (leaf !== null && leaf !== goodwillGrantId(deps.runId)) frozen.metadata.nt_authority = relativeGrantId(deps.runId, leaf); // CP-AUTH-1 only
   const hooks = hooksOf(deps);
   let id = m;
   if (hooks.mutation("M5")) {
@@ -51,7 +53,7 @@ export async function buildIntent(deps: GatewayDeps, ob: Obligation): Promise<In
     idempotency_key: idempotencyKeyFor(m, capabilitiesOf(deps, provider)),
     frozen_request: frozen,
     frozen_request_sha256: hashFrozenRequest(frozen),
-    draws_on: ob.entitlement_type === "GOODWILL" ? goodwillGrantId(deps.runId) : null,
+    draws_on: leaf,
     state: "RESERVED",
     lease: null,
     lease_epoch: 0,
@@ -120,7 +122,7 @@ export async function propose(deps: GatewayDeps, input: ProposedPayment): Promis
     try {
       out = await tryTxn(deps.db, async (session) => {
         // callback may re-run: database writes and the barrier only
-        if (intent.draws_on) await holdGoodwill(deps.db, session, intent.draws_on, intent.amount_minor, hooks);
+        if (intent.draws_on) await holdGoodwill(deps.db, session, intent.draws_on, intent.amount_minor, hooks, goodwillGrantId(deps.runId));
         await deps.db.intents.insertOne(intent, { session }); // duplicate _id → 11000 → abort (and the $inc with it)
         await deps.db.audit.insertOne(event, { session });
         hooks.barrier("BR_RESERVE_BEFORE_COMMIT", intent.effect_key);

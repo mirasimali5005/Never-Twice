@@ -1,7 +1,7 @@
 // Never Twice auditor CLI. Zero dependencies; run with plain node 24.
 //
 //   node evaluator/src/cli.ts manifest --scenario <S0|S1> --group <group_id> [--ops-record <path>] [--out-dir <dir>] [--hidden-dir <dir>]
-//   node --env-file=evaluator/.env evaluator/src/cli.ts check --run <run_id> [--report <path>] [--expect-hash <hex>]
+//   node --env-file=evaluator/.env evaluator/src/cli.ts check --run <run_id> [--report <path>] [--expect-hash <hex>] [--authority-tree <path>]
 //                                                              [--ops-record <path>] [--out-dir <dir>] [--hidden-dir <dir>]
 //
 // Environment (check only), from evaluator/.env, never the root .env: EVAL_SIM_URL, EVAL_SIM_READ_KEY, EVAL_STRIPE_KEY (rk_test_ only; F4).
@@ -19,7 +19,7 @@ import type { LedgerSource } from "./ledger.ts";
 import { simLedgerSource } from "./ledger-sim.ts";
 import { stripeLedgerSource, resolveApiBase } from "./ledger-stripe.ts";
 import { check } from "./checker.ts";
-import type { Commitment } from "./checker.ts";
+import type { AuthorityTree, Commitment } from "./checker.ts";
 import { buildCertificate, renderText } from "./certificate.ts";
 import { gradeLetters, parseLetters, readMessages, renderLetters } from "./letters.ts";
 
@@ -104,6 +104,21 @@ function buildLedgerSources(env: NodeJS.ProcessEnv, needStripe: boolean): { sour
   return { sources, stripe: stripe !== null };
 }
 
+/** Tier 3 (CP-AUTH-1): { nodes: [{ id, parent, grant_minor }] }, root "GOODWILL". */
+function parseAuthorityTree(v: unknown): AuthorityTree {
+  const nodes = (v as { nodes?: unknown } | null)?.nodes;
+  if (!Array.isArray(nodes) || nodes.length === 0) throw new InputError("authority tree: nodes must be a non-empty array");
+  const out = nodes.map((n, i) => {
+    const x = n as Record<string, unknown>;
+    if (typeof x.id !== "string" || !(x.parent === null || typeof x.parent === "string") || typeof x.grant_minor !== "number" || !Number.isSafeInteger(x.grant_minor) || x.grant_minor < 0) {
+      throw new InputError(`authority tree: node ${i} must be { id: string, parent: string | null, grant_minor: integer >= 0 }`);
+    }
+    return { id: x.id, parent: x.parent as string | null, grant_minor: x.grant_minor };
+  });
+  if (!out.some((n) => n.id === "GOODWILL" && n.parent === null)) throw new InputError("authority tree: the root must be GOODWILL with parent null");
+  return { nodes: out };
+}
+
 async function cmdCheck(opts: Map<string, string>, env: NodeJS.ProcessEnv): Promise<number> {
   const runId = opts.get("run");
   if (!runId || !RUN_ID_RE.test(runId)) throw new UsageError("--run must be r + 7 lowercase base-36 characters");
@@ -138,7 +153,8 @@ async function cmdCheck(opts: Map<string, string>, env: NodeJS.ProcessEnv): Prom
   const { sources, stripe } = buildLedgerSources(env, needStripe);
   const { objects, counts } = await readAllSources(sources, runId);
 
-  const result = check({ manifest, storedManifest, commitment, expectHash: opts.get("expect-hash") ?? null, ledger: objects, report });
+  const authorityTree = opts.has("authority-tree") ? parseAuthorityTree(readJson(resolve(opts.get("authority-tree")!), "authority tree")) : null;
+  const result = check({ manifest, storedManifest, commitment, expectHash: opts.get("expect-hash") ?? null, ledger: objects, report, authorityTree });
   const cert = buildCertificate(report, result, { sim_objects: counts.sim ?? 0, stripe_objects: stripe ? (counts.stripe ?? 0) : null }, new Date().toISOString());
   if (stripe) {
     cert.notes.push(`Stripe test mode: ${counts.stripe ?? 0} refund object(s) with metadata.nt_run_id ${runId} read from the top-level refund list ` +
@@ -162,7 +178,7 @@ async function cmdCheck(opts: Map<string, string>, env: NodeJS.ProcessEnv): Prom
 
 const USAGE = `usage:
   node evaluator/src/cli.ts manifest --scenario <S0|S1> --group <group_id> [--ops-record <path>]
-  node --env-file=evaluator/.env evaluator/src/cli.ts check --run <run_id> [--report <path>] [--expect-hash <hex>]
+  node --env-file=evaluator/.env evaluator/src/cli.ts check --run <run_id> [--report <path>] [--expect-hash <hex>] [--authority-tree <path>]
 `;
 
 export async function main(argv: string[], env: NodeJS.ProcessEnv): Promise<number> {

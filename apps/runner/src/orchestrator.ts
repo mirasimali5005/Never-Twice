@@ -36,8 +36,8 @@ export type RunOptions = { runId: string; arm?: Arm | undefined; pauseBeforePayo
 
 export type PayoutOutcome = { effect_key: string; result: "REFUSED" | "SKIPPED" | "DISPATCHED"; detail: string };
 
-/** nt and nt_mutant (the mutant is the same code with NT_MUTATION set, which the gateway reads). rules_only (task E5) reuses runArm with its own extractor. */
-export const ORCHESTRATED_ARMS: readonly Arm[] = ["nt", "nt_mutant"];
+/** nt and nt_mutant (the mutant is the same code with NT_MUTATION set, which the gateway reads). rules_only (arm R) runs the same code with the regular-expression extractor in place of the model (chosen in cli.ts). */
+export const ORCHESTRATED_ARMS: readonly Arm[] = ["nt", "nt_mutant", "rules_only"];
 
 /** Owed obligations in payout order: due_by, then earliest claim received_at, then a passenger's statutory obligation before that passenger's
  *  goodwill (HANDOVER.md §7.3), then effect_key. Passengers sharing both keys are ordered by their effect-key prefix, so goodwill follows its own statutory payment. */

@@ -22,7 +22,8 @@ export * from "./errors.ts";
 export { auditEvent } from "./audit.ts";
 export { applyTransition, NO_LIVE_LEASE, type TransitionSpec } from "./transition.ts";
 export { buildFrozenRequest, idempotencyKeyFor, providerFor } from "./frozen.ts";
-export { goodwillGrantId, goodwillGuard, holdGoodwill } from "./authority.ts";
+export { authorityLeafId, chainFrozen, goodwillGrantId, goodwillGuard, grantChain, holdGoodwill, relativeGrantId } from "./authority.ts";
+export { seedGrantTree, type GrantNode } from "./grant-tree.ts";
 export { adoptExisting, quarantineReserved, type T11Reason } from "./adopt.ts";
 export { buildIntent, propose } from "./reserve.ts";
 export { barrier, barrierAfterMs } from "./barrier.ts";
@@ -37,3 +38,4 @@ export { applyResendResult, recordLicence, resend, MAX_ATTEMPTS } from "./resend
 export { freezeGrant, releaseReserved } from "./human.ts";
 export { scanInvariants, type InvariantReport, type InvariantViolation as InvariantFinding } from "./invariants.ts";
 export { readOnlyProviderView, type ProviderReadView } from "./read-view.ts";
+export { recordProviderReversal, reversalEventId, reversedIntentIds, type ReversalRecord } from "./reversal.ts";

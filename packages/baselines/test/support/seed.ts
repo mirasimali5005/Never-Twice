@@ -14,7 +14,7 @@ export const REPO_ROOT = join(dirname(fileURLToPath(import.meta.url)), "../../..
 
 export type Seeded = { runId: string; groupId: string; account: string };
 
-export async function seedControlRun(db: NtDb, sim: SimProcess, o: { scenario?: "S0" | "S1"; faults?: object[]; poolMinor?: number } = {}): Promise<Seeded> {
+export async function seedControlRun(db: NtDb, sim: SimProcess, o: { scenario?: "S0" | "S1"; faults?: object[]; poolMinor?: number; arm?: "control" | "documented" } = {}): Promise<Seeded> {
   const scenario = o.scenario ?? "S0";
   const runId = newRunId();
   const groupId = newGroupId();
@@ -29,7 +29,7 @@ export async function seedControlRun(db: NtDb, sim: SimProcess, o: { scenario?: 
   const run: ExecutionRun = {
     _id: runId,
     group_id: groupId,
-    arm: "control",
+    arm: o.arm ?? "control",
     scenario,
     seed: 1,
     fault_schedule: "test",

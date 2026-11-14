@@ -15,6 +15,7 @@ import { mutation } from "./mutation.ts";
 import { quarantine } from "./outcomes.ts";
 import { applyResendResult, recordLicence, resend } from "./resend.ts";
 import { propose } from "./reserve.ts";
+import { recordProviderReversal, type ReversalRecord } from "./reversal.ts";
 import { confirmQuarantined, settle, type Evidence } from "./settle.ts";
 import { capabilitiesOf, type GatewayConfig, type GatewayDeps } from "./types.ts";
 
@@ -40,6 +41,8 @@ export interface Gateway {
   freezeGrant(runId: string, actor: string): Promise<void>;
   capabilitiesOf(provider: ProviderId): ProviderCapabilities;
   scanInvariants(runId: string): Promise<InvariantReport>;
+  // Tier 3 (CP-REV-1): a CONFIRMED intent's object later undone at the provider. Audit event only; no state change, no re-send.
+  recordProviderReversal(it: Intent, object: ProviderObject): Promise<ReversalRecord>;
 }
 
 export function withDefaultHooks(deps: GatewayDeps): GatewayDeps {
@@ -79,6 +82,7 @@ export function createGateway(input: GatewayDeps): Gateway {
     freezeGrant: (runId, actor) => freezeGrant(deps, runId, actor),
     capabilitiesOf: (p) => capabilitiesOf(deps, p),
     scanInvariants: (runId) => scanInvariants(deps, runId),
+    recordProviderReversal: (it, o) => recordProviderReversal(deps, it, o),
   };
 }
 
@@ -93,6 +97,7 @@ export type GatewayEnv = ProviderEnv & {
   NT_INVESTIGATOR_TIMEOUT_MS?: string | undefined;
   NT_STRIPE_ENABLED?: string | undefined;
   NT_LETTERS_ENABLED?: string | undefined;
+  NT_AUTHORITY_GRANT?: string | undefined;
 };
 
 const num = (v: string | undefined, d: number) => (v === undefined || v === "" ? d : Number(v));
@@ -106,6 +111,7 @@ export function configFromEnv(env: GatewayEnv): GatewayConfig {
     stripeEnabled: String(env.NT_STRIPE_ENABLED ?? "true") !== "false", // parseEnv may hand over a boolean or a string
     // CP-LETTER-1: OFF unless NT_LETTERS_ENABLED=true (process env as a fallback: role env schemas do not carry it).
     lettersEnabled: String(env.NT_LETTERS_ENABLED ?? process.env["NT_LETTERS_ENABLED"] ?? "false") === "true",
+    authorityGrantId: env.NT_AUTHORITY_GRANT || null, // CP-AUTH-1; unset = the single pool
   };
 }
 

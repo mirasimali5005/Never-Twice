@@ -45,6 +45,9 @@ export interface ReconcilerGateway {
   capabilitiesOf(provider: ProviderId): ProviderCapabilities;
   /** T12 (Tier 2 watcher): QUARANTINED (absence class) → CONFIRMED on matching evidence. Optional until B3 exposes it. */
   confirmQuarantined?(it: Intent, object: ProviderObject): Promise<Intent | null>;
+  /** Tier 3 (CP-REV-1): records a PROVIDER_REVERSAL audit event for a CONFIRMED intent whose object the provider now reports undone.
+   *  No state change and no provider write; the gateway re-runs the fixed detector. */
+  recordProviderReversal?(it: Intent, object: ProviderObject): Promise<{ kind: string }>;
 }
 
 export type OpenedRecord = { id: ObjectId };
@@ -74,6 +77,8 @@ export interface ReconcilerStore {
   expiredDispatching(runId: string): Promise<Intent[]>;
   dueUnknown(runId: string): Promise<Intent[]>;
   watchable(runId: string): Promise<Intent[]>;
+  /** Tier 3 (CP-REV-1): CONFIRMED intents of the run with no PROVIDER_REVERSAL audit event yet. */
+  confirmedUnreversed?(runId: string): Promise<Intent[]>;
   /** Count of RESERVED, DISPATCHING or OUTCOME_UNKNOWN intents of the run (QUARANTINED does not count). */
   unresolvedCount(runId: string): Promise<number>;
   /** Guards for decideRecovery, read through the gateway client from obligations and authority_grants. Bookings are not read. */

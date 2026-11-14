@@ -56,3 +56,12 @@ export const ACCEPTED_STATUSES: Record<ProviderId, ReadonlySet<string>> = {
   stripe_refund: new Set(["succeeded", "pending"]),
   notify_letter: new Set(["sent"]), // CP-LETTER-1: a letter, not a payment
 };
+
+/** Tier 3 (CP-REV-1): provider statuses that positively say an accepted payment was later undone at the provider. Only these
+ *  trigger PROVIDER_REVERSAL handling; an unknown status, a missing object or a read error changes nothing (positive evidence only). */
+export const REVERSAL_STATUSES: Record<ProviderId, ReadonlySet<string>> = {
+  sim_payout: new Set(["reversed", "failed"]),
+  sim_keyless: new Set(["reversed", "failed"]),
+  stripe_refund: new Set(["failed", "canceled"]),
+  notify_letter: new Set(), // CP-LETTER-1: a letter is not a payment and cannot be reversed
+};

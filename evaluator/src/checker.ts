@@ -32,6 +32,11 @@ export type Completion = {
   goodwill_eligible_minor: number;
 };
 
+/** Tier 3 (CP-AUTH-1): a hierarchical goodwill authority tree, an evaluator input like the ops record (never read from the
+ *  system's database). Node ids are relative ("GOODWILL", "GOODWILL/DESK_A", ...); the root is "GOODWILL". */
+export type AuthorityNode = { id: string; parent: string | null; grant_minor: number };
+export type AuthorityTree = { nodes: AuthorityNode[] };
+
 export type CheckInput = {
   /** The manifest regenerated from the inputs by the evaluator's own code: the one every check grades against. */
   manifest: Manifest;
@@ -41,6 +46,9 @@ export type CheckInput = {
   expectHash?: string | null;
   ledger: LedgerObject[];
   report: FinalReport;
+  /** Optional (CP-AUTH-1): when given, C6 also fails if goodwill payments attributed (metadata.nt_authority) to any node and
+   *  its descendants total more than that node's grant. A payment with no nt_authority counts on the root only. */
+  authorityTree?: AuthorityTree | null;
 };
 
 export type CheckResult = {
@@ -167,6 +175,40 @@ export function check(input: CheckInput): CheckResult {
   if (goodwillPaid > manifest.goodwill_grant_minor) {
     add({ check: "C6", effect_key: null, provider_object_ids: goodwillPayments.map((o) => o.id),
       message: `goodwill payments total ${goodwillPaid}, above the grant of ${manifest.goodwill_grant_minor}` });
+  }
+
+  // C6, per level (CP-AUTH-1): every node of the authority tree, with each payment counted on its node and every ancestor.
+  if (input.authorityTree) {
+    const parent = new Map(input.authorityTree.nodes.map((n) => [n.id, n.parent]));
+    const chain = (id: string): string[] | null => {
+      const out: string[] = [];
+      for (let cur: string | null | undefined = id; cur !== null; cur = parent.get(cur)) {
+        if (cur === undefined || out.includes(cur)) return null; // unknown node or a cycle
+        out.push(cur);
+      }
+      return out;
+    };
+    const totals = new Map<string, { sum: number; ids: string[] }>();
+    for (const o of goodwillPayments) {
+      const node = typeof o.metadata.nt_authority === "string" && o.metadata.nt_authority !== "" ? o.metadata.nt_authority : "GOODWILL";
+      const c = chain(node);
+      if (c === null) {
+        add({ check: "C6", effect_key: keyOf(o), provider_object_ids: [o.id], message: `goodwill payment drew on authority ${node}, which is not in the authority tree` });
+        continue;
+      }
+      for (const n of c) {
+        const t = totals.get(n) ?? { sum: 0, ids: [] };
+        t.sum += o.amount_minor;
+        t.ids.push(o.id);
+        totals.set(n, t);
+      }
+    }
+    for (const n of input.authorityTree.nodes) {
+      const t = totals.get(n.id);
+      if (t && t.sum > n.grant_minor) {
+        add({ check: "C6", effect_key: null, provider_object_ids: t.ids, message: `goodwill payments under ${n.id} total ${t.sum}, above its grant of ${n.grant_minor}` });
+      }
+    }
   }
 
   // C7 false completion.

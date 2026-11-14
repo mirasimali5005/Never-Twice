@@ -24,6 +24,8 @@ export function deriveReport(input: {
   obligations: Obligation[];
   intents: Intent[];
   budgetRefusedKeys: ReadonlySet<string>;
+  /** Tier 3 (CP-REV-1): intent ids with a PROVIDER_REVERSAL audit event. A reversed payment is not a payment: parked, never paid. */
+  reversedIntentIds?: ReadonlySet<string>;
   generatedAt: string;
 }): FinalReport {
   const { run, claims, budgetRefusedKeys } = input;
@@ -47,6 +49,7 @@ export function deriveReport(input: {
       };
     })
     .sort(byKey((x) => x.effect_key));
+  const reversed = input.reversedIntentIds ?? new Set<string>();
   const paid: FinalReport["paid"] = [];
   const refused: FinalReport["refused"] = [];
   const parked: FinalReport["parked"] = [];
@@ -60,6 +63,7 @@ export function deriveReport(input: {
     switch (it.state) {
       case "CONFIRMED":
         if (it.evidence === null) unresolved.push({ effect_key: it.effect_key, state: "CONFIRMED_WITHOUT_EVIDENCE" });
+        else if (reversed.has(it._id)) parked.push({ effect_key: it.effect_key, claim_id: null, reason_code: "PROVIDER_REVERSAL", amount_minor: it.amount_minor });
         else
           paid.push({
             effect_key: it.effect_key,
@@ -136,11 +140,12 @@ export function deriveReport(input: {
 export async function buildFinalReport(db: Db & Pick<NtDb, "db">, runId: string, opts: { now?: Date } = {}): Promise<FinalReport> {
   const run = await db.runs.findOne({ _id: runId });
   if (!run) throw new ReportError(`no execution_runs document for ${runId}`);
-  const [claims, obligations, intents, budget] = await Promise.all([
+  const [claims, obligations, intents, budget, reversals] = await Promise.all([
     db.claims.find({ run_id: runId }).toArray(),
     db.obligations.find({ run_id: runId }).toArray(),
     db.intents.find({ run_id: runId }).toArray(),
     db.audit.find({ run_id: runId, type: "BUDGET_REFUSED" }).toArray(),
+    db.audit.find({ run_id: runId, type: "PROVIDER_REVERSAL" }).toArray(),
   ]);
   const generatedAt = (opts.now ?? (await dbNow(db, runId))).toISOString();
   return deriveReport({
@@ -149,6 +154,7 @@ export async function buildFinalReport(db: Db & Pick<NtDb, "db">, runId: string,
     obligations,
     intents,
     budgetRefusedKeys: new Set(budget.flatMap((e) => (e.effect_key ? [e.effect_key] : []))),
+    reversedIntentIds: new Set(reversals.flatMap((e) => (e.intent_id ? [e.intent_id] : []))),
     generatedAt,
   });
 }

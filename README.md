@@ -43,8 +43,12 @@ Only numbers that were measured are in this table. Nothing here is a projection.
 | Live AI investigation | about 8 s per in-doubt payment; decisions are made by fixed code, never by the model |
 | Vector Search over past investigations (n = 6 investigations with recall, 6 without) | The top recalled record was always the matching past case. **No measurable benefit on S0**: decisions identical, 5.33 vs 4.67 queries, 7.66 s vs 7.60 s mean |
 | Kill sweep: 7 crash points × 3 provider faults × 3 positions = 63 cells, a real `SIGKILL` each | **53 PASS, 0 FAIL**; in the other 10 the kill cannot fire by construction (e.g. a rejected request never reaches the after-response barrier) and all 10 were still audited SAFETY PASS. No provider payment was duplicated in any cell. Enumeration of instrumented crash points, not a proof. Details: `out/sweeps/kill-sweep.md` |
+| Four arms on S1, kill at P02 (`nt`, `control`, `documented` = stable key per entitlement + retries + checkpoints, `rules_only` = regex parser instead of the model) | Before the keyless late commit lands: `nt` PASS, `documented` **PASS**, `rules_only` PASS, `control` FAIL (P02 paid three times). After it lands: `nt` PASS 10 of 10 (watcher confirms P11 from evidence), `rules_only` PASS, **`documented` FAIL (P11 paid twice while reporting complete)**, `control` FAIL. So documented practice is as safe as Never Twice until a keyless rail commits late — and it completes more before that, because it re-sends where Never Twice parks |
+| Model vs regex intake on S1 | **No difference measured**: the regex parser resolved the same 17 of 17 claims as the model (the shared deterministic resolver does most of the work), and never paid a wrong passenger. Caveat: the regex was written after reading the S1 claims, so this is an upper bound for unseen text. On S1 the model's measured contribution is in the investigation, not the intake |
 | Goodwill-cap concurrency sweep (N = 1, 5, 10, 25, 50 concurrent proposals; pool at 60% of demand) | **0 violations in 50 runs at each N** (250 runs; ≈95% upper bound 3/50 = 6% per N — sampled evidence, not a proof). With the guard removed (M1) the cap was exceeded in 5 of 5 runs at every N |
 | Mutation sweep (each mutation at one code site) | **5 of 5 caught**: M1 → C6 and invariant P2; M2 → C5; M3 (re-send on "not found" without a licence) → C1 + C4, end to end through the real reconciler; M4 (rebuilt request) → C2 + C4; M5 (random intent id) → invariant P1 + C1. The unmutated arm stayed green throughout |
+| AI-written read-only probes for a keyless tool (NotifySim), admitted only after four canaries | Live model: 20 of 20 specs admitted on the first attempt — but it wrote the same spec each time, so this is close to one observation. Known-bad specs (matches any recent object, uses the lagging search, ignores the marker, no pagination, POST) are each rejected by the planned canary in tests |
+| EU261 rule pack (jurisdiction as data) | Fixture EU1: the rules engine and the auditor's separate EU261 table agree — 250.00 EUR, 300.00 EUR (600 halved after re-routing), two refusals |
 | Automated tests | 759 unit, 167 integration, 19 end-to-end (S0 demo, safety), 61 evaluator self-tests (planted defects EM1–EM9 each turn exactly their check red), 40 dependency-boundary tests |
 
 Confirmed means: the provider holds one payment object matching marker, amount, currency and payee. It does not mean the passenger has received the money.
@@ -65,7 +69,7 @@ With a provider that deduplicates on the idempotency key for its retention perio
 - The entrant wrote the simulator, the system and the auditor; on one laptop their independence is procedural. Partial answers: a judge chooses the kill, a labelled mutant turns the auditor red, and the ticket-refund ledger is Stripe's.
 - Audit events are append-only by convention and by database privilege, not cryptographically tamper-evident.
 - A provider's acknowledgement is not payment finality; refunds and payouts can fail later (not handled here).
-- Not built: the documented-practice and rules-only baseline arms, model-generated probes, the EU261 rule pack.
+- The EU261 pack (fixture EU1) is computed and graded but EUR payments are not sent (payment documents are CAD-only by design today).
 
 ## Running it
 

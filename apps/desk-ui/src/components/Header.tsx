@@ -39,6 +39,7 @@ export function Header(props: {
           {g?.database === "local" && <span className="label label--local" title="Not the Atlas sandbox: this desk reads a local database">LOCAL DATABASE</span>}
           {props.mock && <span className="label label--mock">Mock data</span>}
           <span className="label">Compensation provider: simulator</span>
+          <span className="label label--stripe">Stripe: test mode</span>
           {props.intakeReplay && <span className="label">Intake: replayed from a recording</span>}
           {props.onHowItWorks && (
             <button type="button" className="label label--button" onClick={props.onHowItWorks} title="beat 13: what is built, what is simulated">
@@ -60,7 +61,7 @@ export function Header(props: {
           ) : (
             <i>appears here once the auditor has run</i>
           )}{" "}
-          {hash && <>committed before the run{equal === true && <span className="ok"> · equals the commitment</span>}{equal === false && <span className="bad"> · DIFFERS from the commitment</span>}</>}
+          {hash && <><span className="badge badge--green">committed before the run</span>{equal === true && <span className="ok"> · equals the commitment</span>}{equal === false && <span className="bad"> · DIFFERS from the commitment</span>}</>}
         </span>
         <span className="runs">
           {g === null && props.group && !props.group.ok && <span className="bad">group unavailable ({props.group.error})</span>}
