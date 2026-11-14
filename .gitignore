@@ -147,3 +147,36 @@ vite.config.ts.timestamp-*
 
 # Turbo Repo
 .turbo
+
+# --- Never Twice (task A1) ---
+# Secrets: real values live only in .env files, never in the repository.
+.env
+.env.*
+!.env.example
+evaluator/.env
+# Dependencies, outputs and local working state
+node_modules
+node_modules/
+out/
+evaluator/out/
+.nt/
+apps/provider-sim/data/
+coverage
+*.log
+# evaluator/hidden/ is deliberately NOT ignored.
+
+# Design documents written before the build period: kept out of the public repo (entrant's decision, 14 Nov).
+# They stay on this laptop; agents read them at /Users/mirasimali/JustResearch/never-twice/<NAME>.md
+/HANDOVER.md
+/ARCHITECTURE.md
+/IMPLEMENTATION_PLAN.md
+/AGENT_TASKS.md
+/ORCHESTRATOR.md
+/AGENT_ASSIGNMENTS.md
+/DEMO_RUNBOOK.md
+/TEST_PLAN.md
+/SETUP.md
+/DECISIONS.md
+/AGENTS.md
+/NEW_SESSION_PROMPT.md
+/tasks/

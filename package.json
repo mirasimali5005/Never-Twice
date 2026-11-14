@@ -1,0 +1,49 @@
+{
+  "name": "never-twice",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Never Twice: the claims desk that refuses to guess.",
+  "license": "MIT",
+  "packageManager": "pnpm@10.33.0",
+  "engines": {
+    "node": ">=24"
+  },
+  "scripts": {
+    "typecheck": "pnpm -r --workspace-concurrency=1 run typecheck",
+    "lint:boundaries": "node -e \"console.error('TO IMPLEMENT: lint:boundaries (task H2)');process.exit(1)\"",
+    "test": "vitest run --project unit",
+    "test:int": "vitest run --project int",
+    "test:e2e": "vitest run --project e2e",
+    "test:evaluator": "node -e \"console.error('TO IMPLEMENT: test:evaluator (task F3)');process.exit(1)\"",
+    "db:up": "node -e \"console.error('TO IMPLEMENT: db:up (task H1)');process.exit(1)\"",
+    "db:down": "node -e \"console.error('TO IMPLEMENT: db:down (task H1)');process.exit(1)\"",
+    "db:init": "node -e \"console.error('TO IMPLEMENT: db:init (task B1)');process.exit(1)\"",
+    "sim": "node -e \"console.error('TO IMPLEMENT: sim (task C1)');process.exit(1)\"",
+    "seed": "node -e \"console.error('TO IMPLEMENT: seed (task H1)');process.exit(1)\"",
+    "run:arm": "node -e \"console.error('TO IMPLEMENT: run:arm (task E4)');process.exit(1)\"",
+    "reconcile": "node -e \"console.error('TO IMPLEMENT: reconcile (task D2)');process.exit(1)\"",
+    "evaluator:manifest": "node -e \"console.error('TO IMPLEMENT: evaluator:manifest (task F1/F2)');process.exit(1)\"",
+    "evaluator:check": "node -e \"console.error('TO IMPLEMENT: evaluator:check (task F2)');process.exit(1)\"",
+    "desk": "node -e \"console.error('TO IMPLEMENT: desk (task G1/G2)');process.exit(1)\"",
+    "sweep:kill": "node -e \"console.error('TO IMPLEMENT: sweep:kill (task H2)');process.exit(1)\"",
+    "sweep:concurrency": "node -e \"console.error('TO IMPLEMENT: sweep:concurrency (task H3)');process.exit(1)\"",
+    "sweep:mutations": "node -e \"console.error('TO IMPLEMENT: sweep:mutations (task H3)');process.exit(1)\"",
+    "demo:reset": "node -e \"console.error('TO IMPLEMENT: demo:reset (task H4)');process.exit(1)\"",
+    "demo:start": "node -e \"console.error('TO IMPLEMENT: demo:start (task H4)');process.exit(1)\"",
+    "demo:go": "node -e \"console.error('TO IMPLEMENT: demo:go (task H4)');process.exit(1)\"",
+    "demo:resume": "node -e \"console.error('TO IMPLEMENT: demo:resume (task H4)');process.exit(1)\"",
+    "demo:audit": "node -e \"console.error('TO IMPLEMENT: demo:audit (task H4)');process.exit(1)\"",
+    "demo:late-commit": "node -e \"console.error('TO IMPLEMENT: demo:late-commit (task H4)');process.exit(1)\"",
+    "demo:replay": "node -e \"console.error('TO IMPLEMENT: demo:replay (task H4)');process.exit(1)\"",
+    "demo:tty": "node -e \"console.error('TO IMPLEMENT: demo:tty (task H4)');process.exit(1)\"",
+    "check:safety": "node -e \"console.error('TO IMPLEMENT: check:safety (task H1)');process.exit(1)\""
+  },
+  "devDependencies": {
+    "@types/node": "24.19.2",
+    "concurrently": "10.0.7",
+    "tsx": "4.23.15",
+    "typescript": "7.0.2",
+    "vitest": "5.1.0"
+  }
+}

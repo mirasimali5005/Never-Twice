@@ -1,0 +1,17 @@
+{
+  "name": "@nt/desk-api",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "main": "./src/index.ts",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "scripts": {
+    "typecheck": "tsc --noEmit -p tsconfig.json"
+  },
+  "dependencies": {
+    "hono": "4.13.18",
+    "@hono/node-server": "2.1.8"
+  }
+}

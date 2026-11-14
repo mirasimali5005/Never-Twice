@@ -1,0 +1,9 @@
+# evaluator/ is deliberately NOT a workspace package: it has zero dependencies
+# and imports nothing from the workspace (HANDOVER section 14 and section 18).
+packages:
+  - "packages/*"
+  - "apps/*"
+
+# pnpm 10 blocks dependency build scripts by default; esbuild (used by tsx and vitest) is allowed.
+onlyBuiltDependencies:
+  - esbuild
