@@ -12,5 +12,8 @@
   },
   "dependencies": {
     "mongodb": "7.9.0"
+  },
+  "devDependencies": {
+    "mongodb-memory-server": "11.3.0"
   }
 }
