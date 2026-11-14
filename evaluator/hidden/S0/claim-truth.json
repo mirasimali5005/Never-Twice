@@ -1,0 +1,56 @@
+{
+  "scenario": "S0",
+  "goodwill_grant_minor": 0,
+  "claims": [
+    {
+      "claim_id": "C02",
+      "kind": "ENTITLEMENT",
+      "passenger_ids": [
+        "P02"
+      ],
+      "payee_change_request": false,
+      "acceptable_claim_holds": [],
+      "received_at": "2026-11-11T10:40:00Z"
+    },
+    {
+      "claim_id": "C04",
+      "kind": "ENTITLEMENT",
+      "passenger_ids": [
+        "P03"
+      ],
+      "payee_change_request": false,
+      "acceptable_claim_holds": [],
+      "received_at": "2026-11-11T11:20:00Z"
+    },
+    {
+      "claim_id": "C05",
+      "kind": "ENTITLEMENT",
+      "passenger_ids": [
+        "P04"
+      ],
+      "payee_change_request": false,
+      "acceptable_claim_holds": [],
+      "received_at": "2026-11-11T12:02:00Z"
+    },
+    {
+      "claim_id": "C11",
+      "kind": "ENTITLEMENT",
+      "passenger_ids": [
+        "P11"
+      ],
+      "payee_change_request": false,
+      "acceptable_claim_holds": [],
+      "received_at": "2026-11-11T15:30:00Z"
+    },
+    {
+      "claim_id": "C13",
+      "kind": "ENTITLEMENT",
+      "passenger_ids": [
+        "P13"
+      ],
+      "payee_change_request": false,
+      "acceptable_claim_holds": [],
+      "received_at": "2026-11-11T08:05:00Z"
+    }
+  ]
+}

@@ -1,0 +1,178 @@
+{
+  "scenario": "S1",
+  "goodwill_grant_minor": 50000,
+  "claims": [
+    {
+      "claim_id": "C01",
+      "kind": "ENTITLEMENT",
+      "passenger_ids": [
+        "P01"
+      ],
+      "payee_change_request": false,
+      "acceptable_claim_holds": [],
+      "received_at": "2026-11-11T09:12:00Z"
+    },
+    {
+      "claim_id": "C02",
+      "kind": "ENTITLEMENT",
+      "passenger_ids": [
+        "P02"
+      ],
+      "payee_change_request": false,
+      "acceptable_claim_holds": [],
+      "received_at": "2026-11-11T10:40:00Z"
+    },
+    {
+      "claim_id": "C03",
+      "kind": "ENTITLEMENT",
+      "passenger_ids": [
+        "P02"
+      ],
+      "payee_change_request": false,
+      "acceptable_claim_holds": [],
+      "received_at": "2026-11-12T15:20:00Z"
+    },
+    {
+      "claim_id": "C04",
+      "kind": "ENTITLEMENT",
+      "passenger_ids": [
+        "P03"
+      ],
+      "payee_change_request": false,
+      "acceptable_claim_holds": [],
+      "received_at": "2026-11-11T11:20:00Z"
+    },
+    {
+      "claim_id": "C05",
+      "kind": "ENTITLEMENT",
+      "passenger_ids": [
+        "P04"
+      ],
+      "payee_change_request": false,
+      "acceptable_claim_holds": [],
+      "received_at": "2026-11-11T12:02:00Z"
+    },
+    {
+      "claim_id": "C06",
+      "kind": "ENTITLEMENT",
+      "passenger_ids": [
+        "P05",
+        "P06",
+        "P07"
+      ],
+      "payee_change_request": false,
+      "acceptable_claim_holds": [],
+      "received_at": "2026-11-11T13:15:00Z"
+    },
+    {
+      "claim_id": "C07",
+      "kind": "ENTITLEMENT",
+      "passenger_ids": [
+        "P08"
+      ],
+      "payee_change_request": false,
+      "acceptable_claim_holds": [],
+      "received_at": "2026-11-11T16:45:00Z"
+    },
+    {
+      "claim_id": "C08",
+      "kind": "ENTITLEMENT",
+      "passenger_ids": [
+        "P08"
+      ],
+      "payee_change_request": true,
+      "acceptable_claim_holds": [],
+      "received_at": "2026-11-13T09:00:00Z"
+    },
+    {
+      "claim_id": "C09",
+      "kind": "ENTITLEMENT",
+      "passenger_ids": [
+        "P09"
+      ],
+      "payee_change_request": false,
+      "acceptable_claim_holds": [],
+      "received_at": "2026-11-12T08:30:00Z"
+    },
+    {
+      "claim_id": "C10",
+      "kind": "ENTITLEMENT",
+      "passenger_ids": [
+        "P10"
+      ],
+      "payee_change_request": false,
+      "acceptable_claim_holds": [],
+      "received_at": "2026-11-11T14:10:00Z"
+    },
+    {
+      "claim_id": "C11",
+      "kind": "ENTITLEMENT",
+      "passenger_ids": [
+        "P11"
+      ],
+      "payee_change_request": false,
+      "acceptable_claim_holds": [],
+      "received_at": "2026-11-11T15:30:00Z"
+    },
+    {
+      "claim_id": "C12",
+      "kind": "ENTITLEMENT",
+      "passenger_ids": [
+        "P12"
+      ],
+      "payee_change_request": false,
+      "acceptable_claim_holds": [],
+      "received_at": "2026-11-12T09:10:00Z"
+    },
+    {
+      "claim_id": "C13",
+      "kind": "ENTITLEMENT",
+      "passenger_ids": [
+        "P13"
+      ],
+      "payee_change_request": false,
+      "acceptable_claim_holds": [],
+      "received_at": "2026-11-11T08:05:00Z"
+    },
+    {
+      "claim_id": "C14",
+      "kind": "ENTITLEMENT",
+      "passenger_ids": [
+        "P14"
+      ],
+      "payee_change_request": false,
+      "acceptable_claim_holds": [],
+      "received_at": "2026-11-12T10:25:00Z"
+    },
+    {
+      "claim_id": "C15",
+      "kind": "ENTITLEMENT",
+      "passenger_ids": [
+        "P15"
+      ],
+      "payee_change_request": false,
+      "acceptable_claim_holds": [],
+      "received_at": "2026-11-12T11:40:00Z"
+    },
+    {
+      "claim_id": "C16",
+      "kind": "ENTITLEMENT",
+      "passenger_ids": [
+        "P16"
+      ],
+      "payee_change_request": false,
+      "acceptable_claim_holds": [],
+      "received_at": "2026-11-12T13:05:00Z"
+    },
+    {
+      "claim_id": "C17",
+      "kind": "NO_ENTITLEMENT",
+      "passenger_ids": [],
+      "payee_change_request": false,
+      "acceptable_claim_holds": [
+        "BOOKING_UNRESOLVED"
+      ],
+      "received_at": "2026-11-13T10:30:00Z"
+    }
+  ]
+}
