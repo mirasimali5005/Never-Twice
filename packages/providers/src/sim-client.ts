@@ -235,6 +235,45 @@ export class SimClient implements PaymentProvider {
     return { records, complete };
   }
 
+  /** GET /v1/search/payouts?account=&marker= (read key). The simulator's search LAGS by search_lag_ms: an empty answer is never
+   *  evidence of absence. Added in task B3 for the investigator's read-only view (search_provider_payments). */
+  async searchOperations(q: { account: string; marker: string }): Promise<ProviderObject[]> {
+    const params = new URLSearchParams({ account: q.account, marker: q.marker });
+    const out = await this.#get(`/v1/search/payouts?${params.toString()}`);
+    if (out.kind !== "response") throw new ProviderReadError(`searchOperations: ${out.kind} (${out.detail})`);
+    if (out.status === 401 || out.status === 403) throw new ProviderConfigError(`searchOperations: HTTP ${out.status}: check the read key`);
+    if (out.status !== 200) throw new ProviderReadError(`searchOperations: HTTP ${out.status}`);
+    const p = parseJson(out.text);
+    const v = p.ok ? (p.value as { data?: unknown } | null) : null;
+    if (!v || !Array.isArray(v.data)) throw new ProviderReadError("searchOperations: body has an unexpected shape");
+    const res: ProviderObject[] = [];
+    for (const item of v.data) {
+      const o = ProviderObject.safeParse(item);
+      if (o.success) res.push(o.data);
+    }
+    return res;
+  }
+
+  /** GET /v1/events?account=&since= (read key; Tier 2): delayed and unordered, corroboration only. Added in task B3. */
+  async listEvents(q: { account: string; since?: Date }): Promise<{ type: string; object_id: string; at: string }[]> {
+    const params = new URLSearchParams({ account: q.account });
+    if (q.since !== undefined) params.set("since", q.since.toISOString());
+    const out = await this.#get(`/v1/events?${params.toString()}`);
+    if (out.kind !== "response") throw new ProviderReadError(`listEvents: ${out.kind} (${out.detail})`);
+    if (out.status === 401 || out.status === 403) throw new ProviderConfigError(`listEvents: HTTP ${out.status}: check the read key`);
+    if (out.status !== 200) throw new ProviderReadError(`listEvents: HTTP ${out.status}`);
+    const p = parseJson(out.text);
+    const v = p.ok ? (p.value as { data?: unknown } | null) : null;
+    if (!v || !Array.isArray(v.data)) throw new ProviderReadError("listEvents: body has an unexpected shape");
+    const res: { type: string; object_id: string; at: string }[] = [];
+    for (const e of v.data as { type?: unknown; object_id?: unknown; created_at?: unknown }[]) {
+      if (typeof e?.type === "string" && typeof e.object_id === "string" && typeof e.created_at === "string") {
+        res.push({ type: e.type, object_id: e.object_id, at: e.created_at });
+      }
+    }
+    return res;
+  }
+
   /** Every object of the account (optionally since a time), page by page. Throws ProviderReadError if a page cannot be read. */
   async *listOperations(scope: { account: string; since?: Date }): AsyncGenerator<ProviderObject> {
     let after: string | null = null;

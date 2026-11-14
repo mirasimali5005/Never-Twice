@@ -5,7 +5,7 @@
 import { newRunId, type Obligation } from "@nt/contracts";
 import { closeAll, connect } from "@nt/db";
 import { createProvider } from "@nt/providers";
-import { createGatewayPart1 } from "../src/index.ts";
+import { createGateway } from "../src/index.ts";
 
 const env = process.env;
 const runId = newRunId();
@@ -30,7 +30,7 @@ const ob: Obligation = {
 await db.obligations.insertOne(ob);
 
 const penv = { ...env, NT_RUN_ID: runId };
-const gateway = createGatewayPart1({
+const gateway = createGateway({
   db,
   runId,
   workerId: "ic1-runner",
