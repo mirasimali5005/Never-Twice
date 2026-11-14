@@ -41,7 +41,8 @@
     "demo:tty": "node --env-file-if-exists=.env scripts/tty.ts",
     "demo:control": "node --env-file-if-exists=.env scripts/demo/control-server.ts",
     "probe:admit": "tsx --env-file-if-exists=.env scripts/probes/admit-cli.ts",
-    "check:safety": "node --env-file-if-exists=.env scripts/check-safety.ts"
+    "check:safety": "node --env-file-if-exists=.env scripts/check-safety.ts",
+    "demo:evidence": "tsx --env-file-if-exists=.env scripts/demo/evidence.ts"
   },
   "devDependencies": {
     "@types/node": "24.19.2",
