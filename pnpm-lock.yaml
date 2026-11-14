@@ -29,9 +29,18 @@ importers:
       '@hono/node-server':
         specifier: 2.1.8
         version: 2.1.8(hono@4.13.18)
+      '@nt/contracts':
+        specifier: workspace:*
+        version: link:../../packages/contracts
+      '@nt/db':
+        specifier: workspace:*
+        version: link:../../packages/db
       hono:
         specifier: 4.13.18
         version: 4.13.18
+      mongodb:
+        specifier: 7.9.0
+        version: 7.9.0
 
   apps/desk-ui:
     dependencies:
