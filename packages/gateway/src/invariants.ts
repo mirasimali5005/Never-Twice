@@ -41,14 +41,27 @@ export async function scanInvariants(deps: GatewayDeps, runId: string): Promise<
   }
 
   // P9: replaying the state-changing audit events reproduces the state, with no forbidden transition.
-  const events = await deps.db.audit.find({ run_id: runId, to_state: { $ne: null } }).sort({ _id: 1 }).toArray();
+  // ObjectIds minted by two processes (a killed runner and its successor) need not sort in creation order within one second,
+  // so the chain is rebuilt from the events themselves: start from no state, repeatedly take the earliest (by `at`, then _id)
+  // event whose from_state is the current state. Every event must be consumed and every step must be an allowed transition.
+  const events = await deps.db.audit.find({ run_id: runId, to_state: { $ne: null } }).toArray();
+  const ts = (e: (typeof events)[number]): number => new Date(e.at as unknown as string | Date).getTime();
+  events.sort((a, b) => ts(a) - ts(b) || String(a._id).localeCompare(String(b._id)));
   const perIntent = new Map<string, typeof events>();
   for (const e of events) if (e.intent_id) perIntent.set(e.intent_id, [...(perIntent.get(e.intent_id) ?? []), e]);
   for (const it of intents) {
     let state: IntentState | null = null;
-    for (const e of perIntent.get(it._id) ?? []) {
-      if (e.from_state !== state || allowedTransition(e.from_state, e.to_state!) === null) {
+    const pending = [...(perIntent.get(it._id) ?? [])];
+    while (pending.length > 0) {
+      const i = pending.findIndex((e) => e.from_state === state);
+      if (i < 0) {
+        const e = pending[0]!;
         v.push({ code: "P9_FORBIDDEN_OR_BROKEN_CHAIN", intent_id: it._id, detail: `${e.type} ${e.from_state} -> ${e.to_state} while replayed state is ${state}` });
+        break;
+      }
+      const e = pending.splice(i, 1)[0]!;
+      if (allowedTransition(e.from_state, e.to_state!) === null) {
+        v.push({ code: "P9_FORBIDDEN_OR_BROKEN_CHAIN", intent_id: it._id, detail: `${e.type} ${e.from_state} -> ${e.to_state} is not an allowed transition` });
       }
       state = e.to_state;
     }

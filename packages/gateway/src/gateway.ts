@@ -102,7 +102,7 @@ export function configFromEnv(env: GatewayEnv): GatewayConfig {
     dispatchTimeoutMs: num(env.NT_DISPATCH_TIMEOUT_MS, 3000),
     keyMarginMs: num(env.NT_KEY_MARGIN_MS, 60000),
     investigatorTimeoutMs: num(env.NT_INVESTIGATOR_TIMEOUT_MS, 45000),
-    stripeEnabled: env.NT_STRIPE_ENABLED !== "false",
+    stripeEnabled: String(env.NT_STRIPE_ENABLED ?? "true") !== "false", // parseEnv may hand over a boolean or a string
   };
 }
 

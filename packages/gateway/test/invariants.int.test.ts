@@ -22,6 +22,20 @@ describe("scanInvariants", () => {
     expect(r.ok).toBe(true);
   });
 
+  it("P9 rebuilds the chain from the events, not from ObjectId order (two processes in the same second; kill sweep finding)", async () => {
+    const a = await reservedFlow(w, ["ACCEPT"]);
+    await dispatch(a.deps, a.id);
+    // Rewrite the run's state-changing events with _ids in reverse creation order, as a killed process and its successor can produce.
+    const evs = await w.db.audit.find({ run_id: a.run, to_state: { $ne: null } }).sort({ _id: 1 }).toArray();
+    expect(evs.length).toBeGreaterThanOrEqual(2);
+    await w.db.audit.deleteMany({ _id: { $in: evs.map((e) => e._id) } });
+    const { ObjectId } = await import("mongodb");
+    const ids = evs.map(() => new ObjectId()).reverse();
+    await w.db.audit.insertMany(evs.map((e, i) => ({ ...e, _id: ids[i]! })));
+    const r = await scanInvariants(a.deps, a.run);
+    expect(r.violations.filter((v) => v.code.startsWith("P9"))).toEqual([]);
+  });
+
   it("M5 second intent → P1; counter drift → P2; missing audit event → P9; CONFIRMED without evidence → P3", async () => {
     const f = await reservedFlow(w, [], { entitlement_type: "GOODWILL" }, { mutation: "M5" });
     await propose(f.deps, proposalFor(f.ob)); // second intent for the same key under M5
