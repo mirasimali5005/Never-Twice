@@ -6,7 +6,11 @@ import { CheckCircle2, ChevronDown, FileCheck2, Loader2, RotateCcw, ShieldCheck,
 import { KILL_TARGETS, PASSENGER_NAMES } from "./ChoiceStrip";
 import type { StageName } from "./Hero";
 
-export const CONTROL_URL = "http://127.0.0.1:4030/control";
+const LOCAL = typeof location !== "undefined" && ["localhost", "127.0.0.1"].includes(location.hostname);
+// Local presenter: talk to the control server directly. Public link: same-origin /control (proxied), only with ?key=<secret>.
+export const CONTROL_URL = LOCAL ? "http://127.0.0.1:4030/control" : "/control";
+const CONTROL_KEY = typeof location !== "undefined" ? new URLSearchParams(location.search).get("key") ?? "" : "";
+const KEY_HEADERS: Record<string, string> = CONTROL_KEY ? { "X-NT-Control-Key": CONTROL_KEY } : {};
 type Action = "go" | "resume" | "audit" | "late-commit" | "reset";
 type Last = { action: Action; ok: boolean; exit_code: number | null; started_at: string; ended_at: string; tail: string[]; group_id?: string | null };
 type Status = { running: Action | null; started_at: string | null; running_tail: string[]; last: Last | null };
@@ -26,7 +30,7 @@ export function enabledFor(stage: StageName | null): Record<Exclude<Action, "res
 
 async function getStatus(): Promise<Status | null> {
   try {
-    const r = await fetch(`${CONTROL_URL}/status`, { signal: AbortSignal.timeout(1500) });
+    const r = await fetch(`${CONTROL_URL}/status`, { headers: KEY_HEADERS, signal: AbortSignal.timeout(1500) });
     return r.ok ? ((await r.json()) as Status) : null;
   } catch {
     return null;
@@ -71,7 +75,7 @@ export function DemoControls(props: { stage: StageName | null; scenario: "S0" | 
     setConfirmReset(false);
     setStatus({ ...status, running: action, started_at: new Date().toISOString(), running_tail: [] });
     try {
-      const r = await fetch(`${CONTROL_URL}/${action}`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) });
+      const r = await fetch(`${CONTROL_URL}/${action}`, { method: "POST", headers: { "Content-Type": "application/json", ...KEY_HEADERS }, body: JSON.stringify(body) });
       const j = (await r.json()) as Last & { error?: string };
       if (r.status !== 200) setError(j.error ?? `HTTP ${r.status}`);
       else if (action === "reset" && j.ok && j.group_id) {

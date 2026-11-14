@@ -23,6 +23,18 @@ import { useResource, useRunData } from "./useRunData";
 
 const q = new URLSearchParams(typeof location === "undefined" ? "" : location.search);
 const GROUP_ID = q.get("group") ?? (MOCK ? "g4x8p2nd" : null);
+// Opening the bare URL lands on the latest demo run (no ?group= needed).
+if (!GROUP_ID && !MOCK && typeof location !== "undefined") {
+  fetch("/api/current")
+    .then((r) => (r.ok ? r.json() : null))
+    .then((j: { group_id?: string } | null) => {
+      if (j?.group_id) {
+        q.set("group", j.group_id);
+        location.replace(`${location.pathname}?${q.toString()}`);
+      }
+    })
+    .catch(() => undefined);
+}
 const ARM_PARAM = q.get("arm");
 const MANIFEST_PARAM = q.get("manifest");
 

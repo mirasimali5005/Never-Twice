@@ -9,7 +9,7 @@ export default defineConfig({
     port: 5173,
     strictPort: true,
     allowedHosts: [".trycloudflare.com", ".ngrok-free.app", ".ngrok-free.dev", ".ngrok.app", ".ngrok.io"], // public read-only link via `cloudflared tunnel --url http://localhost:5173`
-    proxy: { "/api": { target: process.env.NT_DESK_API_URL ?? "http://127.0.0.1:4020", changeOrigin: false } }, // NT_DESK_API_URL: point at a desk API on another port
+    proxy: { "/api": { target: process.env.NT_DESK_API_URL ?? "http://127.0.0.1:4020", changeOrigin: false }, "/control": { target: "http://127.0.0.1:4030", changeOrigin: true, xfwd: true } }, // NT_DESK_API_URL: point at a desk API on another port
   },
   test: { include: ["test/**/*.test.ts"] },
 });

@@ -148,12 +148,16 @@ function send(req: IncomingMessage, res: ServerResponse, status: number, body: u
 export function makeServer(control: ReturnType<typeof createControl>): Server {
   return createServer((req, res) => {
     const origin = req.headers.origin;
-    if (origin && !ALLOWED_ORIGINS.has(origin)) return send(req, res, 403, { error: "origin not allowed" });
+    const token = process.env["NT_CONTROL_TOKEN"] ?? "";
+    const keyed = token.length >= 16 && req.headers["x-nt-control-key"] === token;
+    // Requests arriving through the public tunnel (proxied, no local origin) must carry the secret key.
+    const viaProxy = Boolean(req.headers["x-forwarded-for"] || req.headers["x-forwarded-host"]) || (origin !== undefined && !ALLOWED_ORIGINS.has(origin));
+    if (viaProxy && !keyed) return send(req, res, 403, { error: "control key required" });
     const url = new URL(req.url ?? "/", "http://127.0.0.1");
     if (req.method === "OPTIONS") {
       if (origin) {
         res.setHeader("Access-Control-Allow-Methods", "GET, POST");
-        res.setHeader("Access-Control-Allow-Headers", "Content-Type");
+        res.setHeader("Access-Control-Allow-Headers", "Content-Type, X-NT-Control-Key");
         res.setHeader("Access-Control-Max-Age", "600");
       }
       return send(req, res, 204, {});

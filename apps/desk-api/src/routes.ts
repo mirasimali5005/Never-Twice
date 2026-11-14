@@ -83,6 +83,18 @@ export function createApp(source: DepsSource): Hono {
       return handler(c, d, run);
     };
 
+  // The current demo group (read-only; from .nt/current.json written by seed/reset) so the root URL opens on the latest run.
+  app.get("/api/current", async (c) => {
+    try {
+      const { readFileSync } = await import("node:fs");
+      const j = JSON.parse(readFileSync(new URL("../../../.nt/current.json", import.meta.url), "utf8")) as { group_id?: string };
+      if (!j.group_id || !GROUP_ID_RE.test(j.group_id)) return notFound(c, "NO_CURRENT_GROUP");
+      return c.json({ group_id: j.group_id });
+    } catch {
+      return notFound(c, "NO_CURRENT_GROUP");
+    }
+  });
+
   app.get("/api/groups/:group_id", async (c) => {
     const groupId = c.req.param("group_id");
     if (!GROUP_ID_RE.test(groupId)) return notFound(c, "UNKNOWN_GROUP");
