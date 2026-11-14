@@ -121,9 +121,6 @@ importers:
       '@nt/gateway':
         specifier: workspace:*
         version: link:../../packages/gateway
-      '@nt/providers':
-        specifier: workspace:*
-        version: link:../../packages/providers
       '@nt/rules':
         specifier: workspace:*
         version: link:../../packages/rules

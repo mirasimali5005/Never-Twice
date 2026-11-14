@@ -15,7 +15,6 @@
     "@nt/contracts": "workspace:*",
     "@nt/db": "workspace:*",
     "@nt/gateway": "workspace:*",
-    "@nt/providers": "workspace:*",
     "@nt/rules": "workspace:*",
     "mongodb": "7.9.0"
   },
