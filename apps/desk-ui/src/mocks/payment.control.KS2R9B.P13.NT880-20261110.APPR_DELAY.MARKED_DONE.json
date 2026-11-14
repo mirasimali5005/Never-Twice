@@ -1,0 +1,26 @@
+{
+  "source": "baseline",
+  "effect_key": "KS2R9B.P13.NT880-20261110.APPR_DELAY",
+  "passenger_id": "P13",
+  "entitlement_type": "APPR_DELAY",
+  "amount_minor": 70000,
+  "currency": "CAD",
+  "payee_ref": "payee_P13",
+  "attempts": [
+    {
+      "n": 1,
+      "idempotency_key": "ctl_5b82d0e9a4c1",
+      "at": "2026-11-14T18:00:03.610Z",
+      "result": "timed out"
+    },
+    {
+      "n": 2,
+      "idempotency_key": "ctl_c9136e7f20ba",
+      "at": "2026-11-14T18:00:06.700Z",
+      "result": "blind retry under a new random key: provider answered 201"
+    }
+  ],
+  "marked_done": true,
+  "marked_done_at": "2026-11-14T18:00:06.750Z",
+  "note": "a 2xx is treated as paid"
+}

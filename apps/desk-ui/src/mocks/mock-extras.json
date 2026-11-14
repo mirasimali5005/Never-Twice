@@ -1,0 +1,17 @@
+{
+  "late_commit": {
+    "effect_key": "PC1D6V.P11.NT212-20261110.APPR_DENIED_BOARDING",
+    "control_object": {
+      "id": "po_a84d1f06c3e7b925",
+      "status": "paid",
+      "amount_minor": 90000,
+      "created_at": "2026-11-14T18:03:09.870Z"
+    },
+    "nt_object": {
+      "id": "po_f47a0b2e9d1c6853",
+      "status": "paid",
+      "amount_minor": 90000,
+      "created_at": "2026-11-14T18:03:09.870Z"
+    }
+  }
+}

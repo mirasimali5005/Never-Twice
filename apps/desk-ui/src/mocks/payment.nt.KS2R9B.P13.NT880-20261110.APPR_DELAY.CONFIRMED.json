@@ -1,0 +1,211 @@
+{
+  "source": "nt",
+  "intent": {
+    "_id": "r7k2m9qa:KS2R9B.P13.NT880-20261110.APPR_DELAY",
+    "run_id": "r7k2m9qa",
+    "effect_key": "KS2R9B.P13.NT880-20261110.APPR_DELAY",
+    "obligation_id": "r7k2m9qa:KS2R9B.P13.NT880-20261110.APPR_DELAY",
+    "entitlement_type": "APPR_DELAY",
+    "amount_minor": 70000,
+    "currency": "CAD",
+    "payee_ref": "payee_P13",
+    "provider": "sim_payout",
+    "idempotency_key": "r7k2m9qa:KS2R9B.P13.NT880-20261110.APPR_DELAY",
+    "frozen_request_sha256": "4a7e0c91d3b5f2682e9a1c4d7b0f3e5a96c8d2b1f4e7a0c3d5b9e1f2a4c6d8e0",
+    "state": "CONFIRMED",
+    "lease": null,
+    "lease_epoch": 3,
+    "attempts": [
+      {
+        "n": 1,
+        "licence": "FIRST_SEND",
+        "epoch": 1,
+        "at": "2026-11-14T18:00:03.640Z",
+        "request_sha256": "4a7e0c91d3b5f2682e9a1c4d7b0f3e5a96c8d2b1f4e7a0c3d5b9e1f2a4c6d8e0",
+        "result": {
+          "kind": "INDETERMINATE",
+          "cause": "TIMEOUT",
+          "code": null,
+          "replayed": null,
+          "provider_object_id": null
+        }
+      },
+      {
+        "n": 2,
+        "licence": "L1_SAME_KEY",
+        "epoch": 3,
+        "at": "2026-11-14T18:01:52.310Z",
+        "request_sha256": "4a7e0c91d3b5f2682e9a1c4d7b0f3e5a96c8d2b1f4e7a0c3d5b9e1f2a4c6d8e0",
+        "result": {
+          "kind": "ACCEPTED",
+          "cause": null,
+          "code": null,
+          "replayed": false,
+          "provider_object_id": "po_b71e04c9d2a6f318"
+        }
+      }
+    ],
+    "evidence": {
+      "source": "REDISPATCH",
+      "provider_object_id": "po_b71e04c9d2a6f318",
+      "status": "paid",
+      "amount_minor": 70000,
+      "currency": "CAD",
+      "payee_ref": "payee_P13",
+      "marker": "r7k2m9qa:KS2R9B.P13.NT880-20261110.APPR_DELAY",
+      "retrieved_at": "2026-11-14T18:01:52.402Z"
+    },
+    "rejection": null,
+    "quarantine": null,
+    "policy_version": "APPR-SOR-2019-150@2022-09-08",
+    "rule_citation": "s. 19(1)(a)(ii)",
+    "first_dispatch_at": "2026-11-14T18:00:03.640Z",
+    "last_send_at": "2026-11-14T18:01:52.310Z",
+    "key_expires_at": "2026-11-15T18:00:03.640Z"
+  },
+  "obligation": {
+    "_id": "r7k2m9qa:KS2R9B.P13.NT880-20261110.APPR_DELAY",
+    "run_id": "r7k2m9qa",
+    "effect_key": "KS2R9B.P13.NT880-20261110.APPR_DELAY",
+    "status": "OWED",
+    "amount_minor": 70000,
+    "currency": "CAD",
+    "payee_ref": "payee_P13",
+    "rail": "instant",
+    "reason_code": null,
+    "rule_citation": "s. 19(1)(a)(ii)",
+    "policy_version": "APPR-SOR-2019-150@2022-09-08",
+    "claim_ids": [
+      "C13"
+    ],
+    "due_by": "2026-12-11T14:05:00Z"
+  },
+  "investigations": [
+    {
+      "epoch": 3,
+      "investigator": "llm",
+      "hypothesis": "request dropped before the provider applied it",
+      "steps": [
+        {
+          "tool": "get_intent_summary",
+          "input": {},
+          "summary": "instant rail, 700.00 CAD, payee_P13, one send, timed out",
+          "record_count": 0
+        },
+        {
+          "tool": "list_provider_payments_by_payee",
+          "input": {
+            "created_gte": "2026-11-14T17:59:00Z"
+          },
+          "summary": "1 page, 0 objects, complete",
+          "record_count": 0
+        }
+      ],
+      "match": "NO_MATCH",
+      "decision": {
+        "kind": "REDISPATCH_SAME_KEY",
+        "row": 6
+      },
+      "licence": "L1_SAME_KEY",
+      "recalled": [],
+      "opened_at": "2026-11-14T18:01:47.020Z",
+      "closed_at": "2026-11-14T18:01:52.480Z"
+    }
+  ],
+  "audit": [
+    {
+      "type": "OBLIGATION_DECIDED",
+      "from_state": null,
+      "to_state": null,
+      "actor": {
+        "kind": "orchestrator",
+        "id": "runner-1"
+      }
+    },
+    {
+      "type": "INTENT_RESERVED",
+      "from_state": null,
+      "to_state": "RESERVED",
+      "actor": {
+        "kind": "gateway",
+        "id": "runner-1"
+      }
+    },
+    {
+      "type": "TRANSITION",
+      "from_state": "RESERVED",
+      "to_state": "DISPATCHING",
+      "actor": {
+        "kind": "gateway",
+        "id": "runner-1"
+      },
+      "detail": {
+        "transition": "T2",
+        "epoch": 1
+      }
+    },
+    {
+      "type": "TRANSITION",
+      "from_state": "DISPATCHING",
+      "to_state": "OUTCOME_UNKNOWN",
+      "actor": {
+        "kind": "gateway",
+        "id": "runner-1"
+      },
+      "detail": {
+        "transition": "T5",
+        "cause": "TIMEOUT",
+        "epoch": 1
+      }
+    },
+    {
+      "type": "LICENCE_GRANTED",
+      "actor": {
+        "kind": "reconciler",
+        "id": "reconciler-1"
+      },
+      "detail": {
+        "licence": "L1_SAME_KEY",
+        "same_request_sha256": true
+      }
+    },
+    {
+      "type": "TRANSITION",
+      "from_state": "OUTCOME_UNKNOWN",
+      "to_state": "OUTCOME_UNKNOWN",
+      "actor": {
+        "kind": "reconciler",
+        "id": "reconciler-1"
+      },
+      "detail": {
+        "transition": "T8",
+        "epoch": 3
+      }
+    },
+    {
+      "type": "EVIDENCE_RECORDED",
+      "actor": {
+        "kind": "reconciler",
+        "id": "reconciler-1"
+      },
+      "detail": {
+        "match": "MATCH",
+        "provider_object_id": "po_b71e04c9d2a6f318"
+      }
+    },
+    {
+      "type": "TRANSITION",
+      "from_state": "OUTCOME_UNKNOWN",
+      "to_state": "CONFIRMED",
+      "actor": {
+        "kind": "reconciler",
+        "id": "reconciler-1"
+      },
+      "detail": {
+        "transition": "T6",
+        "epoch": 3,
+        "evidence_source": "REDISPATCH"
+      }
+    }
+  ]
+}

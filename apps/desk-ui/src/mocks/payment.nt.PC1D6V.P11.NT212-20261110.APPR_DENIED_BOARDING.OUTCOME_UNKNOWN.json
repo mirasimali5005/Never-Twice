@@ -1,0 +1,107 @@
+{
+  "source": "nt",
+  "intent": {
+    "_id": "r7k2m9qa:PC1D6V.P11.NT212-20261110.APPR_DENIED_BOARDING",
+    "run_id": "r7k2m9qa",
+    "effect_key": "PC1D6V.P11.NT212-20261110.APPR_DENIED_BOARDING",
+    "obligation_id": "r7k2m9qa:PC1D6V.P11.NT212-20261110.APPR_DENIED_BOARDING",
+    "entitlement_type": "APPR_DENIED_BOARDING",
+    "amount_minor": 90000,
+    "currency": "CAD",
+    "payee_ref": "payee_P11",
+    "provider": "sim_keyless",
+    "idempotency_key": null,
+    "frozen_request_sha256": "c2e8a4f0b6d19375e1c7a3f9b5d02864e0a6c2f8b4d1937a5e3c9f1b7d0a4e68",
+    "state": "OUTCOME_UNKNOWN",
+    "lease": null,
+    "lease_epoch": 1,
+    "attempts": [
+      {
+        "n": 1,
+        "licence": "FIRST_SEND",
+        "epoch": 1,
+        "at": "2026-11-14T18:00:02.118Z",
+        "request_sha256": "c2e8a4f0b6d19375e1c7a3f9b5d02864e0a6c2f8b4d1937a5e3c9f1b7d0a4e68",
+        "result": {
+          "kind": "INDETERMINATE",
+          "cause": "TIMEOUT",
+          "code": null,
+          "replayed": null,
+          "provider_object_id": null
+        }
+      }
+    ],
+    "evidence": null,
+    "rejection": null,
+    "quarantine": null,
+    "policy_version": "APPR-SOR-2019-150@2022-09-08",
+    "rule_citation": "s. 20(1)",
+    "first_dispatch_at": "2026-11-14T18:00:02.118Z",
+    "last_send_at": "2026-11-14T18:00:02.118Z"
+  },
+  "obligation": {
+    "_id": "r7k2m9qa:PC1D6V.P11.NT212-20261110.APPR_DENIED_BOARDING",
+    "run_id": "r7k2m9qa",
+    "effect_key": "PC1D6V.P11.NT212-20261110.APPR_DENIED_BOARDING",
+    "status": "OWED",
+    "amount_minor": 90000,
+    "currency": "CAD",
+    "payee_ref": "payee_P11",
+    "rail": "legacy",
+    "reason_code": null,
+    "rule_citation": "s. 20(1)",
+    "policy_version": "APPR-SOR-2019-150@2022-09-08",
+    "claim_ids": [
+      "C11"
+    ],
+    "due_by": "2026-12-11T14:05:00Z"
+  },
+  "investigations": [],
+  "audit": [
+    {
+      "type": "OBLIGATION_DECIDED",
+      "from_state": null,
+      "to_state": null,
+      "actor": {
+        "kind": "orchestrator",
+        "id": "runner-1"
+      }
+    },
+    {
+      "type": "INTENT_RESERVED",
+      "from_state": null,
+      "to_state": "RESERVED",
+      "actor": {
+        "kind": "gateway",
+        "id": "runner-1"
+      }
+    },
+    {
+      "type": "TRANSITION",
+      "from_state": "RESERVED",
+      "to_state": "DISPATCHING",
+      "actor": {
+        "kind": "gateway",
+        "id": "runner-1"
+      },
+      "detail": {
+        "transition": "T2",
+        "epoch": 1
+      }
+    },
+    {
+      "type": "TRANSITION",
+      "from_state": "DISPATCHING",
+      "to_state": "OUTCOME_UNKNOWN",
+      "actor": {
+        "kind": "gateway",
+        "id": "runner-1"
+      },
+      "detail": {
+        "transition": "T5",
+        "cause": "TIMEOUT",
+        "epoch": 1
+      }
+    }
+  ]
+}

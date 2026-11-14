@@ -1,0 +1,20 @@
+{
+  "source": "baseline",
+  "effect_key": "ZT4H9X.P02.NT101-20261110.APPR_DELAY",
+  "passenger_id": "P02",
+  "entitlement_type": "APPR_DELAY",
+  "amount_minor": 70000,
+  "currency": "CAD",
+  "payee_ref": "payee_P02",
+  "attempts": [
+    {
+      "n": 1,
+      "idempotency_key": "ctl_a41f9c20e7b3",
+      "at": "2026-11-14T18:00:07.190Z",
+      "result": "no result recorded (the process stopped here)"
+    }
+  ],
+  "marked_done": false,
+  "marked_done_at": null,
+  "note": "claim not marked done"
+}

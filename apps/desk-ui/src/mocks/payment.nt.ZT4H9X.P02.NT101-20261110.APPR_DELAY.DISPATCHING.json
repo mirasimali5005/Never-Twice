@@ -1,0 +1,90 @@
+{
+  "source": "nt",
+  "intent": {
+    "_id": "r7k2m9qa:ZT4H9X.P02.NT101-20261110.APPR_DELAY",
+    "run_id": "r7k2m9qa",
+    "effect_key": "ZT4H9X.P02.NT101-20261110.APPR_DELAY",
+    "obligation_id": "r7k2m9qa:ZT4H9X.P02.NT101-20261110.APPR_DELAY",
+    "entitlement_type": "APPR_DELAY",
+    "amount_minor": 70000,
+    "currency": "CAD",
+    "payee_ref": "payee_P02",
+    "provider": "sim_payout",
+    "idempotency_key": "r7k2m9qa:ZT4H9X.P02.NT101-20261110.APPR_DELAY",
+    "frozen_request_sha256": "9d1f2b7c4e0a8356c1d9b02f7a4e6d38b50c91e7a2f4d6083b1c5e9a7d2f4c60",
+    "state": "DISPATCHING",
+    "lease": {
+      "owner": "runner-1",
+      "expires_at": "2026-11-14T18:00:15.210Z"
+    },
+    "lease_epoch": 1,
+    "attempts": [
+      {
+        "n": 1,
+        "licence": "FIRST_SEND",
+        "epoch": 1,
+        "at": "2026-11-14T18:00:07.210Z",
+        "request_sha256": "9d1f2b7c4e0a8356c1d9b02f7a4e6d38b50c91e7a2f4d6083b1c5e9a7d2f4c60",
+        "result": null
+      }
+    ],
+    "evidence": null,
+    "rejection": null,
+    "quarantine": null,
+    "policy_version": "APPR-SOR-2019-150@2022-09-08",
+    "rule_citation": "s. 19(1)(a)(ii)",
+    "first_dispatch_at": "2026-11-14T18:00:07.210Z",
+    "last_send_at": "2026-11-14T18:00:07.210Z"
+  },
+  "obligation": {
+    "_id": "r7k2m9qa:ZT4H9X.P02.NT101-20261110.APPR_DELAY",
+    "run_id": "r7k2m9qa",
+    "effect_key": "ZT4H9X.P02.NT101-20261110.APPR_DELAY",
+    "status": "OWED",
+    "amount_minor": 70000,
+    "currency": "CAD",
+    "payee_ref": "payee_P02",
+    "rail": "instant",
+    "reason_code": null,
+    "rule_citation": "s. 19(1)(a)(ii)",
+    "policy_version": "APPR-SOR-2019-150@2022-09-08",
+    "claim_ids": [
+      "C02"
+    ],
+    "due_by": "2026-12-11T14:05:00Z"
+  },
+  "investigations": [],
+  "audit": [
+    {
+      "type": "OBLIGATION_DECIDED",
+      "from_state": null,
+      "to_state": null,
+      "actor": {
+        "kind": "orchestrator",
+        "id": "runner-1"
+      }
+    },
+    {
+      "type": "INTENT_RESERVED",
+      "from_state": null,
+      "to_state": "RESERVED",
+      "actor": {
+        "kind": "gateway",
+        "id": "runner-1"
+      }
+    },
+    {
+      "type": "TRANSITION",
+      "from_state": "RESERVED",
+      "to_state": "DISPATCHING",
+      "actor": {
+        "kind": "gateway",
+        "id": "runner-1"
+      },
+      "detail": {
+        "transition": "T2",
+        "epoch": 1
+      }
+    }
+  ]
+}

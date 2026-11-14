@@ -1,0 +1,62 @@
+[
+  {
+    "effect_key": "PC1D6V.P11.NT212-20261110.APPR_DENIED_BOARDING",
+    "passenger_id": "P11",
+    "entitlement_type": "APPR_DENIED_BOARDING",
+    "amount_minor": 90000,
+    "rail": "legacy",
+    "provider": "sim_keyless",
+    "state": "QUARANTINED",
+    "colour": "needs_person",
+    "quarantine_reason": "NO_DEDUPE_NO_EVIDENCE",
+    "source": "nt"
+  },
+  {
+    "effect_key": "KS2R9B.P13.NT880-20261110.APPR_DELAY",
+    "passenger_id": "P13",
+    "entitlement_type": "APPR_DELAY",
+    "amount_minor": 70000,
+    "rail": "instant",
+    "provider": "sim_payout",
+    "state": "CONFIRMED",
+    "colour": "confirmed",
+    "quarantine_reason": null,
+    "source": "nt"
+  },
+  {
+    "effect_key": "ZT4H9X.P02.NT101-20261110.APPR_DELAY",
+    "passenger_id": "P02",
+    "entitlement_type": "APPR_DELAY",
+    "amount_minor": 70000,
+    "rail": "instant",
+    "provider": "sim_payout",
+    "state": "CONFIRMED",
+    "colour": "confirmed",
+    "quarantine_reason": null,
+    "source": "nt"
+  },
+  {
+    "effect_key": "LM2P8D.P03.NT101-20261110.APPR_REFUND_COMP",
+    "passenger_id": "P03",
+    "entitlement_type": "APPR_REFUND_COMP",
+    "amount_minor": 40000,
+    "rail": "instant",
+    "provider": "sim_payout",
+    "state": "CONFIRMED",
+    "colour": "confirmed",
+    "quarantine_reason": null,
+    "source": "nt"
+  },
+  {
+    "effect_key": "LM2P8D.P03.NT101-20261110.TICKET_REFUND",
+    "passenger_id": "P03",
+    "entitlement_type": "TICKET_REFUND",
+    "amount_minor": 41260,
+    "rail": "instant",
+    "provider": "stripe_refund",
+    "state": "CONFIRMED",
+    "colour": "confirmed",
+    "quarantine_reason": null,
+    "source": "nt"
+  }
+]
