@@ -22,7 +22,7 @@
     "sim": "node --env-file-if-exists=.env apps/provider-sim/src/server.ts",
     "seed": "node -e \"console.error('TO IMPLEMENT: seed (task H1)');process.exit(1)\"",
     "run:arm": "node -e \"console.error('TO IMPLEMENT: run:arm (task E4)');process.exit(1)\"",
-    "reconcile": "node -e \"console.error('TO IMPLEMENT: reconcile (task D2)');process.exit(1)\"",
+    "reconcile": "tsx --env-file-if-exists=.env apps/reconciler/src/cli.ts",
     "evaluator:manifest": "node --env-file-if-exists=evaluator/.env evaluator/src/cli.ts manifest",
     "evaluator:check": "node --env-file-if-exists=evaluator/.env evaluator/src/cli.ts check",
     "desk": "node -e \"console.error('TO IMPLEMENT: desk (task G1/G2)');process.exit(1)\"",
