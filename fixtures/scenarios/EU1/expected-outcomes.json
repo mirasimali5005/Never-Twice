@@ -1,0 +1,46 @@
+{
+  "scenario": "EU1",
+  "policy": "EU261-2004@2004-02-11",
+  "currency": "EUR",
+  "claim_received_at": "2026-11-11T09:00:00.000Z",
+  "note": "Hand-derived from Regulation (EC) No 261/2004, independently of both implementations (rules engine and evaluator). Amounts in euro cents.",
+  "expected": [
+    {
+      "passenger_id": "E01",
+      "effect_key": "EU01AA.E01.AU100-20261110.EU261_COMPENSATION",
+      "status": "OWED",
+      "amount_minor": 25000,
+      "reason_code": null,
+      "why": "1,105 km: Art. 7(1)(a) 250 EUR; arrival delay 215 min >= 180 (Sturgeon); no re-routing, no reduction"
+    },
+    {
+      "passenger_id": "E02",
+      "effect_key": "EU02AA.E02.AU100-20261110.EU261_COMPENSATION",
+      "status": "NOT_OWED",
+      "amount_minor": 0,
+      "reason_code": "DELAY_UNDER_3H",
+      "why": "arrival delay 179 min < 180 (Sturgeon)"
+    },
+    {
+      "passenger_id": "E03",
+      "effect_key": "EU03AA.E03.AU200-20261110.EU261_COMPENSATION",
+      "status": "OWED",
+      "amount_minor": 30000,
+      "reason_code": null,
+      "why": "cancelled, notice 3 days; 5,837 km non-intra-EU: Art. 7(1)(c) 600 EUR; re-routed, arrival 200 min <= 240: Art. 7(2) 50% = 300 EUR"
+    },
+    {
+      "passenger_id": "E04",
+      "effect_key": "EU04AA.E04.AU300-20261110.EU261_COMPENSATION",
+      "status": "NOT_OWED",
+      "amount_minor": 0,
+      "reason_code": "OUTSIDE_CARRIER_CONTROL",
+      "why": "storm, extraordinary circumstances: Art. 5(3)"
+    }
+  ],
+  "totals": {
+    "owed_minor": 55000,
+    "owed_payments": 2,
+    "refusals": 2
+  }
+}
