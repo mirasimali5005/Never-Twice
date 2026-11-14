@@ -42,8 +42,8 @@ Only numbers that were measured are in this table. Nothing here is a projection.
 | Claim intake (17 claims, live model) | 17 of 17 resolved to the right booking and passengers; median 3.6 s per claim |
 | Live AI investigation | about 8 s per in-doubt payment; decisions are made by fixed code, never by the model |
 | Vector Search over past investigations (n = 6 investigations with recall, 6 without) | The top recalled record was always the matching past case. **No measurable benefit on S0**: decisions identical, 5.33 vs 4.67 queries, 7.66 s vs 7.60 s mean |
-| Kill sweep (63 cells) | See `out/sweeps/kill-sweep.md` if present; reported below only once run |
-| Automated tests | 759 unit, 166 integration, 19 end-to-end (S0 demo, safety), 61 evaluator self-tests (planted defects EM1–EM9 each turn exactly their check red), 40 dependency-boundary tests |
+| Kill sweep: 7 crash points × 3 provider faults × 3 positions = 63 cells, a real `SIGKILL` each | **53 PASS, 0 FAIL**; in the other 10 the kill cannot fire by construction (e.g. a rejected request never reaches the after-response barrier) and all 10 were still audited SAFETY PASS. No provider payment was duplicated in any cell. Enumeration of instrumented crash points, not a proof. Details: `out/sweeps/kill-sweep.md` |
+| Automated tests | 759 unit, 167 integration, 19 end-to-end (S0 demo, safety), 61 evaluator self-tests (planted defects EM1–EM9 each turn exactly their check red), 40 dependency-boundary tests |
 
 Confirmed means: the provider holds one payment object matching marker, amount, currency and payee. It does not mean the passenger has received the money.
 
