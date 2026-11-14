@@ -49,7 +49,10 @@ Only numbers that were measured are in this table. Nothing here is a projection.
 | Mutation sweep (each mutation at one code site) | **5 of 5 caught**: M1 → C6 and invariant P2; M2 → C5; M3 (re-send on "not found" without a licence) → C1 + C4, end to end through the real reconciler; M4 (rebuilt request) → C2 + C4; M5 (random intent id) → invariant P1 + C1. The unmutated arm stayed green throughout |
 | AI-written read-only probes for a keyless tool (NotifySim), admitted only after four canaries | Live model: 20 of 20 specs admitted on the first attempt — but it wrote the same spec each time, so this is close to one observation. Known-bad specs (matches any recent object, uses the lagging search, ignores the marker, no pagination, POST) are each rejected by the planned canary in tests |
 | EU261 rule pack (jurisdiction as data) | Fixture EU1: the rules engine and the auditor's separate EU261 table agree — 250.00 EUR, 300.00 EUR (600 halved after re-routing), two refusals |
-| Automated tests | 759 unit, 167 integration, 19 end-to-end (S0 demo, safety), 61 evaluator self-tests (planted defects EM1–EM9 each turn exactly their check red), 40 dependency-boundary tests |
+| Hierarchical authority (airline pool → desks → agents), S1 on the sandbox acting as one agent with a 200.00 limit | Every level checked by the auditor (C6) against a tree committed before the run: **SAFETY PASS, no level exceeded**; 25 concurrent proposals across 4 agents never exceeded any level (integration test) |
+| Provider reversal (a confirmed payment later reversed by the provider) | Recorded once, never re-paid, parked for a person; the auditor fails C5 if a report still calls it paid (end-to-end test REV-01) |
+| Decision letters through a keyless tool, confirmed only by the admitted AI-written probe | Response lost → probe finds the letter → confirmed; request dropped → parked, never re-sent; no admitted probe → parked (integration test PRB-08). Off by default (`NT_LETTERS_ENABLED=true` to enable) |
+| Automated tests | 857 unit, 197 integration, 20 end-to-end (S0 demo, safety, reversal), 77 evaluator self-tests (planted defects EM1–EM9 each turn exactly their check red), 40 dependency-boundary tests |
 
 Confirmed means: the provider holds one payment object matching marker, amount, currency and payee. It does not mean the passenger has received the money.
 
