@@ -9,5 +9,15 @@
   },
   "scripts": {
     "typecheck": "tsc --noEmit -p tsconfig.json"
+  },
+  "dependencies": {
+    "@nt/agents": "workspace:*",
+    "@nt/contracts": "workspace:*",
+    "@nt/db": "workspace:*",
+    "@nt/providers": "workspace:*",
+    "@nt/rules": "workspace:*"
+  },
+  "devDependencies": {
+    "@types/node": "24.19.2"
   }
 }

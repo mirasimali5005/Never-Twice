@@ -90,7 +90,27 @@ importers:
         specifier: 24.19.2
         version: 24.19.2
 
-  packages/baselines: {}
+  packages/baselines:
+    dependencies:
+      '@nt/agents':
+        specifier: workspace:*
+        version: link:../agents
+      '@nt/contracts':
+        specifier: workspace:*
+        version: link:../contracts
+      '@nt/db':
+        specifier: workspace:*
+        version: link:../db
+      '@nt/providers':
+        specifier: workspace:*
+        version: link:../providers
+      '@nt/rules':
+        specifier: workspace:*
+        version: link:../rules
+    devDependencies:
+      '@types/node':
+        specifier: 24.19.2
+        version: 24.19.2
 
   packages/contracts:
     dependencies:
