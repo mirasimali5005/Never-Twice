@@ -3,6 +3,7 @@ import { api, MOCK } from "./api";
 import { ArmColumn } from "./components/ArmColumn";
 import { AuditorPanel, auditable } from "./components/AuditorPanel";
 import { DecisionCard } from "./components/DecisionCard";
+import { ErrorBoundary } from "./components/ErrorBoundary";
 import { Header } from "./components/Header";
 import certNt from "./mocks/certificate.nt.json";
 import { mockElapsed, restartMock } from "./mocks/engine";
@@ -101,18 +102,28 @@ export function App() {
 
   return (
     <div className="desk">
-      <Header groupId={GROUP_ID} group={group} manifest={manifest} mock={MOCK} stream={ntData.stream} intakeReplay={intakeReplay} />
+      <ErrorBoundary name="header" resetKey={group}>
+        <Header groupId={GROUP_ID} group={group} manifest={manifest} mock={MOCK} stream={ntData.stream} intakeReplay={intakeReplay} />
+      </ErrorBoundary>
       {groupNow && !groupNow.ok && (
         <div className="banner banner--error">
           Desk API unavailable ({groupNow.error}){groupKept ? ": what you see is the last data received" : ". Nothing below is shown as zero or green"}.
         </div>
       )}
-      <DecisionCard claim={shownClaim} claims={claims?.ok ? claims.data : []} compact={compact} onToggle={() => setOverride(!compact)} />
+      <ErrorBoundary name="case file" resetKey={shownClaim}>
+        <DecisionCard claim={shownClaim} claims={claims?.ok ? claims.data : []} compact={compact} onToggle={() => setOverride(!compact)} />
+      </ErrorBoundary>
       <main className="cols">
-        <ArmColumn title="Ordinary agent (control)" kind="control" run={control} data={controlData} selectedKey={selectedKey} onSelect={setPicked} groupReady={groupKept !== null} />
-        <ArmColumn title="Never Twice" kind="nt" run={nt} data={ntData} selectedKey={selectedKey} onSelect={setPicked} groupReady={groupKept !== null} />
+        <ErrorBoundary name="control column" resetKey={controlData}>
+          <ArmColumn title="Ordinary agent (control)" kind="control" run={control} data={controlData} selectedKey={selectedKey} onSelect={setPicked} groupReady={groupKept !== null} />
+        </ErrorBoundary>
+        <ErrorBoundary name="Never Twice column" resetKey={ntData}>
+          <ArmColumn title="Never Twice" kind="nt" run={nt} data={ntData} selectedKey={selectedKey} onSelect={setPicked} groupReady={groupKept !== null} />
+        </ErrorBoundary>
       </main>
-      <AuditorPanel entries={entries} selectedArm={armSel} onSelect={setArmSel} />
+      <ErrorBoundary name="auditor" resetKey={entries}>
+        <AuditorPanel entries={entries} selectedArm={armSel} onSelect={setArmSel} />
+      </ErrorBoundary>
       {MOCK && (
         <div className="mockclock" aria-hidden>
           mock clock {Math.floor(mockElapsed())} s · r restarts

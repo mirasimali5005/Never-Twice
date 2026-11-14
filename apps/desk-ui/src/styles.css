@@ -174,3 +174,5 @@ h1, h2 { margin: 0; }
   .claimtext { max-height: 82px; }
   .obl__amount { font-size: 2rem; }
 }
+
+.panel-failed { padding: 6px 10px; border: 1px dashed var(--red); border-radius: 4px; background: var(--red-bg); color: var(--red); font-size: 0.9rem; font-weight: 600; }

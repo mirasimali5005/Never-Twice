@@ -1,3 +1,4 @@
+import { ErrorBoundary } from "./ErrorBoundary";
 import { EvidenceTrail } from "./EvidenceTrail";
 import { PaymentChips } from "./PaymentChips";
 import { ProviderStatement } from "./ProviderStatement";
@@ -40,7 +41,9 @@ export function ArmColumn(props: {
         <>
           <div className="col__body">
             <PaymentChips rows={data.payments} selectedKey={props.selectedKey} onSelect={props.onSelect} baseline={isControl} statement={data.statement} />
-            <EvidenceTrail trail={data.trail} selectedKey={props.selectedKey} />
+            <ErrorBoundary name="evidence trail" resetKey={data.trail}>
+              <EvidenceTrail trail={data.trail} selectedKey={props.selectedKey} />
+            </ErrorBoundary>
           </div>
           <ProviderStatement statement={data.statement} selected={selected} isControl={isControl} />
         </>

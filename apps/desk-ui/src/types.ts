@@ -138,9 +138,10 @@ export type InvestigationRecord = {
   epoch: number;
   investigator: "llm" | "deterministic";
   hypothesis: string | null;
-  steps: InvestigationStep[];
-  match: "MATCH" | "NO_MATCH" | "CONTRADICTION";
-  decision: { kind: "SETTLE" | "REDISPATCH_SAME_KEY" | "QUARANTINE"; row: number; reason?: string; detail?: string };
+  steps: InvestigationStep[] | null;
+  // An open record (the investigation is running) carries match, decision and closed_at as null.
+  match: "MATCH" | "NO_MATCH" | "CONTRADICTION" | null;
+  decision: { kind: "SETTLE" | "REDISPATCH_SAME_KEY" | "QUARANTINE"; row: number; reason?: string; detail?: string } | null;
   licence: string | null;
   recalled: unknown[];
   opened_at: string;
