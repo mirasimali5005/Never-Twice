@@ -123,6 +123,9 @@ importers:
       '@nt/db':
         specifier: workspace:*
         version: link:../db
+      '@nt/providers':
+        specifier: workspace:*
+        version: link:../providers
       '@nt/recovery':
         specifier: workspace:*
         version: link:../recovery

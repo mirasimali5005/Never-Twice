@@ -14,7 +14,8 @@
     "@nt/contracts": "workspace:*",
     "@nt/db": "workspace:*",
     "mongodb": "7.9.0",
-    "@nt/recovery": "workspace:*"
+    "@nt/recovery": "workspace:*",
+    "@nt/providers": "workspace:*"
   },
   "devDependencies": {
     "mongodb-memory-server": "11.3.0"
