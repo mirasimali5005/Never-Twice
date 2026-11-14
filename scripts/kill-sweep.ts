@@ -23,7 +23,7 @@
 // Outputs: out/sweeps/kill-sweep.json and out/sweeps/kill-sweep.md. Usage:
 //   pnpm sweep:kill [-- --parallel 3] [--only KS5/DROP_REQUEST/P13] [--deadline-min 25]
 import { execFileSync } from "node:child_process";
-import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from "node:fs";
+import { mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { pathToFileURL } from "node:url";
@@ -428,6 +428,8 @@ function markdown(records: CellRecord[], meta: Record<string, unknown>, sum: Ret
     for (const r of bad) L.push(`- **${r.id}** ${r.outcome}${r.detail["p9_replay_clean_in_event_time_order"] === true ? " [the only failing check is the scan's P9 replay, which is clean when ordered by event time: ObjectId order across the killed and the restarted process]" : ""} (run ${r.run_id ?? "-"}, kill fired: ${r.kill_fired ? "yes" : "no"}): ${r.failing_checks.join("; ") || "see kill-sweep.json"}${r.scan_findings.length ? ` | scan: ${r.scan_findings.join("; ")}` : ""}`);
     L.push("");
   }
+  L.push("## Observations from running it", "");
+  L.push("- **Invariant scan P9 is order-sensitive across processes (a defect in `packages/gateway/src/invariants.ts`, or in the audit-event ordering it relies on).** It replays audit events sorted by `_id`. An ObjectId made by the killed process and one made by the restarted process inside the same second do not sort in creation order (the middle bytes are a per-process random value), so a valid chain can replay as `RESERVED -> DISPATCHING` before `INTENT_RESERVED`. It happens when the restart follows the kill within a second, in every failing cell seen, KS2 (kill right after the reserve commit). The auditor says SAFETY: PASS in those cells, every state is allowed, and replayed in event-time order the chain is clean (`p9_replay_clean_in_event_time_order` in the JSON); but by the pass condition they are FAIL cells. Which KS2 cells fail varies from run to run (4 in a first pass at a 60 s limit, 2 in this one, different cells; a re-run of one of them passed), so this sweep is not deterministic at the level of that check.", "- **A kill inside a transaction costs the restart about 80 to 90 s** (KS1 `BR_RESERVE_BEFORE_COMMIT` and KS6 `BR_SETTLE_IN_TXN`): the killed process leaves an open MongoDB transaction whose locks the server releases only when it aborts it (`transactionLifetimeLimitSeconds`, default 60 s). With the TEST_PLAN limit of 60 s for `reconcile --until-drained` the five KS6 cells whose reconciler was killed timed out in the first pass (TIMEOUT 5); with 180 s they all passed and drained. The restarted process does recover, only late.", "- **`NT_STRIPE_ENABLED=false` does not work** for the runner and reconciler (see the Stripe note above), so the sweep ran with Stripe test mode on for P03's ticket refund.", "- **KS4 under REJECT cannot arm.** The simulator applies one fault per request, so `HOLD_RESPONSE_MS` cannot be combined with `REJECT`; the rejection answers before the barrier's 100 ms, the barrier is cancelled, and the three KS4/REJECT cells are NOT_REACHED (TEST_PLAN predicted seven NOT_REACHED cells; these three make ten). In them the run was still audited: FAILED_NO_EFFECT, no duplicate.", "");
   L.push("## What this supports", "");
   L.push(sum.FAIL === 0 && sum.TIMEOUT === 0 && sum.NOT_RUN === 0
     ? "Every instrumented single crash point that was reached, under three provider faults, ended in a state the auditor accepted or on the would-not-guess list (QUARANTINED)."
@@ -459,7 +461,15 @@ function git(args: string[]): string {
 }
 
 async function main(): Promise<number> {
-  const a = parseArgs(process.argv.slice(2), ["parallel", "only", "deadline-min", "scan", "recon-timeout-s", "out-name"]);
+  const a = parseArgs(process.argv.slice(2), ["parallel", "only", "deadline-min", "scan", "recon-timeout-s", "out-name", "render"]);
+  if (a.values.has("render")) {
+    const name = a.values.get("render")!;
+    const j = JSON.parse(readFileSync(join(OUT_DIR, `${name}.json`), "utf8")) as { summary: ReturnType<typeof summarize>; meta: Record<string, unknown>; cells: CellRecord[] };
+    const sum = summarize(j.cells);
+    writeFileSync(join(OUT_DIR, `${name}.json`), `${JSON.stringify({ summary: sum, meta: j.meta, cells: j.cells }, null, 2)}\n`);
+    writeFileSync(join(OUT_DIR, `${name}.md`), markdown(j.cells, j.meta, sum));
+    return 0;
+  }
   if (a.values.has("scan")) {
     await scanChild(a.values.get("scan")!);
     return 0;
@@ -483,7 +493,7 @@ async function main(): Promise<number> {
   if (cells.length === 0) throw new Error(`--only ${only} matches no cell`);
 
   const stripeNote = mode.on
-    ? "Stripe: TEST mode is ON for P03's ticket refund, not off as the brief intended, because NT_STRIPE_ENABLED=false is not honoured by the gateway (packages/gateway/src/gateway.ts:105 compares the parsed boolean with the string \"false\"); faults and kills never target the Stripe payment, so the sweep's subject is the simulator payments"
+    ? "Stripe: TEST mode is ON for P03's ticket refund, not off as the brief intended, because NT_STRIPE_ENABLED=false is not honoured by the gateway (packages/gateway/src/gateway.ts:105 compares the parsed boolean with the string \"false\"); faults and kills never target the Stripe payment, so the sweep's subject is the simulator payments."
     : "Stripe: OFF";
   const started = Date.now();
   const results = new Map<string, CellRecord>();
