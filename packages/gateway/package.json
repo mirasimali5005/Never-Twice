@@ -9,5 +9,13 @@
   },
   "scripts": {
     "typecheck": "tsc --noEmit -p tsconfig.json"
+  },
+  "dependencies": {
+    "@nt/contracts": "workspace:*",
+    "@nt/db": "workspace:*",
+    "mongodb": "7.9.0"
+  },
+  "devDependencies": {
+    "mongodb-memory-server": "11.3.0"
   }
 }
