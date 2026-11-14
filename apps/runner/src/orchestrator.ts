@@ -28,7 +28,7 @@ export type RunnerDeps = {
   goTimeoutMs?: number;
   sleep?: (ms: number) => Promise<void>;
   log?: (msg: string) => void;
-  /** NT_LETTERS_ENABLED (default true): after the payout phase, send one decision letter per decided claim (CP-LETTER-1). */
+  /** NT_LETTERS_ENABLED (default false; letters only when explicitly "true"): after the payout phase, send one decision letter per decided claim (CP-LETTER-1). */
   lettersEnabled?: boolean;
 };
 
@@ -220,7 +220,7 @@ export async function runArm(opts: RunOptions, deps: RunnerDeps): Promise<number
 
   try {
     await payout(deps, runId);
-    if (deps.lettersEnabled ?? process.env["NT_LETTERS_ENABLED"] !== "false") await sendLetters(deps, runId);
+    if (deps.lettersEnabled ?? process.env["NT_LETTERS_ENABLED"] === "true") await sendLetters(deps, runId); // CP-LETTER-1: off by default
   } catch (e) {
     log(`payout stopped: ${(e as Error).message}`);
     return 1; // the run stays RUNNING; restart resumes

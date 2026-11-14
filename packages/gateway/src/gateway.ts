@@ -104,7 +104,8 @@ export function configFromEnv(env: GatewayEnv): GatewayConfig {
     keyMarginMs: num(env.NT_KEY_MARGIN_MS, 60000),
     investigatorTimeoutMs: num(env.NT_INVESTIGATOR_TIMEOUT_MS, 45000),
     stripeEnabled: String(env.NT_STRIPE_ENABLED ?? "true") !== "false", // parseEnv may hand over a boolean or a string
-    lettersEnabled: String(env.NT_LETTERS_ENABLED ?? "true") !== "false", // CP-LETTER-1
+    // CP-LETTER-1: OFF unless NT_LETTERS_ENABLED=true (process env as a fallback: role env schemas do not carry it).
+    lettersEnabled: String(env.NT_LETTERS_ENABLED ?? process.env["NT_LETTERS_ENABLED"] ?? "false") === "true",
   };
 }
 
@@ -127,7 +128,7 @@ export async function createGatewayFromEnv(
     sim_keyless: await createProvider("sim_keyless", penv),
   };
   if (config.stripeEnabled) providers.stripe_refund = await createProvider("stripe_refund", penv);
-  if (config.lettersEnabled !== false) providers.notify_letter = await createProvider("notify_letter", penv); // CP-LETTER-1
+  if (config.lettersEnabled === true) providers.notify_letter = await createProvider("notify_letter", penv); // CP-LETTER-1
   const db = await connect("gateway", env);
   return createGateway({
     db,

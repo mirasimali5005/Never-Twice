@@ -39,6 +39,7 @@ function gatewayFor(role: "runner" | "reconciler", workerId: string): Promise<Ga
       NT_STRIPE_ENABLED: "false",
       NT_DISPATCH_TIMEOUT_MS: "600",
       NT_LEASE_MS: "8000",
+      NT_LETTERS_ENABLED: "true",
     },
     { runId: RUN, workerId },
   );
