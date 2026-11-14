@@ -168,7 +168,11 @@ async function persistGroup(db: Db, runId: string, g: Group, decisions: Obligati
       break;
     }
     const decidedAt = new Date();
-    const docs: Obligation[] = missing.map((d) => ({ ...d, _id: idOf(d), run_id: runId, claim_ids: claimIds, decided_at: decidedAt }));
+    const docs: Obligation[] = missing.map((d) => {
+      // Fail closed: the payment side is CAD only (CP-EU261-1); an EUR decision is never stored, proposed or paid.
+      if (d.currency !== "CAD") throw new Error(`obligation ${d.effect_key} is ${d.currency}; only CAD obligations can be stored`);
+      return { ...d, currency: d.currency, _id: idOf(d), run_id: runId, claim_ids: claimIds, decided_at: decidedAt };
+    });
     const events = docs.map((o) =>
       runAudit("OBLIGATION_DECIDED", runId, {
         effect_key: o.effect_key,

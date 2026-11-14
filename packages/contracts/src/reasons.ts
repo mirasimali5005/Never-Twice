@@ -2,7 +2,8 @@
 // Families are never mixed: NotOwedReason, HeldReason, ProposalRefusal, QuarantineReason.
 import { z } from "zod";
 
-export const ENTITLEMENT_TYPES = ["APPR_DELAY", "APPR_DENIED_BOARDING", "APPR_REFUND_COMP", "TICKET_REFUND", "GOODWILL"] as const;
+// EU261_COMPENSATION: Tier 3 EU261 rule pack (change proposal CP-EU261-1); the five APPR-era types are unchanged.
+export const ENTITLEMENT_TYPES = ["APPR_DELAY", "APPR_DENIED_BOARDING", "APPR_REFUND_COMP", "TICKET_REFUND", "GOODWILL", "EU261_COMPENSATION"] as const;
 export const EntitlementType = z.enum(ENTITLEMENT_TYPES);
 export type EntitlementType = z.infer<typeof EntitlementType>;
 

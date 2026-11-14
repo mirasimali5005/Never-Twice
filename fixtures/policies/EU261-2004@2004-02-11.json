@@ -1,0 +1,161 @@
+{
+  "_id": "EU261-2004@2004-02-11",
+  "policy_id": "EU261-2004",
+  "version": "2004-02-11",
+  "kind": "STATUTORY",
+  "jurisdiction": "EU",
+  "currency": "EUR",
+  "entitlement_type": "EU261_COMPENSATION",
+  "source": "Regulation (EC) No 261/2004 of the European Parliament and of the Council of 11 February 2004 establishing common rules on compensation and assistance to passengers in the event of denied boarding and of cancellation or long delay of flights (OJ L 46, 17.2.2004, p. 1). Case law: Joined Cases C-402/07 and C-432/07 (Sturgeon and Others).",
+  "applies_from": "2005-02-17",
+  "applies_from_citation": "Art. 19",
+  "how_to_read": "Rule table as data (HANDOVER 3, Tier 3). Every amount, threshold and exemption below carries the article it comes from in its own `citation` field. The engine in packages/rules reads this document generically; there is no EU-specific code. Distances are great-circle kilometres (Art. 7(1), last subparagraph). Amounts are integer cents of EUR.",
+  "compensation": {
+    "citation": "Art. 7(1)",
+    "measure_fact": "distance_km",
+    "measured_by": "great circle route, first departure airport to final destination (Art. 7(1) last subparagraph); a fact on the disruption record, never computed from claim text",
+    "bands": [
+      {
+        "id": "A_UP_TO_1500",
+        "min": 0,
+        "min_inclusive": true,
+        "max": 1500,
+        "max_inclusive": true,
+        "amount_minor": 25000,
+        "reduction_threshold_minutes": 120,
+        "citation": "Art. 7(1)(a); reduction ceiling Art. 7(2)(a)"
+      },
+      {
+        "id": "B_INTRA_UNION_OVER_1500",
+        "min": 1500,
+        "min_inclusive": false,
+        "max": null,
+        "max_inclusive": false,
+        "when": {
+          "intra_union": true
+        },
+        "amount_minor": 40000,
+        "reduction_threshold_minutes": 180,
+        "citation": "Art. 7(1)(b); reduction ceiling Art. 7(2)(b)"
+      },
+      {
+        "id": "B_OTHER_1500_TO_3500",
+        "min": 1500,
+        "min_inclusive": false,
+        "max": 3500,
+        "max_inclusive": true,
+        "when": {
+          "intra_union": false
+        },
+        "amount_minor": 40000,
+        "reduction_threshold_minutes": 180,
+        "citation": "Art. 7(1)(b); reduction ceiling Art. 7(2)(b)"
+      },
+      {
+        "id": "C_OTHER_OVER_3500",
+        "min": 3500,
+        "min_inclusive": false,
+        "max": null,
+        "max_inclusive": false,
+        "when": {
+          "intra_union": false
+        },
+        "amount_minor": 60000,
+        "reduction_threshold_minutes": 240,
+        "citation": "Art. 7(1)(c); reduction ceiling Art. 7(2)(c)"
+      }
+    ]
+  },
+  "triggers": {
+    "DELAY": {
+      "citation": "Art. 6 with Art. 7(1), as read in Sturgeon (C-402/07, C-432/07): a delay of three hours or more in arriving at the final destination gives the Art. 7 compensation",
+      "min_arrival_delay_minutes": 180,
+      "below_threshold_reason": "DELAY_UNDER_3H"
+    },
+    "CANCELLATION": {
+      "citation": "Art. 5(1)(c) with Art. 7(1)",
+      "min_arrival_delay_minutes": 0,
+      "notice_exemption": {
+        "min_notice_minutes": 20160,
+        "reason_code": "NOTICE_OVER_14_DAYS",
+        "citation": "Art. 5(1)(c)(i): informed at least two weeks before the scheduled departure"
+      }
+    },
+    "DENIED_BOARDING": {
+      "citation": "Art. 4(3) with Art. 7(1)",
+      "min_arrival_delay_minutes": 0
+    }
+  },
+  "control_rules": [
+    {
+      "control_class": "OUTSIDE_CONTROL",
+      "status": "NOT_OWED",
+      "reason_code": "OUTSIDE_CARRIER_CONTROL",
+      "kinds": [
+        "DELAY",
+        "CANCELLATION"
+      ],
+      "citation": "Art. 5(3): extraordinary circumstances which could not have been avoided even if all reasonable measures had been taken (Recitals 14, 15)"
+    },
+    {
+      "control_class": "SAFETY_REQUIRED",
+      "status": "NOT_OWED",
+      "reason_code": "SAFETY_REQUIRED",
+      "kinds": [
+        "DELAY",
+        "CANCELLATION"
+      ],
+      "citation": "Art. 5(3) (ASSUMPTION A6)"
+    },
+    {
+      "control_class": "UNDETERMINED",
+      "status": "HELD",
+      "reason_code": "CAUSE_UNDETERMINED",
+      "citation": "Art. 5(3): the carrier bears the burden of showing extraordinary circumstances; cause not settled from the record (ASSUMPTION A7)"
+    }
+  ],
+  "reduction": {
+    "numerator": 1,
+    "denominator": 2,
+    "requires_fact": "rerouted_art8",
+    "citation": "Art. 7(2): 50% when re-routed under Art. 8 and the arrival is not later than the band's ceiling (2 h, 3 h or 4 h after the scheduled arrival)"
+  },
+  "other_regime": {
+    "citation": "Art. 12(1) (ASSUMPTION A5: simplified to a refusal; the Article itself allows deduction)"
+  },
+  "undetermined_citation": "Art. 5(3)",
+  "payee_citation": "Art. 7(3) (ASSUMPTION A8)",
+  "goodwill_citation": "NT-GOODWILL@1 is a CAD tariff and is not defined for this regime (ASSUMPTION A9)",
+  "pay_within_days": null,
+  "pay_within_note": "The Regulation sets no payment deadline; time limits are national law (Art. 16, enforcement). due_by is null. ASSUMPTION A4.",
+  "not_modelled_passenger_fields": [
+    "refund_elected",
+    "alternative_accepted_in_writing"
+  ],
+  "values_and_sources": {
+    "250 EUR": "Art. 7(1)(a): all flights of 1500 kilometres or less",
+    "400 EUR": "Art. 7(1)(b): all intra-Community flights of more than 1500 km, and all other flights between 1500 and 3500 km",
+    "600 EUR": "Art. 7(1)(c): all flights not falling under (a) or (b)",
+    "50% reduction": "Art. 7(2)",
+    "reduction ceilings 2 h / 3 h / 4 h": "Art. 7(2)(a), (b), (c)",
+    "3 h arrival delay": "Sturgeon, Joined Cases C-402/07 and C-432/07 (compensation for delay by analogy with Art. 5 and 7)",
+    "14 days notice": "Art. 5(1)(c)(i)",
+    "extraordinary circumstances": "Art. 5(3); not available for denied boarding (Art. 4(3) has no such exemption)"
+  },
+  "assumptions": [
+    "A1. The Official Journal reference, the 17 February 2005 date of application (Art. 19) and the Sturgeon case numbers are recalled by the author and were NOT checked against EUR-Lex or the judgment text in this build. No paragraph numbers of the judgment are cited.",
+    "A2. A distance of exactly 3500 km is placed in band (b) (400 EUR), reading 'between 1500 and 3500 kilometres' as inclusive; exactly 1500 km is placed in band (a) ('1500 kilometres or less'). Distance is an integer fact on the fixture record; real distances are great-circle and not integer.",
+    "A3. 'Intra-Community flight' is represented by the boolean fact `intra_union`. Art. 3 scope (departure from an EU airport, or arrival in the EU on a Community carrier) is NOT evaluated: a record carrying jurisdiction EU is taken to be in scope. EEA and third-country carve-outs are not modelled.",
+    "A4. No payment deadline and no claim-filing window are modelled; both are national law, not the Regulation. due_by is null and CLAIM_AFTER_ONE_YEAR is never produced.",
+    "A5. A recorded other-regime payment is treated as a refusal (ALREADY_COMPENSATED_OTHER_REGIME). Art. 12(1) preserves the right to further compensation and allows deduction, so this is a simplification, not the Article.",
+    "A6. SAFETY_REQUIRED is treated as an Art. 5(3) exemption. Whether a safety-driven disruption is an extraordinary circumstance depends on the facts (technical faults inherent in normal operation are not); the booking record's control_class is trusted as the carrier's proof.",
+    "A7. An undetermined cause is held, not refused or paid, because the burden of showing extraordinary circumstances is the carrier's.",
+    "A8. A payee-change request is held, as in the APPR pack; the Regulation (Art. 7(3)) only lists payment forms.",
+    "A9. Goodwill is not defined for this regime: a proposal produces NOT_GOODWILL_ELIGIBLE.",
+    "A10. Art. 5(1)(c)(ii) and (iii) (re-routing exemptions for notice of 7 to 14 days and under 7 days) are NOT modelled: the record carries no re-routing departure time, so a cancellation with under 14 days notice is treated as compensable. This can overpay; it never underpays.",
+    "A11. Art. 7(2) is applied only where the record fact `rerouted_art8` is true (re-routing under Art. 8) and arrival_delay_minutes is at or below the band's ceiling. The ceiling is read as 'does not exceed' (inclusive).",
+    "A12. A delay of exactly 180 minutes owes compensation (three hours or more). How arrival time is measured is not specified here; the record's arrival_delay_minutes is trusted.",
+    "A13. Refund (Art. 8(1)(a)), care (Art. 9), alternative-in-writing and voucher forms (Art. 7(3)) are not modelled; a record that sets refund_elected or alternative_accepted_in_writing makes the engine refuse to compute (RulesError).",
+    "A14. Legislative amendments proposed since 2013 are not modelled; the author did not verify that none is in force on the decision date."
+  ]
+}
