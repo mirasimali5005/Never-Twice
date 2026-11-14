@@ -64,14 +64,25 @@ export async function tick(d: LoopDeps): Promise<TickResult> {
   }, r);
   if (r.investigated > 0 && d.flushEmbeddings) await d.flushEmbeddings().catch(() => undefined);
 
+  if (d.watch) await watchSteps(d, r);
+  return r;
+}
+
+/** Steps 4 and 5 (the watchers). Run by every tick with --watch, and once more at the end of --until-drained --watch. */
+async function watchSteps(d: LoopDeps, r: TickResult): Promise<void> {
   // 4. Watch (Tier 2): QUARANTINED with an absence-class reason → deterministic evidence → T12 on MATCH.
-  if (d.watch) {
-    r.watched = await each(d, await d.store.watchable(d.runId), "watch", (it) => watchOne(d, it), r);
-    // 5. Reversal watch (Tier 3, CP-REV-1): CONFIRMED with no PROVIDER_REVERSAL yet → re-read the confirmed object → audit event only.
-    if (d.store.confirmedUnreversed) {
-      r.reversals = await each(d, await d.store.confirmedUnreversed(d.runId), "reversal", (it) => watchReversal(d, it), r);
-    }
+  r.watched = await each(d, await d.store.watchable(d.runId), "watch", (it) => watchOne(d, it), r);
+  // 5. Reversal watch (Tier 3, CP-REV-1): CONFIRMED with no PROVIDER_REVERSAL yet → re-read the confirmed object → audit event only.
+  if (d.store.confirmedUnreversed) {
+    r.reversals = await each(d, await d.store.confirmedUnreversed(d.runId), "reversal", (it) => watchReversal(d, it), r);
   }
+}
+
+/** The closing watch pass of --until-drained --watch, so a script run picks up a late T12 or a provider reversal (CP-REV-1). */
+export async function finalWatchPass(d: LoopDeps): Promise<TickResult> {
+  const r: TickResult = { orphans: 0, takeovers: 0, investigated: 0, watched: 0, reversals: 0, errors: 0 };
+  await watchSteps(d, r);
+  if (r.watched + r.reversals + r.errors > 0) d.log?.(`[${d.workerId}] final watch pass: watched=${r.watched} reversals=${r.reversals} errors=${r.errors}`);
   return r;
 }
 
@@ -81,13 +92,17 @@ const defaultSleep = (ms: number) => new Promise<void>((resolve) => setTimeout(r
 
 /**
  * Runs passes until stopped. With untilDrained it returns 0 once no intent of the run is RESERVED, DISPATCHING or OUTCOME_UNKNOWN
- * (quarantined intents do not keep it alive). With once it runs exactly one pass. The reconciler never writes the final report.
+ * (quarantined intents do not keep it alive); with watch as well, the run always includes at least one watch pass (a tick's, or a
+ * closing finalWatchPass when it was already drained on entry), so `--until-drained --watch` picks up T12 and provider reversals. With once it runs exactly one pass. The reconciler never writes the final report.
  */
 export async function runLoop(d: LoopDeps, o: RunOptions): Promise<number> {
   const sleep = o.sleep ?? defaultSleep;
   for (;;) {
     if (d.stopping?.()) return 0;
-    if (o.untilDrained && (await d.store.unresolvedCount(d.runId)) === 0) return 0;
+    if (o.untilDrained && (await d.store.unresolvedCount(d.runId)) === 0) {
+      if (d.watch) await finalWatchPass(d); // already drained on entry: still give the watchers one pass
+      return 0;
+    }
     const r = await tick(d);
     if (r.orphans + r.takeovers + r.investigated + r.watched + r.reversals + r.errors > 0) {
       d.log?.(`[${d.workerId}] tick: orphans=${r.orphans} takeovers=${r.takeovers} investigated=${r.investigated} watched=${r.watched} reversals=${r.reversals} errors=${r.errors}`);
