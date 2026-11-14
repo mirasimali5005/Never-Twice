@@ -9,7 +9,9 @@ import { createModelClient, DEFAULT_MODEL } from "@nt/agents";
 import { parseEnv } from "@nt/contracts";
 import type { ModelClient } from "@nt/contracts";
 import { openNtDb, uriFor, dbNameFrom, type NtDb } from "@nt/db";
+import { createRecall, createVoyageEmbedder, recallEnabled, DEFAULT_VOYAGE_DIMS, DEFAULT_VOYAGE_MODEL } from "@nt/recovery/recall";
 import { makeCollect, type CollectMode } from "./collect.ts";
+import { makeEmbedQueue, type EmbedQueue } from "./embed.ts";
 import { runLoop, type LoopDeps } from "./loop.ts";
 import type { Barrier, ReconcilerGateway } from "./ports.ts";
 import { createMongoStore } from "./store.ts";
@@ -107,7 +109,19 @@ export async function main(argv: readonly string[], o: { gatewayFactory?: Gatewa
       // The investigation runs live by default even when intake replays recorded outputs (NT_INVESTIGATOR_MODEL_MODE overrides).
       model = createModelClient({ ...env, NT_MODEL_MODE: (process.env.NT_INVESTIGATOR_MODEL_MODE ?? "live") as typeof env.NT_MODEL_MODE });
     }
-    const collect = makeCollect({ gateway, mode, model, timeoutMs: env.NT_INVESTIGATOR_TIMEOUT_MS });
+    // Tier 2, advisory: Vector Search over past investigations. NT_RECALL_ENABLED defaults to true when VOYAGE_API_KEY is set.
+    // Embedding runs for every closed record (any investigator); recall feeds only the LLM investigator's prompt.
+    const recallOn = recallEnabled({ NT_RECALL_ENABLED: process.env.NT_RECALL_ENABLED, VOYAGE_API_KEY: env.VOYAGE_API_KEY });
+    let recall: ReturnType<typeof createRecall> | undefined;
+    let embeds: EmbedQueue | undefined;
+    if (recallOn && env.VOYAGE_API_KEY) {
+      const dims = process.env.NT_EMBED_DIMS ? Number(process.env.NT_EMBED_DIMS) : DEFAULT_VOYAGE_DIMS;
+      const embedder = createVoyageEmbedder({ apiKey: env.VOYAGE_API_KEY, model: process.env.NT_EMBED_MODEL || DEFAULT_VOYAGE_MODEL, dims });
+      const coll = invDb.investigations as unknown as Parameters<typeof makeEmbedQueue>[0]["collection"] & Parameters<typeof createRecall>[0]["collection"];
+      recall = createRecall({ collection: coll, embedder, log, timeoutMs: Math.min(5_000, Math.floor(env.NT_INVESTIGATOR_TIMEOUT_MS / 4)) });
+      embeds = makeEmbedQueue({ collection: coll, embedder, runId: args.runId, log });
+    }
+    const collect = makeCollect({ gateway, mode, model, timeoutMs: env.NT_INVESTIGATOR_TIMEOUT_MS, recall: mode === "llm" ? recall : undefined, log });
     const deps: LoopDeps = {
       runId: args.runId,
       workerId,
@@ -120,9 +134,13 @@ export async function main(argv: readonly string[], o: { gatewayFactory?: Gatewa
       barrier,
       log,
       stopping: () => stopping,
+      ...(embeds !== undefined ? { embedClosed: embeds.enqueue, flushEmbeddings: () => embeds.flush() } : {}),
+      ...(recall !== undefined && mode === "llm" ? { primeRecall: (due: Parameters<typeof recall.prime>[0]) => recall.prime(due) } : {}),
     };
-    log(`[${workerId}] run ${args.runId}: investigator=${mode} interval=${env.NT_RECONCILE_INTERVAL_MS}ms until_drained=${args.untilDrained} once=${args.once} watch=${args.watch}${env.NT_CRASH_AT ? ` NT_CRASH_AT=${env.NT_CRASH_AT}` : ""}`);
+    log(`[${workerId}] run ${args.runId}: investigator=${mode} recall=${recall !== undefined ? "on" : "off"} interval=${env.NT_RECONCILE_INTERVAL_MS}ms until_drained=${args.untilDrained} once=${args.once} watch=${args.watch}${env.NT_CRASH_AT ? ` NT_CRASH_AT=${env.NT_CRASH_AT}` : ""}`);
     const code = await runLoop(deps, { untilDrained: args.untilDrained, once: args.once, intervalMs: env.NT_RECONCILE_INTERVAL_MS });
+    // Tier 2: embed anything still queued, and retry this run's closed records whose embedding failed earlier. Never fails the exit.
+    if (embeds !== undefined) await embeds.flush({ backfill: true });
     log(`[${workerId}] exit ${code}${args.untilDrained ? " (drained: no RESERVED, DISPATCHING or OUTCOME_UNKNOWN intent)" : ""}`);
     return code;
   } finally {

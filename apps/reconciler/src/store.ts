@@ -4,6 +4,7 @@
 import type { AuditEvent, Intent, RecoveryGuards } from "@nt/contracts";
 import { ABSENCE_CLASS } from "@nt/contracts";
 import { dbNow, type NtDb } from "@nt/db";
+import { faultSignature } from "@nt/recovery/recall";
 import { ObjectId, type Document } from "mongodb";
 import type { ClosedRecord, OpenedRecord, ReconcilerStore } from "./ports.ts";
 
@@ -107,8 +108,9 @@ export function createMongoStore(o: { gw: NtDb; inv: NtDb; runId: string }): Rec
               licence: c.licence,
               guards: c.guards,
               db_now: c.db_now,
-              fault_signature: faultSignature(it, c),
+              fault_signature: faultSignature(it, c.match),
               evidence_queries: c.steps.filter((s) => s.record_count > 0).map((s) => s.tool),
+              ...(c.recalled !== undefined ? { recalled: c.recalled.filter((x) => ObjectId.isValid(x)).map((x) => new ObjectId(x)) } : {}),
             }),
             closed_at: "$$NOW",
           },
@@ -143,9 +145,4 @@ export function createMongoStore(o: { gw: NtDb; inv: NtDb; runId: string }): Rec
       await gw.audit.insertOne(ev);
     },
   };
-}
-
-function faultSignature(it: Intent, c: ClosedRecord): string {
-  const results = it.attempts.map((a) => a.result?.kind ?? "NONE").join(",");
-  return `${it.provider}|attempts:${results}|match:${c.match}`;
 }

@@ -62,6 +62,8 @@ export type ClosedRecord = {
   licence: "L1_SAME_KEY" | null;
   guards: RecoveryGuards;
   db_now: Date;
+  /** Tier 2: ids of the past investigation records shown to the LLM investigator before it started (advisory context only). */
+  recalled?: string[];
 };
 
 export interface ReconcilerStore {
@@ -82,7 +84,13 @@ export interface ReconcilerStore {
 
 export type Barrier = (name: BarrierName, effectKey?: string) => void;
 
+/** Evidence plus, on the LLM path with Tier 2 recall on, the ids of the past records shown to the model. */
+export type CollectedWithRecall = WitnessEvidence & { recalled?: string[] };
+
 /** Collects evidence for one intent: the model path with the deterministic fallback, or deterministic only. Never writes. */
-export type Collect = (it: Intent) => Promise<WitnessEvidence>;
+export type Collect = (it: Intent) => Promise<CollectedWithRecall>;
+
+/** Tier 2: embeds a closed investigation record (best effort; never throws, never blocks recovery). */
+export type EmbedClosed = (investigationId: ObjectId) => Promise<void>;
 
 export type Logger = (line: string) => void;

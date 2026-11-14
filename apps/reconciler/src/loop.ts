@@ -13,6 +13,10 @@ export type LoopDeps = WatchDeps & {
   watch: boolean;
   /** Set by SIGTERM: stop between intents. */
   stopping?: () => boolean;
+  /** Tier 2 (advisory): embed the query texts of the due intents in one call before investigating them. Never blocks. */
+  primeRecall?: (due: Intent[]) => Promise<void>;
+  /** Tier 2 (advisory): embed the records closed during this tick in one call. Never blocks. */
+  flushEmbeddings?: () => Promise<void>;
 };
 
 export type TickResult = { orphans: number; takeovers: number; investigated: number; watched: number; errors: number };
@@ -50,12 +54,15 @@ export async function tick(d: LoopDeps): Promise<TickResult> {
   }, r);
 
   // 3. Investigate: OUTCOME_UNKNOWN, no live lease, next_attempt_at <= $$NOW → acquire the lease → investigate.
-  r.investigated = await each(d, await d.store.dueUnknown(d.runId), "investigate", async (it) => {
+  const due = await d.store.dueUnknown(d.runId);
+  if (due.length > 0 && d.primeRecall) await d.primeRecall(due).catch(() => undefined);
+  r.investigated = await each(d, due, "investigate", async (it) => {
     const leased = await d.gateway.acquireLease(it._id, it.lease_epoch, d.workerId);
     if (!leased) return false; // another worker has it, or it is not yet due
     await investigate(d, leased);
     return true;
   }, r);
+  if (r.investigated > 0 && d.flushEmbeddings) await d.flushEmbeddings().catch(() => undefined);
 
   // 4. Watch (Tier 2): QUARANTINED with an absence-class reason → deterministic evidence → T12 on MATCH.
   if (d.watch) {

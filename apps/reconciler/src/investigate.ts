@@ -3,7 +3,7 @@
 import type { DispatchResult, Intent, ProviderObject, RecoveryDecision } from "@nt/contracts";
 import { decideRecovery, matchEvidence } from "@nt/recovery/pure";
 import type { ObjectId } from "mongodb";
-import type { Barrier, Collect, Logger, ReconcilerGateway, ReconcilerStore } from "./ports.ts";
+import type { Barrier, Collect, EmbedClosed, Logger, ReconcilerGateway, ReconcilerStore } from "./ports.ts";
 
 export type InvestigateDeps = {
   workerId: string;
@@ -12,6 +12,8 @@ export type InvestigateDeps = {
   collect: Collect;
   barrier: Barrier;
   log?: Logger;
+  /** Tier 2: embed the closed record for future recall. Runs after apply(), so it never delays or blocks recovery. */
+  embedClosed?: EmbedClosed;
 };
 
 export type ApplyOutcome = {
@@ -54,12 +56,20 @@ export async function investigate(d: InvestigateDeps, it: Intent): Promise<Apply
       licence: decision.kind === "REDISPATCH_SAME_KEY" ? decision.licence : null,
       guards,
       db_now: now,
+      ...(collected.recalled !== undefined ? { recalled: collected.recalled } : {}),
     },
     d.workerId,
   );
   d.barrier("BR_RECON_AFTER_EVIDENCE", it.effect_key);
   d.log?.(`[${d.workerId}] ${it._id}: ${collected.investigator} → ${match.kind} → ${decision.kind}${decision.kind === "QUARANTINE" ? ` ${decision.reason}` : ""}`);
-  return apply(d, decision, it, rec.id);
+  try {
+    return await apply(d, decision, it, rec.id);
+  } finally {
+    if (d.embedClosed) {
+      // Advisory only: an embedding failure is logged and never changes or blocks what apply() did.
+      await d.embedClosed(rec.id).catch((e: unknown) => d.log?.(`[${d.workerId}] ${it._id}: embedding skipped (${e instanceof Error ? e.message : String(e)})`));
+    }
+  }
 }
 
 export async function apply(d: InvestigateDeps, decision: RecoveryDecision, it: Intent, investigationId: ObjectId): Promise<ApplyOutcome> {
