@@ -18,7 +18,7 @@
     "test:evaluator": "node -e \"console.error('TO IMPLEMENT: test:evaluator (task F3)');process.exit(1)\"",
     "db:up": "node -e \"console.error('TO IMPLEMENT: db:up (task H1)');process.exit(1)\"",
     "db:down": "node -e \"console.error('TO IMPLEMENT: db:down (task H1)');process.exit(1)\"",
-    "db:init": "node -e \"console.error('TO IMPLEMENT: db:init (task B1)');process.exit(1)\"",
+    "db:init": "tsx --env-file-if-exists=.env packages/db/src/init-cli.ts",
     "sim": "node -e \"console.error('TO IMPLEMENT: sim (task C1)');process.exit(1)\"",
     "seed": "node -e \"console.error('TO IMPLEMENT: seed (task H1)');process.exit(1)\"",
     "run:arm": "node -e \"console.error('TO IMPLEMENT: run:arm (task E4)');process.exit(1)\"",
