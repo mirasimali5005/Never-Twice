@@ -100,6 +100,25 @@ export function mountAdmin(app: Hono<Env>): void {
     return c.json({ account: acct.config.account, reset: true });
   });
 
+  // Probe admission (Tier 3): plant a NotifySim message as ground truth in a scratch account. Admin key only; the planted message
+  // is an ordinary ledger entry (message_created), so it counts in the state hash and is visible to the list at once.
+  app.post("/admin/messages", async (c) => {
+    const b = await jsonBody(c);
+    if (b instanceof Response) return b;
+    const acct = acctFrom(c, b.account);
+    if (acct instanceof Response) return acct;
+    if (typeof b.recipient !== "string" || b.recipient === "") return fail(c, 400, "invalid_request", "recipient is required");
+    const template = typeof b.template === "string" && b.template !== "" ? b.template : "planted";
+    const md = b.metadata ?? {};
+    if (md === null || typeof md !== "object" || Array.isArray(md) || Object.values(md).some((v) => typeof v !== "string")) {
+      return fail(c, 400, "invalid_request", "metadata must be an object of strings");
+    }
+    const amount = typeof b.amount_minor === "number" && Number.isSafeInteger(b.amount_minor) ? b.amount_minor : null;
+    const currency = typeof b.currency === "string" ? b.currency : null;
+    const msg = acct.commitMessage({ recipient: b.recipient, template, amount_minor: amount, currency, metadata: md as Record<string, string> });
+    return c.json(msg, 201);
+  });
+
   app.get("/admin/state-hash", (c) => {
     const acct = acctFrom(c, c.req.query("account"));
     if (acct instanceof Response) return acct;
