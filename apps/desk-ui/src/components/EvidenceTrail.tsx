@@ -44,13 +44,18 @@ export function EvidenceTrail(props: { trail: ApiResult<AnyTrail> | null; select
       </div>
     );
   }
-  const colour = stateColour({ intentState: t.intent.state });
+  const colour = stateColour({ intentState: t.intent.state, reversed: t.reversal != null });
   const steps = trailSteps(t);
   return (
     <div className="trail">
       <div className={`trail__head trail__head--${colour}`} title={colour === "green" ? `Confirmed: ${CONFIRMED_MEANS}` : undefined}>
         {colour === "neutral" ? stateLabel(t.intent.state) : COLOUR_LABEL[colour]}
         {t.intent.state === "QUARANTINED" && t.intent.quarantine && <span className="trail__reason"> · {quarantineWords(t.intent.quarantine.reason)}</span>}
+        {t.reversal && (
+          <span className="trail__reason">
+            {" "}· the provider now reports {t.reversal.provider_object_id ?? "the payment"} as {t.reversal.status_now ?? "reversed"}; it was not re-paid
+          </span>
+        )}
       </div>
       <ol className="steps">
         {steps.map((s, i) => (

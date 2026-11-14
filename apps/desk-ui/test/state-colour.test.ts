@@ -35,4 +35,12 @@ describe("stateColour", () => {
     const all = [...Object.values(COLOUR_LABEL), quarantineWords("NO_DEDUPE_NO_EVIDENCE")].join(" ").toLowerCase();
     for (const w of ["exactly-once", "guaranteed", "tamper-proof", "immutable"]) expect(all).not.toContain(w);
   });
+  it("CP-REV-1: a confirmed payment the provider later reversed is red, 'Reversed at provider — needs a person'", () => {
+    expect(stateColour({ intentState: "CONFIRMED", reversed: true })).toBe("red");
+    expect(stateColour({ intentState: "QUARANTINED", reversed: true })).toBe("grey-blue"); // only CONFIRMED can be reversed
+    expect(COLOUR_LABEL.red).toBe("Reversed at provider — needs a person");
+    expect(stateLabel("CONFIRMED", true)).toBe("Reversed at provider — needs a person");
+    expect(stateLabel("CONFIRMED")).toBe("Confirmed");
+    for (const w of ["exactly-once", "guaranteed", "tamper-proof", "immutable"]) expect(COLOUR_LABEL.red.toLowerCase()).not.toContain(w);
+  });
 });
