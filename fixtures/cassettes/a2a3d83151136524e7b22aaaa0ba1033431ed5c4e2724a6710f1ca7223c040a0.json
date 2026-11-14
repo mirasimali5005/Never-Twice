@@ -1,0 +1,28 @@
+{
+  "request_sha256": "a2a3d83151136524e7b22aaaa0ba1033431ed5c4e2724a6710f1ca7223c040a0",
+  "model": "claude-opus-5-5",
+  "prompt_version": "probe-author@1",
+  "recorded_at": "2026-11-14T19:25:37.695Z",
+  "response": {
+    "parsed_output": {
+      "request": {
+        "method": "GET",
+        "path": "/v1/messages",
+        "query": {
+          "account": "{{account}}",
+          "recipient": "{{payee_ref}}",
+          "created_gte": "{{first_dispatch_at}}",
+          "limit": "20"
+        },
+        "credential": "read"
+      },
+      "items_path": "$.data[*]",
+      "marker_path": "$.metadata.nt_marker",
+      "pagination": {
+        "cursor_param": "starting_after",
+        "next_path": "$.next_cursor",
+        "max_pages": 10
+      }
+    }
+  }
+}

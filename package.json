@@ -39,6 +39,7 @@
     "demo:replay": "tsx --env-file-if-exists=.env scripts/demo/replay.ts",
     "demo:record": "tsx --env-file-if-exists=.env scripts/demo/record.ts",
     "demo:tty": "node --env-file-if-exists=.env scripts/tty.ts",
+    "probe:admit": "tsx --env-file-if-exists=.env scripts/probes/admit-cli.ts",
     "check:safety": "node --env-file-if-exists=.env scripts/check-safety.ts"
   },
   "devDependencies": {
