@@ -82,7 +82,30 @@ importers:
         specifier: 4.13.18
         version: 4.13.18
 
-  apps/reconciler: {}
+  apps/reconciler:
+    dependencies:
+      '@nt/agents':
+        specifier: workspace:*
+        version: link:../../packages/agents
+      '@nt/contracts':
+        specifier: workspace:*
+        version: link:../../packages/contracts
+      '@nt/db':
+        specifier: workspace:*
+        version: link:../../packages/db
+      '@nt/gateway':
+        specifier: workspace:*
+        version: link:../../packages/gateway
+      '@nt/recovery':
+        specifier: workspace:*
+        version: link:../../packages/recovery
+      mongodb:
+        specifier: 7.9.0
+        version: 7.9.0
+    devDependencies:
+      mongodb-memory-server:
+        specifier: 11.3.0
+        version: 11.3.0(bare-buffer@3.7.2)
 
   apps/runner:
     dependencies:

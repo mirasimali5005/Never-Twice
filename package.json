@@ -23,7 +23,7 @@
     "seed": "node --env-file-if-exists=.env scripts/seed.ts",
     "run:arm": "tsx --env-file-if-exists=.env apps/runner/src/cli.ts",
     "run:control": "node --env-file-if-exists=.env packages/baselines/src/control-cli.ts",
-    "reconcile": "node -e \"console.error('TO IMPLEMENT: reconcile (task D2)');process.exit(1)\"",
+    "reconcile": "tsx --env-file-if-exists=.env apps/reconciler/src/cli.ts",
     "evaluator:manifest": "node --env-file-if-exists=evaluator/.env evaluator/src/cli.ts manifest",
     "evaluator:check": "node --env-file-if-exists=evaluator/.env evaluator/src/cli.ts check",
     "desk": "concurrently -k -n api,ui -c blue,green \"tsx --env-file-if-exists=.env apps/desk-api/src/server.ts\" \"pnpm --filter @nt/desk-ui dev\"",
