@@ -15,6 +15,7 @@ import { mutation } from "./mutation.ts";
 import { quarantine } from "./outcomes.ts";
 import { applyResendResult, recordLicence, resend } from "./resend.ts";
 import { propose } from "./reserve.ts";
+import { recordProviderReversal, type ReversalRecord } from "./reversal.ts";
 import { confirmQuarantined, settle, type Evidence } from "./settle.ts";
 import { capabilitiesOf, type GatewayConfig, type GatewayDeps } from "./types.ts";
 
@@ -40,6 +41,8 @@ export interface Gateway {
   freezeGrant(runId: string, actor: string): Promise<void>;
   capabilitiesOf(provider: ProviderId): ProviderCapabilities;
   scanInvariants(runId: string): Promise<InvariantReport>;
+  // Tier 3 (CP-REV-1): a CONFIRMED intent's object later undone at the provider. Audit event only; no state change, no re-send.
+  recordProviderReversal(it: Intent, object: ProviderObject): Promise<ReversalRecord>;
 }
 
 export function withDefaultHooks(deps: GatewayDeps): GatewayDeps {
@@ -79,6 +82,7 @@ export function createGateway(input: GatewayDeps): Gateway {
     freezeGrant: (runId, actor) => freezeGrant(deps, runId, actor),
     capabilitiesOf: (p) => capabilitiesOf(deps, p),
     scanInvariants: (runId) => scanInvariants(deps, runId),
+    recordProviderReversal: (it, o) => recordProviderReversal(deps, it, o),
   };
 }
 
@@ -92,6 +96,7 @@ export type GatewayEnv = ProviderEnv & {
   NT_KEY_MARGIN_MS?: string | undefined;
   NT_INVESTIGATOR_TIMEOUT_MS?: string | undefined;
   NT_STRIPE_ENABLED?: string | undefined;
+  NT_AUTHORITY_GRANT?: string | undefined;
 };
 
 const num = (v: string | undefined, d: number) => (v === undefined || v === "" ? d : Number(v));
@@ -103,6 +108,7 @@ export function configFromEnv(env: GatewayEnv): GatewayConfig {
     keyMarginMs: num(env.NT_KEY_MARGIN_MS, 60000),
     investigatorTimeoutMs: num(env.NT_INVESTIGATOR_TIMEOUT_MS, 45000),
     stripeEnabled: String(env.NT_STRIPE_ENABLED ?? "true") !== "false", // parseEnv may hand over a boolean or a string
+    authorityGrantId: env.NT_AUTHORITY_GRANT || null, // CP-AUTH-1; unset = the single pool
   };
 }
 

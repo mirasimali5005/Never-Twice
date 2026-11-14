@@ -10,7 +10,9 @@ import { RecoveryDecisionSchema } from "./recovery.ts";
 import { Arm, GoodwillKind, HeldReason, Licence, ProviderId, Rail, RunStatus, Scenario } from "./reasons.ts";
 import { FinalReport } from "./report.ts";
 
-/** authority_grants: the single guarded goodwill pool, _id `${run_id}:GOODWILL`. */
+/** authority_grants: the guarded goodwill pool, _id `${run_id}:GOODWILL`. Tier 3 (CP-AUTH-1): optional sub-grants
+ *  (`${run_id}:GOODWILL/DESK_A`, `${run_id}:GOODWILL/DESK_A/AGENT_1`) name their `ancestors`, parent first, the pool last;
+ *  a reservation on a sub-grant must fit every level. Absent `ancestors` = a root (the single-pool default). */
 export const AuthorityGrant = z.object({
   _id: z.string(),
   run_id: RunId,
@@ -21,6 +23,7 @@ export const AuthorityGrant = z.object({
   frozen: z.boolean(),
   currency: z.literal("CAD"),
   policy_version: z.string(),
+  ancestors: z.array(z.string()).optional(),
 });
 export type AuthorityGrant = z.infer<typeof AuthorityGrant>;
 

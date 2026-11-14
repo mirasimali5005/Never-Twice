@@ -1,6 +1,7 @@
 // Leases (ARCHITECTURE.md §3.3). T2 markDispatching (write-ahead mark + lease), T5 takeOverExpired (reconciler form),
 // acquireLease on OUTCOME_UNKNOWN (not a transition: one guarded update, majority, no audit event). Every time comparison
 // is $$NOW inside the write; a worker's clock is never used for a lease or key-window decision.
+import { chainFrozen } from "./authority.ts";
 import type { Intent } from "@nt/contracts";
 import { majorityReader } from "@nt/db";
 import { keyExpiresAt } from "@nt/recovery/pure";
@@ -58,8 +59,9 @@ export async function markDispatching(deps: GatewayDeps, it: Intent, worker = de
         if (ob.status !== "OWED") throw new BusinessGuardFailed("AUTHORITY_REVOKED", `obligation ${ob.status}`);
         if (ob.payee_ref !== it.payee_ref) throw new BusinessGuardFailed("AUTHORITY_REVOKED", "payee differs from the obligation");
         if (it.draws_on) {
-          const g = await deps.db.grants.findOne({ _id: it.draws_on }, { session });
-          if (!g || g.frozen) throw new BusinessGuardFailed("AUTHORITY_REVOKED", g ? "grant frozen" : "grant missing");
+          // Every level of the chain (CP-AUTH-1): freezing the airline pool revokes every desk and agent under it.
+          const f = await chainFrozen(deps.db, it.draws_on, session);
+          if (f.frozen) throw new BusinessGuardFailed("AUTHORITY_REVOKED", f.detail);
         }
       },
       set: {

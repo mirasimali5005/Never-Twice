@@ -79,6 +79,21 @@ export function mountAdmin(app: Hono<Env>): void {
     return c.json({ account: acct.config.account, released });
   });
 
+  // Tier 3 (provider-side reversal): a paid object is later undone at the provider. Body { account, id, status?: "reversed"|"failed" }.
+  app.post("/admin/payouts/reverse", async (c) => {
+    const b = await jsonBody(c);
+    if (b instanceof Response) return b;
+    const acct = acctFrom(c, b.account);
+    if (acct instanceof Response) return acct;
+    if (typeof b.id !== "string" || b.id === "") return fail(c, 400, "invalid_request", "id is required");
+    const status = b.status === undefined ? "reversed" : b.status;
+    if (status !== "reversed" && status !== "failed") return fail(c, 400, "invalid_request", "status must be \"reversed\" or \"failed\"");
+    const r = acct.reverseObject(b.id, status);
+    if (r === "not_found") return fail(c, 404, "not_found", `no object ${b.id} in account ${acct.config.account}`);
+    if (r === "not_paid") return fail(c, 409, "not_paid", `object ${b.id} is not paid`);
+    return c.json(r);
+  });
+
   app.post("/admin/clock/advance", async (c) => {
     const b = await jsonBody(c);
     if (b instanceof Response) return b;

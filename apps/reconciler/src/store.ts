@@ -46,6 +46,11 @@ export function createMongoStore(o: { gw: NtDb; inv: NtDb; runId: string }): Rec
     watchable: (runId) =>
       intents.find({ run_id: runId, state: "QUARANTINED", "quarantine.reason": { $in: [...ABSENCE_CLASS] } }, sorted).toArray(),
 
+    async confirmedUnreversed(runId) {
+      const done = await gw.audit.distinct("intent_id", { run_id: runId, type: "PROVIDER_REVERSAL" } as Document);
+      return intents.find({ run_id: runId, state: "CONFIRMED", _id: { $nin: done.filter((x): x is string => typeof x === "string") } }, sorted).toArray();
+    },
+
     unresolvedCount: (runId) => intents.countDocuments({ run_id: runId, state: { $in: [...UNRESOLVED] } }),
 
     async guards(it: Intent): Promise<RecoveryGuards> {
@@ -54,6 +59,12 @@ export function createMongoStore(o: { gw: NtDb; inv: NtDb; runId: string }): Rec
       if (it.draws_on !== null) {
         const g = await gw.grants.findOne({ _id: it.draws_on } as Document);
         grantFrozen = g ? g.frozen !== false : true; // a missing grant is treated as frozen (conservative)
+        // CP-AUTH-1: any frozen or missing ancestor revokes authority too.
+        const anc = (g as { ancestors?: unknown } | null)?.ancestors;
+        if (!grantFrozen && Array.isArray(anc) && anc.length > 0) {
+          const ups = await gw.grants.find({ _id: { $in: anc } } as Document).toArray();
+          grantFrozen = ups.length !== anc.length || ups.some((u) => u.frozen !== false);
+        }
       }
       if (!ob) return { obligationStatus: "NOT_OWED", obligationReason: null, grantFrozen }; // missing → row 4, AUTHORITY_REVOKED
       return { obligationStatus: ob.status, obligationReason: ob.reason_code ?? null, grantFrozen };

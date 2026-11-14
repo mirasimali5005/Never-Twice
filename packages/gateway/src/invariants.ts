@@ -22,17 +22,24 @@ export async function scanInvariants(deps: GatewayDeps, runId: string): Promise<
   for (const [key, list] of perKey) if (list.length > 1) v.push({ code: "P1_MULTIPLE_INTENTS_PER_KEY", intent_id: null, detail: `${key}: ${list.map((i) => i._id).join(", ")}` });
 
   // P2: counters equal the recomputation, and held + settled <= grant (unknown and quarantined count as held).
+  // CP-AUTH-1: checked on EVERY grant of the run; an intent counts on its draws_on grant and on each of that grant's ancestors.
   const grant = await deps.db.grants.findOne({ _id: goodwillGrantId(runId) });
   const drawing = intents.filter((i) => i.draws_on !== null);
-  if (grant) {
-    const held = drawing.filter((i) => HELD_STATES.includes(i.state)).reduce((s, i) => s + i.amount_minor, 0);
-    const settled = drawing.filter((i) => i.state === "CONFIRMED").reduce((s, i) => s + i.amount_minor, 0);
-    if (held !== grant.held_minor || settled !== grant.settled_minor) {
-      v.push({ code: "P2_COUNTER_DRIFT", intent_id: null, detail: `stored held ${grant.held_minor} settled ${grant.settled_minor}; recomputed held ${held} settled ${settled}` });
+  const grants = await deps.db.grants.find({ run_id: runId }).toArray();
+  const chainOf = new Map<string, string[]>(grants.map((g) => [g._id, [g._id, ...(((g as { ancestors?: string[] }).ancestors) ?? [])]]));
+  for (const g of grants) {
+    const members = drawing.filter((i) => (chainOf.get(i.draws_on!) ?? [i.draws_on!]).includes(g._id));
+    const held = members.filter((i) => HELD_STATES.includes(i.state)).reduce((s, i) => s + i.amount_minor, 0);
+    const settled = members.filter((i) => i.state === "CONFIRMED").reduce((s, i) => s + i.amount_minor, 0);
+    const at = g._id === goodwillGrantId(runId) ? "" : ` [${g._id}]`;
+    if (held !== g.held_minor || settled !== g.settled_minor) {
+      v.push({ code: "P2_COUNTER_DRIFT", intent_id: null, detail: `stored held ${g.held_minor} settled ${g.settled_minor}; recomputed held ${held} settled ${settled}${at}` });
     }
-    if (grant.held_minor + grant.settled_minor > grant.grant_minor) v.push({ code: "P2_CAP_EXCEEDED", intent_id: null, detail: `${grant.held_minor} + ${grant.settled_minor} > ${grant.grant_minor}` });
-  } else if (drawing.length > 0) {
-    v.push({ code: "P2_GRANT_MISSING", intent_id: null, detail: `${drawing.length} intent(s) draw on a missing grant` });
+    if (g.held_minor + g.settled_minor > g.grant_minor) v.push({ code: "P2_CAP_EXCEEDED", intent_id: null, detail: `${g.held_minor} + ${g.settled_minor} > ${g.grant_minor}${at}` });
+  }
+  const missing = drawing.filter((i) => !chainOf.has(i.draws_on!));
+  if ((!grant && drawing.length > 0) || missing.length > 0) {
+    v.push({ code: "P2_GRANT_MISSING", intent_id: null, detail: `${Math.max(missing.length, grant ? 0 : drawing.length)} intent(s) draw on a missing grant` });
   }
 
   // P3: every CONFIRMED intent carries evidence whose marker equals its _id.
