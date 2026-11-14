@@ -85,7 +85,11 @@ export interface ReconcilerStore {
 export type Barrier = (name: BarrierName, effectKey?: string) => void;
 
 /** Evidence plus, on the LLM path with Tier 2 recall on, the ids of the past records shown to the model. */
-export type CollectedWithRecall = WitnessEvidence & { recalled?: string[] };
+export type CollectedWithRecall = WitnessEvidence & {
+  recalled?: string[];
+  /** CP-LETTER-1: set when the intent's only evidence source is a generated probe and none is admitted for the tool's current schema. */
+  probe_not_admitted?: string;
+};
 
 /** Collects evidence for one intent: the model path with the deterministic fallback, or deterministic only. Never writes. */
 export type Collect = (it: Intent) => Promise<CollectedWithRecall>;

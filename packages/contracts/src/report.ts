@@ -33,6 +33,15 @@ export const FinalReportParked = z.object({
 });
 export const FinalReportAwaitingBudget = z.object({ effect_key: z.string(), amount_minor: Minor });
 export const FinalReportFailedNoEffect = z.object({ effect_key: z.string(), code: z.string() });
+export const FinalReportLetter = z.object({
+  effect_key: z.string(),
+  claim_id: z.string(),
+  marker: z.string(),
+  payee_ref: z.string(),
+  state: z.string(),
+  provider_object_id: z.string().nullable(),
+  quarantine_reason: QuarantineReason.nullable(),
+});
 export const FinalReportUnresolved = z.object({ effect_key: z.string(), state: z.string() });
 
 export const FinalReport = z.object({
@@ -48,6 +57,8 @@ export const FinalReport = z.object({
   awaiting_budget: z.array(FinalReportAwaitingBudget),
   failed_no_effect: z.array(FinalReportFailedNoEffect),
   unresolved: z.array(FinalReportUnresolved),
+  /** CP-LETTER-1 (Tier 3): decision letters, one per decided claim. NOT payments: never in `paid`; graded separately. */
+  letters: z.array(FinalReportLetter).optional(),
 });
 export type FinalReport = z.infer<typeof FinalReport>;
 /** Alias of FinalReport (AGENT_TASKS.md packet A name). */

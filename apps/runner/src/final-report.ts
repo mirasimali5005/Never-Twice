@@ -26,7 +26,27 @@ export function deriveReport(input: {
   budgetRefusedKeys: ReadonlySet<string>;
   generatedAt: string;
 }): FinalReport {
-  const { run, claims, obligations, intents, budgetRefusedKeys } = input;
+  const { run, claims, budgetRefusedKeys } = input;
+  // CP-LETTER-1: decision letters are not payments. They never enter paid/refused/parked/...; they are listed in `letters` only.
+  const isLetter = (t: string) => t === "DECISION_LETTER";
+  const obligations = input.obligations.filter((o) => !isLetter(o.entitlement_type));
+  const intents = input.intents.filter((i) => !isLetter(i.entitlement_type));
+  const letterIntents = new Map(input.intents.filter((i) => isLetter(i.entitlement_type)).map((i) => [i.effect_key, i] as const));
+  const letters: NonNullable<FinalReport["letters"]> = input.obligations
+    .filter((o) => isLetter(o.entitlement_type))
+    .map((o) => {
+      const it = letterIntents.get(o.effect_key);
+      return {
+        effect_key: o.effect_key,
+        claim_id: o.claim_ids[0] ?? "",
+        marker: it?._id ?? "",
+        payee_ref: o.payee_ref,
+        state: it?.state ?? "NO_INTENT",
+        provider_object_id: it?.evidence?.provider_object_id ?? null,
+        quarantine_reason: it?.quarantine?.reason ?? null,
+      };
+    })
+    .sort(byKey((x) => x.effect_key));
   const paid: FinalReport["paid"] = [];
   const refused: FinalReport["refused"] = [];
   const parked: FinalReport["parked"] = [];
@@ -108,6 +128,7 @@ export function deriveReport(input: {
     awaiting_budget,
     failed_no_effect,
     unresolved,
+    ...(letters.length > 0 ? { letters } : {}),
   });
 }
 

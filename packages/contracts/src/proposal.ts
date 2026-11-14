@@ -10,7 +10,7 @@ import type { ProposalRefusal } from "./reasons.ts";
 export const ProposedPayment = z.object({
   run_id: RunId,
   effect_key: z.string(),
-  amount_minor: Minor.min(1),
+  amount_minor: Minor, // 0 only for a DECISION_LETTER (CP-LETTER-1; the gateway checks it against the obligation)
   currency: z.literal("CAD"),
   payee_ref: z.string(),
   claim_ids: z.array(z.string()),

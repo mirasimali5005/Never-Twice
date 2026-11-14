@@ -11,6 +11,8 @@ export type { SimClientOptions, SimAccountInfo, SimRail } from "./sim-client.ts"
 export { SimPayoutProvider } from "./sim-payout.ts";
 export { SimKeylessProvider } from "./sim-keyless.ts";
 export { FaultInjectingProvider } from "./fault-injecting.ts";
+export { NotifyLetterProvider, LETTER_TEMPLATE, letterBody, messageToObject } from "./notify-letter.ts";
+import { NotifyLetterProvider } from "./notify-letter.ts";
 export type { ClientFault, ClientFaultName } from "./fault-injecting.ts";
 
 /** The slice of the process environment `createProvider` reads (a superset of what the runner and reconciler roles receive).
@@ -47,6 +49,17 @@ export async function createProvider(id: PaymentProvider["id"], env: ProviderEnv
         ...(env.readTimeoutMs !== undefined ? { readTimeoutMs: env.readTimeoutMs } : {}),
       };
       return id === "sim_payout" ? SimPayoutProvider.create(o) : SimKeylessProvider.create(o);
+    }
+    case "notify_letter": {
+      // CP-LETTER-1: NotifySim, keyless. Same simulator, same run account, same write key (gateway only).
+      const writeKey = need(env.NT_SIM_WRITE_KEY, "NT_SIM_WRITE_KEY");
+      return new NotifyLetterProvider({
+        baseUrl: env.NT_SIM_URL ?? "http://127.0.0.1:4010",
+        account: env.account ?? `acct_${need(env.NT_RUN_ID, "NT_RUN_ID")}`,
+        writeKey,
+        readKey: env.NT_SIM_READ_KEY && env.NT_SIM_READ_KEY !== "" ? env.NT_SIM_READ_KEY : writeKey,
+        ...(env.readTimeoutMs !== undefined ? { readTimeoutMs: env.readTimeoutMs } : {}),
+      });
     }
     case "stripe_refund": {
       // Lazy import: simulator-only consumers never load the Stripe SDK. The constructor refuses any key that is not a test key.

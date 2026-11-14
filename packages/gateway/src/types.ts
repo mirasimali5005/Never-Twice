@@ -15,6 +15,8 @@ export type GatewayConfig = {
   dispatchTimeoutMs: number;
   keyMarginMs: number;
   stripeEnabled: boolean;
+  /** NT_LETTERS_ENABLED (default true): decision letters through NotifySim (CP-LETTER-1). */
+  lettersEnabled?: boolean;
   /** NT_INVESTIGATOR_TIMEOUT_MS; default 45000. Part of the reconciler's lease on OUTCOME_UNKNOWN. */
   investigatorTimeoutMs?: number;
 };

@@ -21,7 +21,7 @@ export const PAYMENT_INTENTS_SCHEMA: Document = {
     effect_key: { bsonType: "string", pattern: "^[A-Z0-9._-]+$" },
     obligation_id: { bsonType: "string" },
     state: { enum: [...INTENT_STATES] },
-    amount_minor: { bsonType: ["int", "long"], minimum: 1 },
+    amount_minor: { bsonType: ["int", "long"], minimum: 0 }, // 0 only for a DECISION_LETTER (CP-LETTER-1)
     currency: { enum: ["CAD"] },
     payee_ref: { bsonType: "string" },
     entitlement_type: { enum: [...ENTITLEMENT_TYPES] },
@@ -43,6 +43,11 @@ export const PAYMENT_INTENTS_SCHEMA: Document = {
     created_at: { bsonType: "date" },
     updated_at: { bsonType: "date" },
   },
+  // CP-LETTER-1: amount 0 only on a DECISION_LETTER; every payment is at least 1.
+  anyOf: [
+    { properties: { entitlement_type: { enum: ["DECISION_LETTER"] }, amount_minor: { enum: [0] } } },
+    { properties: { entitlement_type: { enum: ENTITLEMENT_TYPES.filter((t) => t !== "DECISION_LETTER") }, amount_minor: { minimum: 1 } } },
+  ],
 };
 
 const runIdOnly: Document = { bsonType: "object", required: ["run_id"], properties: { run_id: { bsonType: "string" } } };

@@ -3,7 +3,14 @@
 import { z } from "zod";
 
 // EU261_COMPENSATION: Tier 3 EU261 rule pack (change proposal CP-EU261-1); the five APPR-era types are unchanged.
-export const ENTITLEMENT_TYPES = ["APPR_DELAY", "APPR_DENIED_BOARDING", "APPR_REFUND_COMP", "TICKET_REFUND", "GOODWILL", "EU261_COMPENSATION"] as const;
+// DECISION_LETTER: Tier 3 (change proposal CP-LETTER-1). The written decision a claim is owed. NOT a payment: amount_minor is 0, it is sent
+// through NotifySim (provider notify_letter, keyless), and it is never listed among payments.
+export const ENTITLEMENT_TYPES = ["APPR_DELAY", "APPR_DENIED_BOARDING", "APPR_REFUND_COMP", "TICKET_REFUND", "GOODWILL", "EU261_COMPENSATION", "DECISION_LETTER"] as const;
+/** Entitlement types that are not payments (CP-LETTER-1). */
+export const NON_PAYMENT_TYPES = ["DECISION_LETTER"] as const;
+export function isPaymentType(t: string): boolean {
+  return !(NON_PAYMENT_TYPES as readonly string[]).includes(t);
+}
 export const EntitlementType = z.enum(ENTITLEMENT_TYPES);
 export type EntitlementType = z.infer<typeof EntitlementType>;
 
@@ -89,7 +96,8 @@ export const LICENCES = ["FIRST_SEND", "L1_SAME_KEY", "L2_BOUNDED_WAIT"] as cons
 export const Licence = z.enum(LICENCES);
 export type Licence = z.infer<typeof Licence>;
 
-export const PROVIDER_IDS = ["sim_payout", "sim_keyless", "stripe_refund"] as const;
+// notify_letter: NotifySim, keyless (CP-LETTER-1). Sends decision letters, never money.
+export const PROVIDER_IDS = ["sim_payout", "sim_keyless", "stripe_refund", "notify_letter"] as const;
 export const ProviderId = z.enum(PROVIDER_IDS);
 export type ProviderId = z.infer<typeof ProviderId>;
 

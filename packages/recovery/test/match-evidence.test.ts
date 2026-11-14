@@ -71,7 +71,8 @@ describe.each(PROVIDER_IDS)("matchEvidence on %s", (provider: ProviderId) => {
   it.each([
     ["amount higher", { amount_minor: 100000 }],
     ["amount lower", { amount_minor: 69999 }],
-    ["amount zero", { amount_minor: 0 }],
+    // a letter's amount is 0, so for notify_letter "amount zero" would match: use 1 there (still a mismatch)
+    ["amount zero (1 on a letter)", { amount_minor: provider === "notify_letter" ? 1 : 0 }],
     ["currency USD", { currency: "USD" }],
     ["currency lower-case cad", { currency: "cad" }],
     ["payee differs", { payee_ref: "payee_P14" }],

@@ -39,7 +39,10 @@ export async function investigate(d: InvestigateDeps, it: Intent): Promise<Apply
   const match = matchEvidence(it, records);
   const guards = await d.store.guards(it);
   const now = await d.store.now();
-  const decision = decideRecovery(it, match, d.gateway.capabilitiesOf(it.provider), now, guards);
+  // CP-LETTER-1 / HANDOVER §11.3: when the sole evidence source for a tool is a generated probe that is not admitted, quarantine.
+  const decision: RecoveryDecision = collected.probe_not_admitted !== undefined
+    ? { row: 9, kind: "QUARANTINE", reason: "PROBE_NOT_ADMITTED", detail: collected.probe_not_admitted }
+    : decideRecovery(it, match, d.gateway.capabilitiesOf(it.provider), now, guards);
   await d.store.closeInvestigation(
     rec,
     it,

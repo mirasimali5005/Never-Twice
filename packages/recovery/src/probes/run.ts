@@ -107,16 +107,15 @@ function stringRecord(v: unknown): Record<string, string> {
 
 /**
  * Project probe records onto the frozen ProviderObject shape for matchEvidence. Fixed code, NotifySim's documented object schema:
- * recipient → payee_ref, amount_minor (null → 0), currency (null → ""), status, metadata (string values), created_at.
- * `kind` is a frozen contracts enum ("payout" | "refund") with no member for a message; "payout" is used and is NOT a claim that the
- * message is a payment. The matcher's hit test is metadata.nt_marker === intent._id, so the evidence is decided by the marker only.
+ * recipient → payee_ref, amount_minor (null → 0), currency (null → ""), status, metadata (string values), created_at, kind "message"
+ * (CP-LETTER-1). With provider notify_letter the fixed matcher accepts status "sent"; it still requires marker, amount, currency, payee.
  */
 export function toProviderObjects(records: readonly ProbeRecord[]): ProviderObject[] {
   return records.map((r) => {
     const it = r.item;
     return {
       id: r.id,
-      kind: "payout",
+      kind: "message",
       status: typeof it.status === "string" ? it.status : "unknown",
       amount_minor: typeof it.amount_minor === "number" && Number.isSafeInteger(it.amount_minor) && it.amount_minor >= 0 ? it.amount_minor : 0,
       currency: typeof it.currency === "string" ? it.currency : "",

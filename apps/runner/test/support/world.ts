@@ -126,7 +126,7 @@ export function fakeGateway(db: NtDb, runId: string, outcome: (effectKey: string
     db,
     runId,
     workerId: "runner-1",
-    providers: { sim_payout: capsOnly("sim_payout", true), sim_keyless: capsOnly("sim_keyless", false), stripe_refund: capsOnly("stripe_refund", true) },
+    providers: { sim_payout: capsOnly("sim_payout", true), sim_keyless: capsOnly("sim_keyless", false), stripe_refund: capsOnly("stripe_refund", true), notify_letter: capsOnly("notify_letter", false) },
     config: { leaseMs: 8000, dispatchTimeoutMs: 3000, keyMarginMs: 60000, stripeEnabled: false },
   });
   const gw: FakeGateway = {
@@ -159,5 +159,5 @@ export function fakeGateway(db: NtDb, runId: string, outcome: (effectKey: string
 }
 
 export function depsFor(world: World, runId: string, repoRoot: string, gateway?: RunnerGateway, extra: Partial<RunnerDeps> = {}): RunnerDeps {
-  return { db: world.db, gateway: gateway ?? fakeGateway(world.db, runId), model: replayModel(), policy: policyBundle(), repoRoot, ...extra };
+  return { db: world.db, gateway: gateway ?? fakeGateway(world.db, runId), model: replayModel(), policy: policyBundle(), repoRoot, lettersEnabled: false, ...extra };
 }

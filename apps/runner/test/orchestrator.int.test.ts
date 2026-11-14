@@ -265,3 +265,34 @@ describe("cli", () => {
     }
   });
 });
+
+describe("decision letters (CP-LETTER-1, NT_LETTERS_ENABLED)", () => {
+  it("after the payouts, one DECISION_LETTER per decided claim is proposed (amount 0, notify_letter, keyless) and reported under letters only", async () => {
+    const { runId } = await seedRun(world.db, "S0");
+    const root = tmpRoot();
+    const gw = fakeGateway(world.db, runId);
+    expect(await runArm({ runId, pauseBeforePayout: false }, depsFor(world, runId, root, gw, { lettersEnabled: true }))).toBe(0);
+    const payments = gw.proposed.filter((k) => !k.startsWith("LETTER."));
+    const letters = gw.proposed.filter((k) => k.startsWith("LETTER."));
+    expect(payments).toHaveLength(5);
+    expect(gw.proposed.slice(0, 5)).toEqual(payments); // letters come after every payment
+    const claims = await world.db.claims.find({ run_id: runId, status: "RESOLVED" }).toArray();
+    expect(letters.sort()).toEqual(claims.map((c) => `LETTER.${c.claim_id}`).sort()); // S0: every claim has a statutory decision
+    const its = await world.db.intents.find({ run_id: runId, entitlement_type: "DECISION_LETTER" }).toArray();
+    expect(its).toHaveLength(letters.length);
+    for (const it of its) {
+      expect(it).toMatchObject({ amount_minor: 0, provider: "notify_letter", idempotency_key: null, draws_on: null });
+      expect(it.frozen_request).toMatchObject({ operation: "NOTIFY", rail: null, amount_minor: 0, provider: "notify_letter" });
+    }
+    const report = FinalReport.parse(JSON.parse(readFileSync(join(root, "out", "reports", `${runId}.final-report.json`), "utf8")));
+    expect(report.paid.map((p) => p.effect_key).some((k) => k.startsWith("LETTER."))).toBe(false);
+    expect(report.paid).toHaveLength(5);
+    expect(report.letters?.map((l) => l.effect_key).sort()).toEqual(letters.sort());
+    expect(report.letters?.every((l) => l.state === "CONFIRMED")).toBe(true);
+    // a restart sends no second letter: the obligation and intent _ids are the markers
+    gw.proposed.length = 0;
+    await world.db.runs.updateOne({ _id: runId }, { $set: { status: "RUNNING" } });
+    expect(await runArm({ runId, pauseBeforePayout: false }, depsFor(world, runId, root, gw, { lettersEnabled: true }))).toBe(0);
+    expect(gw.dispatched.filter((k) => k.startsWith("LETTER.")).length).toBe(letters.length);
+  });
+});
