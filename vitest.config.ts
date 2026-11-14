@@ -5,7 +5,7 @@ import { defineConfig } from "vitest/config";
 //   int  -> `pnpm test:int`  : **/test/**/*.int.test.ts (needs a replica set or a running simulator)
 //   e2e  -> `pnpm test:e2e`  : tests/e2e/**/*.test.ts
 // evaluator/test/ is never matched: it runs under node:test through `pnpm test:evaluator`.
-const neverMatched = ["**/node_modules/**", "evaluator/**", "out/**", ".nt/**"];
+const neverMatched = ["**/node_modules/**", "evaluator/**", "out/**", ".nt/**", ".claude/**"];
 
 export default defineConfig({
   test: {
