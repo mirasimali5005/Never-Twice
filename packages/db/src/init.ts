@@ -168,6 +168,8 @@ export function vectorIndexDefinitions(numDimensions: number) {
           { type: "filter", path: "provider" },
           { type: "filter", path: "match" },
           { type: "filter", path: "run_id" },
+          // Recall pre-filters on intent_id ($ne: the intent under investigation) so k results are never eaten by a post-filter.
+          { type: "filter", path: "intent_id" },
         ],
       },
     },

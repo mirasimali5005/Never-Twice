@@ -6,6 +6,7 @@ import type { ReadOnlyProviderView, WitnessEvidence } from "@nt/recovery/investi
 import { ObjectId } from "mongodb";
 import { CAPS, RUN, T0, intent, obj } from "./support/fixtures.ts";
 import { makeCollect } from "../src/collect.ts";
+import { makeEmbedQueue } from "../src/embed.ts";
 import { runLoop, tick, type LoopDeps } from "../src/loop.ts";
 import { watchOne } from "../src/watcher.ts";
 import type { ClosedRecord, Collect, ReconcilerGateway, ReconcilerStore } from "../src/ports.ts";
@@ -388,5 +389,134 @@ describe("Tier 2 watcher (T12)", () => {
     const b = quarantined("CONTRADICTORY_EVIDENCE");
     expect(await watchOne({ ...w.deps({ gateway }), watchCollect: collectWith([obj(b)]) }, b)).toBe(false);
     expect(n).toBe(0);
+  });
+});
+
+describe("Tier 2 recall (advisory): wiring in the reconciler", () => {
+  const PAST = "65a000000000000000000001";
+  const recalledEntry = { id: PAST, hypothesis: "applied, response lost", rail: "instant" as const, fault_signature: "sim_payout|attempts:NO_RESULT|match:MATCH", evidence_queries: ["list_provider_payments_by_payee"], match: "MATCH" as const, decision_kind: "SETTLE" as const, score: 0.91 };
+  const viewWith = (found: ProviderObject): ReadOnlyProviderView => ({
+    async getOperation() { return null; },
+    async findOperationEvidence() { return { records: [found], complete: true }; },
+    async *listOperations() { yield found; },
+  });
+  const planningModel = () => {
+    const prompts: string[] = [];
+    let n = 0;
+    const model: ModelClient = {
+      mode: "live", model: "fake", backend: "cli",
+      parse: async (req) => {
+        prompts.push(String(req.messages[0]?.content ?? ""));
+        const output = n++ === 0 ? { hypothesis: "applied, response lost", queries: [{ tool: "list_provider_payments_by_payee", args: { all_pages: true } }] } : { queries: [] };
+        return { ok: true, output: req.schema.parse(output), requestSha256: "x", source: "live" } as never;
+      },
+      runTools: async () => { throw new Error("unused"); },
+    };
+    return { model, prompts };
+  };
+
+  test("the LLM investigator receives the recalled past records; the closed record stores their ids; the decision is unchanged", async () => {
+    const w = world();
+    const it = intent("P02", "sim_payout");
+    w.put(it);
+    const { model, prompts } = planningModel();
+    const asked: string[] = [];
+    const logs: string[] = [];
+    const recall = { similar: async (x: Intent, k: number) => { asked.push(`${x._id}:${k}`); return [recalledEntry]; } };
+    const collect = makeCollect({ gateway: { readOnlyProviderView: () => viewWith(obj(it)) }, mode: "llm", model, timeoutMs: 5_000, recall, log: (l) => logs.push(l) });
+    await tick(w.deps({ collect }));
+    expect(asked).toEqual([`${it._id}:3`]);
+    expect(prompts[0]).toMatch(/Past investigations of similar intents \(advisory/);
+    expect(prompts[0]).toContain("applied, response lost");
+    const closed = w.records[0]!.closed!;
+    expect(closed).toMatchObject({ investigator: "llm", match: "MATCH", decision: { kind: "SETTLE" }, recalled: [PAST] });
+    expect(w.get(it._id).state).toBe("CONFIRMED");
+    expect(logs.join("\n")).toMatch(/recall: 1 past investigation\(s\)/);
+  });
+
+  test("a recall failure never blocks the investigation", async () => {
+    const w = world();
+    const it = intent("P02", "sim_payout");
+    w.put(it);
+    const { model, prompts } = planningModel();
+    const recall = { similar: async (): Promise<never> => { throw new Error("vector index missing"); } };
+    const collect = makeCollect({ gateway: { readOnlyProviderView: () => viewWith(obj(it)) }, mode: "llm", model, timeoutMs: 5_000, recall });
+    await tick(w.deps({ collect }));
+    expect(prompts[0]).not.toMatch(/Past investigations/);
+    expect(w.records[0]!.closed).toMatchObject({ investigator: "llm", match: "MATCH", recalled: [] });
+    expect(w.get(it._id).state).toBe("CONFIRMED");
+  });
+
+  test("the deterministic path ignores recall", async () => {
+    const w = world();
+    const it = intent("P02", "sim_payout");
+    w.put(it);
+    let asked = 0;
+    const recall = { similar: async () => { asked++; return [recalledEntry]; } };
+    const collect = makeCollect({ gateway: { readOnlyProviderView: () => viewWith(obj(it)) }, mode: "deterministic", timeoutMs: 50, recall });
+    await tick(w.deps({ collect }));
+    expect(asked).toBe(0);
+    expect(w.records[0]!.closed!.recalled).toBeUndefined();
+  });
+
+  test("an embedding failure never blocks closing the record or applying the decision", async () => {
+    const w = world();
+    const it = intent("P02", "sim_payout");
+    w.put(it);
+    w.evidence.set(it._id, [obj(it)]);
+    const logs: string[] = [];
+    const embedded: string[] = [];
+    await tick(w.deps({ log: (l) => logs.push(l), embedClosed: async (id) => { embedded.push(id.toHexString()); throw new Error("voyage 503"); } }));
+    expect(w.records[0]!.closed).toMatchObject({ match: "MATCH" });
+    expect(w.get(it._id).state).toBe("CONFIRMED");
+    expect(embedded).toEqual([w.records[0]!.id.toHexString()]);
+    // embedding runs after apply(): settle precedes it, and the failure is only logged
+    expect(w.calls.map((c) => c.m).slice(-1)).toEqual(["settle"]);
+    expect(logs.join("\n")).toMatch(/embedding skipped \(voyage 503\)/);
+  });
+
+  test("the embed queue writes embedding_text and vectors in one call per flush; on an embedder failure it writes null and does not throw", async () => {
+    const a = new ObjectId();
+    const b = new ObjectId();
+    const doc = (id: ObjectId) => ({ _id: id, intent_id: id.toHexString(), closed_at: T0, hypothesis: "h", provider: "sim_payout", rail: "instant", fault_signature: "f", evidence_queries: ["list_provider_payments_by_payee"], steps: [], match: "MATCH", decision: { kind: "SETTLE" }, licence: null, investigator: "llm" });
+    const sets: { id: string; set: Record<string, unknown> }[] = [];
+    const finds: unknown[] = [];
+    const coll = {
+      find: (f: Record<string, unknown>) => (finds.push(f), { toArray: async () => ("run_id" in f ? [doc(b)] : [doc(a)]) }),
+      updateOne: async (flt: { _id: ObjectId }, u: { $set: Record<string, unknown> }) => { sets.push({ id: flt._id.toHexString(), set: u.$set }); return {}; },
+    };
+    const calls: { n: number; t: string }[] = [];
+    const ok = makeEmbedQueue({ collection: coll, runId: RUN, embedder: { model: "m", dims: 2, embed: async (ts, t) => { calls.push({ n: ts.length, t }); return ts.map(() => [0.5, 0.5]); } } });
+    await ok.enqueue(a);
+    expect(ok.pending).toBe(1);
+    await ok.flush({ backfill: true });
+    expect(calls).toEqual([{ n: 2, t: "document" }]); // queued record + backfilled record, one request
+    expect(sets.map((s) => s.id)).toEqual([a.toHexString(), b.toHexString()]);
+    expect(sets[0]!.set).toMatchObject({ embedding_model: "m", embedding: [0.5, 0.5] });
+    expect(String(sets[0]!.set.embedding_text)).toContain("evidence found by: list_provider_payments_by_payee");
+    await ok.flush(); // empty queue, no backfill: no call
+    expect(calls).toHaveLength(1);
+    sets.length = 0;
+    const bad = makeEmbedQueue({ collection: coll, embedder: { model: "m", dims: 2, embed: async () => { throw new Error("HTTP 429"); } } });
+    await bad.enqueue(a);
+    await expect(bad.flush()).resolves.toBeUndefined();
+    expect(sets[0]!.set).toMatchObject({ embedding_model: null, embedding: null });
+  });
+
+  test("the loop primes recall once for all due intents and flushes embeddings once per tick", async () => {
+    const w = world();
+    const a = intent("P02", "sim_payout");
+    const b = intent("P13", "sim_payout");
+    w.put(a);
+    w.put(b);
+    w.evidence.set(a._id, [obj(a)]);
+    w.evidence.set(b._id, [obj(b)]);
+    const primed: string[][] = [];
+    let flushes = 0;
+    await tick(w.deps({ primeRecall: async (due) => { primed.push(due.map((x) => x._id)); }, flushEmbeddings: async () => { flushes++; throw new Error("ignored"); } }));
+    expect(primed).toEqual([[a._id, b._id]]);
+    expect(flushes).toBe(1);
+    expect(w.get(a._id).state).toBe("CONFIRMED");
+    expect(w.get(b._id).state).toBe("CONFIRMED");
   });
 });
