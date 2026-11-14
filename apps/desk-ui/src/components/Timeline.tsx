@@ -1,23 +1,16 @@
-// The story of the selected Never Twice payment as a strip: Claim → Reserved → Sent → Crash → In doubt → Investigation → Recovered.
-// Derived only from that payment's trail (attempts, investigations, intent state) and the run's status; no step is invented.
-import { AlertTriangle, CircleCheck, FileText, Lock, Search, Send, UserRound, Zap, Hourglass } from "lucide-react";
+// The recovery story of the selected Never Twice payment: Claim received → Payment reserved → Payment sent → System crash →
+// Investigation → Verified recovery. Derived only from that payment's trail (attempts, investigations, intent state) and the
+// run's status; no step is invented.
+import { CircleCheck, FileText, Hourglass, Lock, Search, Send, UserRound, Zap } from "lucide-react";
 import { isBaseline } from "../trailSteps";
 import type { ApiResult } from "../api";
-import type { AnyTrail, RunSummary } from "../types";
+import type { AnyTrail, PaymentTrail, RunSummary } from "../types";
 
-type Stage = { id: string; label: string; icon: typeof Send; done: boolean; tone?: "amber" | "green" | "blue" | "red" };
+type Tone = "red" | "green" | "neutral" | "active";
+type Stage = { id: string; label: string; icon: typeof Send; done: boolean; tone?: Tone };
 
-export function Timeline(props: { trail: ApiResult<AnyTrail> | null; summary: ApiResult<RunSummary> | null }) {
-  const status = props.summary?.ok ? props.summary.data.status : null;
-  const t = props.trail?.ok && !isBaseline(props.trail.data) ? props.trail.data : null;
-  if (!t) {
-    return (
-      <div className="timeline timeline--idle">
-        <Hourglass size={16} aria-hidden />
-        {status === "PAUSED" || status === "SEEDED" ? "Waiting for the judge's go" : "The timeline appears once a Never Twice payment is selected"}
-      </div>
-    );
-  }
+/** What the trail of one Never Twice payment shows, in phases. Pure; shared by the timeline and the hero's stage. */
+export function trailPhase(t: PaymentTrail) {
   const i = t.intent;
   const attempts = i.attempts ?? [];
   const invs = (t.investigations ?? []).filter(Boolean);
@@ -26,41 +19,70 @@ export function Timeline(props: { trail: ApiResult<AnyTrail> | null; summary: Ap
   const lost =
     attempts.some((a) => a.result != null && (a.result.kind === "INDETERMINATE" || a.result.kind === "LEASE_EXPIRED")) ||
     (attempts.some((a) => a.result == null) && (i.state !== "DISPATCHING" || invs.length > 0));
-  const inDoubt = lost || invs.length > 0 || i.state === "DISPATCHING" || i.state === "OUTCOME_UNKNOWN";
   const last = invs[invs.length - 1];
-  const decision = last?.decision?.kind ?? null;
-  let recovered: Stage = { id: "rec", label: "Recovered", icon: CircleCheck, done: false };
-  if (i.state === "CONFIRMED" && invs.length > 0) {
-    recovered = { id: "rec", label: decision === "REDISPATCH_SAME_KEY" ? "Re-sent, same key" : "Confirmed on evidence", icon: CircleCheck, done: true, tone: "green" };
-  } else if (i.state === "CONFIRMED") {
-    recovered = { id: "rec", label: "Confirmed", icon: CircleCheck, done: true, tone: "green" };
-  } else if (i.state === "QUARANTINED") {
-    const reversed = i.quarantine?.reason === "PROVIDER_REVERSAL";
-    recovered = { id: "rec", label: reversed ? "Reversed: needs a person" : "Needs a person", icon: UserRound, done: true, tone: reversed ? "red" : "blue" };
+  return {
+    sent: attempts.length > 0 || i.state !== "RESERVED",
+    lost,
+    investigating: invs.length > 0 && !last?.decision,
+    investigated: invs.length > 0,
+    decision: last?.decision?.kind ?? null,
+    confirmed: i.state === "CONFIRMED",
+    quarantined: i.state === "QUARANTINED",
+    reversed: i.quarantine?.reason === "PROVIDER_REVERSAL",
+  };
+}
+
+export function Timeline(props: { trail: ApiResult<AnyTrail> | null; summary: ApiResult<RunSummary> | null }) {
+  const status = props.summary?.ok ? props.summary.data.status : null;
+  const t = props.trail?.ok && !isBaseline(props.trail.data) ? props.trail.data : null;
+  const p = t ? trailPhase(t) : null;
+
+  let recovered: Stage = { id: "rec", label: "Verified recovery", icon: CircleCheck, done: false };
+  if (p?.confirmed && p.investigated) {
+    recovered = { id: "rec", label: p.decision === "REDISPATCH_SAME_KEY" ? "Verified: re-sent, same key" : "Verified recovery", icon: CircleCheck, done: true, tone: "green" };
+  } else if (p?.confirmed) {
+    recovered = { id: "rec", label: "Verified at provider", icon: CircleCheck, done: true, tone: "green" };
+  } else if (p?.quarantined) {
+    recovered = { id: "rec", label: p.reversed ? "Reversed: needs a person" : "Parked for a person", icon: UserRound, done: true, tone: p.reversed ? "red" : "neutral" };
   }
   const stages: Stage[] = [
-    { id: "claim", label: "Claim", icon: FileText, done: true },
-    { id: "res", label: "Reserved", icon: Lock, done: true },
-    { id: "sent", label: "Sent", icon: Send, done: attempts.length > 0 || i.state !== "RESERVED" },
-    { id: "crash", label: "Crash / kill", icon: Zap, done: lost, tone: lost ? "red" : undefined },
-    { id: "doubt", label: "In doubt", icon: AlertTriangle, done: inDoubt, tone: inDoubt ? "amber" : undefined },
-    { id: "inv", label: "Investigation", icon: Search, done: invs.length > 0, tone: invs.length > 0 && !last?.decision ? "amber" : undefined },
+    { id: "claim", label: "Claim received", icon: FileText, done: t !== null },
+    { id: "res", label: "Payment reserved", icon: Lock, done: t !== null },
+    { id: "sent", label: "Payment sent", icon: Send, done: p?.sent ?? false },
+    { id: "crash", label: "System crash", icon: Zap, done: p?.lost ?? false, tone: p?.lost ? "red" : undefined },
+    { id: "inv", label: "Investigation", icon: Search, done: p?.investigated ?? false, tone: p?.investigating ? "active" : undefined },
     recovered,
   ];
+  const note = !t
+    ? status === "PAUSED" || status === "SEEDED"
+      ? "Paused: waiting for the go"
+      : "Lights up once a Never Twice payment exists"
+    : status === "PAUSED"
+      ? "Paused: waiting for the go"
+      : null;
   return (
-    <ol className="timeline" aria-label="What happened to the selected payment">
-      {stages.map((s) => {
-        const Icon = s.icon;
-        return (
-          <li key={s.id} className={`tl${s.done ? " tl--done" : ""}${s.tone ? ` tl--${s.tone}` : ""}`}>
-            <span className="tl__dot">
-              <Icon size={15} aria-hidden />
-            </span>
-            <span className="tl__label">{s.label}</span>
-          </li>
-        );
-      })}
-      {status === "PAUSED" && <li className="tl__status">paused: waiting for the judge's go</li>}
-    </ol>
+    <section className="glass rtl" aria-label="Recovery timeline for the selected payment">
+      <div className="rtl__head">
+        <span className="eyebrow">Recovery timeline</span>
+        {note && (
+          <span className="rtl__note">
+            <Hourglass size={13} aria-hidden /> {note}
+          </span>
+        )}
+      </div>
+      <ol className="rtl__track">
+        {stages.map((s) => {
+          const Icon = s.icon;
+          return (
+            <li key={s.id} className={`tl${s.done ? " tl--done" : ""}${s.tone ? ` tl--${s.tone}` : ""}`} aria-current={s.tone === "active" ? "step" : undefined}>
+              <span className="tl__dot">
+                <Icon size={16} aria-hidden />
+              </span>
+              <span className="tl__label">{s.label}</span>
+            </li>
+          );
+        })}
+      </ol>
+    </section>
   );
 }
