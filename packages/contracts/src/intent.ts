@@ -49,7 +49,7 @@ export const Intent = z.object({
   effect_key: z.string(),
   obligation_id: z.string(),
   entitlement_type: EntitlementType,
-  amount_minor: Minor.min(1),
+  amount_minor: Minor, // >= 1 for a payment; 0 for a DECISION_LETTER (CP-LETTER-1; enforced by the gateway)
   currency: z.literal("CAD"),
   payee_ref: z.string(),
   provider: ProviderId,
@@ -72,6 +72,9 @@ export const Intent = z.object({
   rule_citation: z.string(),
   created_at: z.date(),
   updated_at: z.date(),
+}).refine((i) => (i.entitlement_type === "DECISION_LETTER" ? i.amount_minor === 0 : i.amount_minor >= 1), {
+  message: "amount_minor must be >= 1 for a payment and 0 for a DECISION_LETTER (CP-LETTER-1)",
+  path: ["amount_minor"],
 });
 export type Intent = z.infer<typeof Intent>;
 /** Alias of Intent (AGENT_TASKS.md packet A name). */

@@ -7,6 +7,7 @@ export const CAPS: Record<ProviderId, ProviderCapabilities> = {
   sim_payout: { dedupesOnIdempotencyKey: true, keyRetentionMs: 86_400_000, declaredMaxInFlightMs: null, stronglyConsistentList: true },
   sim_keyless: { dedupesOnIdempotencyKey: false, keyRetentionMs: null, declaredMaxInFlightMs: null, stronglyConsistentList: true },
   stripe_refund: { dedupesOnIdempotencyKey: true, keyRetentionMs: 86_400_000, declaredMaxInFlightMs: null, stronglyConsistentList: true },
+  notify_letter: { dedupesOnIdempotencyKey: false, keyRetentionMs: null, declaredMaxInFlightMs: null, stronglyConsistentList: true },
 };
 
 export function intent(p: string, provider: ProviderId, over: Partial<Intent> = {}): Intent {

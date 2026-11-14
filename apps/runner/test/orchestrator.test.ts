@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import type { Intent, Obligation } from "@nt/contracts";
-import { payoutOrder } from "../src/orchestrator.ts";
+import { letterEffectKey, payoutOrder } from "../src/orchestrator.ts";
 import { deriveReport } from "../src/final-report.ts";
 
 const day = 86_400_000;
@@ -75,5 +75,39 @@ describe("deriveReport mapping (E4-UNIT-05, E4-UNIT-06)", () => {
     expect(r.unresolved).toEqual([{ effect_key: owed.effect_key, state: "NO_INTENT" }]);
     expect(r.refused).toEqual([{ effect_key: refused.effect_key, reason_code: "DELAY_UNDER_3H", rule_citation: "c" }]);
     expect(r.complete).toBe(false);
+  });
+});
+
+describe("decision letters in the final report (CP-LETTER-1)", () => {
+  const run = { _id: "r1234567", group_id: "g1234567", arm: "nt" as const, scenario: "S0" as const };
+  const none = { run, claims: [], obligations: [], intents: [], budgetRefusedKeys: new Set<string>(), generatedAt: "2026-11-14T00:00:00.000Z" };
+  const letter = (claim: string) => ({ ...ob("P02", "DECISION_LETTER", null, claim), effect_key: letterEffectKey(claim), _id: `r1234567:${letterEffectKey(claim)}`, amount_minor: 0 }) as Obligation;
+
+  it("letterEffectKey is a valid effect key per claim", () => {
+    expect(letterEffectKey("C02")).toBe("LETTER.C02");
+    expect(letterEffectKey("c-7/x")).toBe("LETTER.C-7_X");
+  });
+
+  it("letters are never in paid/refused/parked/unresolved and never block completion; they are listed in `letters` with their state", () => {
+    const l2 = letter("C02");
+    const l3 = letter("C03");
+    const confirmed = {
+      _id: l2._id, effect_key: l2.effect_key, entitlement_type: "DECISION_LETTER", state: "CONFIRMED", amount_minor: 0, currency: "CAD", payee_ref: "payee_P02", provider: "notify_letter",
+      evidence: { source: "PROBE", provider_object_id: "msg_1", status: "sent", amount_minor: 0, currency: "CAD", payee_ref: "payee_P02", marker: l2._id, retrieved_at: new Date() }, quarantine: null,
+    } as never;
+    const quarantined = { _id: l3._id, effect_key: l3.effect_key, entitlement_type: "DECISION_LETTER", state: "QUARANTINED", evidence: null, quarantine: { reason: "NO_DEDUPE_NO_EVIDENCE", detail: "", at: new Date() } } as never;
+    const r = deriveReport({ ...none, obligations: [l2, l3], intents: [confirmed, quarantined] });
+    expect(r.paid).toEqual([]);
+    expect(r.parked).toEqual([]);
+    expect(r.unresolved).toEqual([]);
+    expect(r.complete).toBe(true);
+    expect(r.letters).toEqual([
+      { effect_key: "LETTER.C02", claim_id: "C02", marker: l2._id, payee_ref: "payee_P02", state: "CONFIRMED", provider_object_id: "msg_1", quarantine_reason: null },
+      { effect_key: "LETTER.C03", claim_id: "C03", marker: l3._id, payee_ref: "payee_P02", state: "QUARANTINED", provider_object_id: null, quarantine_reason: "NO_DEDUPE_NO_EVIDENCE" },
+    ]);
+  });
+
+  it("a run without letters has no `letters` field (reports with NT_LETTERS_ENABLED=false are unchanged)", () => {
+    expect("letters" in deriveReport(none)).toBe(false);
   });
 });

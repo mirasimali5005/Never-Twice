@@ -23,6 +23,8 @@ export type MakeCollectOptions = {
   /** How many past records to show (default 3). */
   recallK?: number;
   log?: Logger | undefined;
+  /** CP-LETTER-1: evidence for a notify_letter intent comes ONLY from the admitted generated probe (see probe-collect.ts). */
+  letters?: Collect | undefined;
 };
 
 /** The model path is always given at least this long after recall, whatever recall cost. */
@@ -48,6 +50,10 @@ export function makeCollect(o: MakeCollectOptions): Collect {
     collectDeterministic(it, createReadOnlyEvidenceTools(it, o.gateway.readOnlyProviderView(it.provider)), { fallbackReason: reason });
 
   return async (it) => {
+    if (it.provider === "notify_letter") {
+      if (o.letters) return o.letters(it);
+      return { investigator: "deterministic", hypothesis: null, steps: [], records: [], complete: false, fallback_reason: null, probe_not_admitted: "no probe evidence source configured" };
+    }
     const useLlm = o.mode === "llm" && o.model !== undefined && !DETERMINISTIC_ONLY.has(it.provider);
     if (!useLlm) {
       const why = o.mode === "llm" && o.model === undefined ? "no model client configured" : null;

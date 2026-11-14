@@ -14,7 +14,7 @@ export async function reservedFlow(
 ): Promise<Flow> {
   const run = opts.run ?? freshRun();
   if (opts.seedGrant !== false && !(await w.db.grants.findOne({ _id: `${run}:GOODWILL` }))) await seedGrant(w.db, run);
-  const fp = { sim_payout: fakeProvider("sim_payout", {}, script), sim_keyless: fakeProvider("sim_keyless", {}, script), stripe_refund: fakeProvider("stripe_refund", {}, script) };
+  const fp = { sim_payout: fakeProvider("sim_payout", {}, script), sim_keyless: fakeProvider("sim_keyless", {}, script), stripe_refund: fakeProvider("stripe_refund", {}, script), notify_letter: fakeProvider("notify_letter", {}, script) };
   const barriers: string[] = [];
   const deps = depsFor(w.db, run, { providers: fp, barriers, ...(opts.mutation ? { mutation: opts.mutation } : {}), ...(opts.leaseMs ? { leaseMs: opts.leaseMs } : {}), ...(opts.workerId ? { workerId: opts.workerId } : {}) });
   const ob = obligation(run, o);

@@ -8,7 +8,7 @@ import type { ProviderId } from "./reasons.ts";
 
 export const ProviderObject = z.object({
   id: z.string(),
-  kind: z.enum(["payout", "refund"]),
+  kind: z.enum(["payout", "refund", "message"]), // "message": a NotifySim letter (CP-LETTER-1), never a payment
   status: z.string(),
   amount_minor: Minor,
   currency: z.string(),
@@ -38,7 +38,7 @@ export type ProviderCapabilities = {
 };
 
 export interface PaymentProvider {
-  readonly id: "sim_payout" | "sim_keyless" | "stripe_refund";
+  readonly id: "sim_payout" | "sim_keyless" | "stripe_refund" | "notify_letter";
   readonly capabilities: ProviderCapabilities;
   createPaymentOrRefund(req: FrozenRequest, opts: { idempotencyKey: string | null; timeoutMs: number }): Promise<DispatchResult>;
   getOperation(providerObjectId: string): Promise<ProviderObject | null>;
@@ -54,6 +54,7 @@ export const ACCEPTED_STATUSES: Record<ProviderId, ReadonlySet<string>> = {
   sim_payout: new Set(["paid"]),
   sim_keyless: new Set(["paid"]),
   stripe_refund: new Set(["succeeded", "pending"]),
+  notify_letter: new Set(["sent"]), // CP-LETTER-1: a letter, not a payment
 };
 
 /** Tier 3 (CP-REV-1): provider statuses that positively say an accepted payment was later undone at the provider. Only these
@@ -62,4 +63,5 @@ export const REVERSAL_STATUSES: Record<ProviderId, ReadonlySet<string>> = {
   sim_payout: new Set(["reversed", "failed"]),
   sim_keyless: new Set(["reversed", "failed"]),
   stripe_refund: new Set(["failed", "canceled"]),
+  notify_letter: new Set(), // CP-LETTER-1: a letter is not a payment and cannot be reversed
 };

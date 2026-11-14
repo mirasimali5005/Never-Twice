@@ -16,16 +16,21 @@ export type FrozenRequestMetadata = z.infer<typeof FrozenRequestMetadata>;
 export const FrozenRequest = z
   .object({
     provider: ProviderId,
-    operation: z.enum(["PAYOUT", "REFUND"]),
+    operation: z.enum(["PAYOUT", "REFUND", "NOTIFY"]), // NOTIFY: a decision letter (CP-LETTER-1)
     account: z.string(), // simulator account, or "stripe"
     rail: Rail.nullable(),
-    amount_minor: Minor.min(1),
+    amount_minor: Minor, // >= 1 for a payment; 0 for a decision letter (CP-LETTER-1; enforced by the gateway)
     currency: z.literal("CAD"),
     payee_ref: z.string(), // synthetic payee token
     parent_ref: z.string().nullable(), // Stripe PaymentIntent id for a refund
     metadata: FrozenRequestMetadata,
   })
-  .strict();
+  .strict()
+  // CP-LETTER-1: amount 0 only on a NOTIFY (a decision letter, provider notify_letter); every payment is at least 1.
+  .refine((r) => (r.operation === "NOTIFY" ? r.amount_minor === 0 && r.provider === "notify_letter" : r.amount_minor >= 1 && r.provider !== "notify_letter"), {
+    message: "amount_minor must be >= 1 for a payment and 0 for a NOTIFY on notify_letter",
+    path: ["amount_minor"],
+  });
 export type FrozenRequest = z.infer<typeof FrozenRequest>;
 /** Alias of FrozenRequest (AGENT_TASKS.md packet A name). */
 export const FrozenRequestSchema = FrozenRequest;

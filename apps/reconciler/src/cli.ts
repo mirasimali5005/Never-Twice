@@ -10,7 +10,11 @@ import { parseEnv } from "@nt/contracts";
 import type { ModelClient } from "@nt/contracts";
 import { openNtDb, uriFor, dbNameFrom, type NtDb } from "@nt/db";
 import { createRecall, createVoyageEmbedder, recallEnabled, DEFAULT_VOYAGE_DIMS, DEFAULT_VOYAGE_MODEL } from "@nt/recovery/recall";
+import { readFileSync } from "node:fs";
+import { ToolDescription } from "@nt/recovery/probes";
+import type { ProbeCollection } from "@nt/recovery/probes";
 import { makeCollect, type CollectMode } from "./collect.ts";
+import { makeProbeCollect } from "./probe-collect.ts";
 import { makeEmbedQueue, type EmbedQueue } from "./embed.ts";
 import { runLoop, type LoopDeps } from "./loop.ts";
 import type { Barrier, ReconcilerGateway } from "./ports.ts";
@@ -53,7 +57,7 @@ export const defaultGatewayFactory: GatewayFactory = async (i) => {
   const env = i.env as Record<string, string | undefined> & { NT_STRIPE_ENABLED?: unknown };
   const penv = { ...env, NT_RUN_ID: i.runId } as Parameters<typeof mod.readOnlyProviderView>[1];
   const full = await mod.createGatewayFromEnv("reconciler", penv as Parameters<typeof mod.createGatewayFromEnv>[1], { runId: i.runId, workerId: i.workerId });
-  const ids: ProviderId[] = ["sim_payout", "sim_keyless"];
+  const ids: ProviderId[] = ["sim_payout", "sim_keyless"]; // notify_letter has no read-only view: its evidence is the admitted probe only
   if (String(env.NT_STRIPE_ENABLED) === "true") ids.push("stripe_refund");
   const views = new Map<ProviderId, ReturnType<ReconcilerGateway["readOnlyProviderView"]>>();
   for (const id of ids) views.set(id, (await mod.readOnlyProviderView(id, penv)) as ReturnType<ReconcilerGateway["readOnlyProviderView"]>);
@@ -121,7 +125,18 @@ export async function main(argv: readonly string[], o: { gatewayFactory?: Gatewa
       recall = createRecall({ collection: coll, embedder, log, timeoutMs: Math.min(5_000, Math.floor(env.NT_INVESTIGATOR_TIMEOUT_MS / 4)) });
       embeds = makeEmbedQueue({ collection: coll, embedder, runId: args.runId, log });
     }
-    const collect = makeCollect({ gateway, mode, model, timeoutMs: env.NT_INVESTIGATOR_TIMEOUT_MS, recall: mode === "llm" ? recall : undefined, log });
+    // CP-LETTER-1: decision letters (notify_letter) are recovered ONLY from the admitted generated probe, read key only.
+    const toolFile = process.env.NT_NOTIFY_TOOL_FILE || resolve(fileURLToPath(new URL("../../../fixtures/tool-descriptions/notify.send.json", import.meta.url)));
+    const letters = env.NT_SIM_READ_KEY
+      ? makeProbeCollect({
+          probes: invDb.probes as unknown as ProbeCollection,
+          tool: ToolDescription.parse(JSON.parse(readFileSync(toolFile, "utf8"))),
+          baseUrl: env.NT_SIM_URL,
+          readKey: env.NT_SIM_READ_KEY,
+          log,
+        })
+      : undefined;
+    const collect = makeCollect({ gateway, mode, model, timeoutMs: env.NT_INVESTIGATOR_TIMEOUT_MS, recall: mode === "llm" ? recall : undefined, log, letters });
     const deps: LoopDeps = {
       runId: args.runId,
       workerId,
@@ -130,7 +145,7 @@ export async function main(argv: readonly string[], o: { gatewayFactory?: Gatewa
       gateway,
       store: createMongoStore({ gw: gwDb, inv: invDb, runId: args.runId }),
       collect,
-      watchCollect: makeCollect({ gateway, mode: "deterministic", timeoutMs: env.NT_INVESTIGATOR_TIMEOUT_MS }),
+      watchCollect: makeCollect({ gateway, mode: "deterministic", timeoutMs: env.NT_INVESTIGATOR_TIMEOUT_MS, letters }),
       barrier,
       log,
       stopping: () => stopping,
