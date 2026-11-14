@@ -21,7 +21,7 @@
     "db:init": "tsx --env-file-if-exists=.env packages/db/src/init-cli.ts",
     "sim": "node --env-file-if-exists=.env apps/provider-sim/src/server.ts",
     "seed": "node --env-file-if-exists=.env scripts/seed.ts",
-    "run:arm": "node -e \"console.error('TO IMPLEMENT: run:arm (task E4)');process.exit(1)\"",
+    "run:arm": "tsx --env-file-if-exists=.env apps/runner/src/cli.ts",
     "run:control": "node --env-file-if-exists=.env packages/baselines/src/control-cli.ts",
     "reconcile": "node -e \"console.error('TO IMPLEMENT: reconcile (task D2)');process.exit(1)\"",
     "evaluator:manifest": "node --env-file-if-exists=evaluator/.env evaluator/src/cli.ts manifest",
