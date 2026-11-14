@@ -56,17 +56,19 @@ export async function scanInvariants(deps: GatewayDeps, runId: string): Promise<
   }
 
   // Provider objects carrying the run's id and no intent with their marker.
-  const accounts = new Map<string, NonNullable<GatewayDeps["providers"][keyof GatewayDeps["providers"]]>>();
-  for (const [id, p] of Object.entries(deps.providers)) if (p) accounts.set(id === "stripe_refund" ? "stripe" : simAccountOf(runId), p);
-  for (const [account, p] of accounts) {
-    const objects: ProviderObject[] = [];
+  // Every configured provider is listed (two simulator clients on one account return the same objects; deduplicated by id).
+  const objects = new Map<string, ProviderObject>();
+  for (const [id, p] of Object.entries(deps.providers)) {
+    if (!p) continue;
+    const account = id === "stripe_refund" ? "stripe" : simAccountOf(runId);
     try {
-      for await (const o of p.listOperations({ account })) objects.push(o);
+      for await (const o of p.listOperations({ account })) objects.set(o.id, o);
     } catch (e) {
-      v.push({ code: "PROVIDER_LIST_INCOMPLETE", intent_id: null, detail: `${account}: ${(e as Error).message}` });
-      continue;
+      v.push({ code: "PROVIDER_LIST_INCOMPLETE", intent_id: null, detail: `${id} ${account}: ${(e as Error).message}` });
     }
-    for (const o of objects) {
+  }
+  {
+    for (const o of objects.values()) {
       if (o.metadata["nt_run_id"] !== runId) continue;
       const marker = o.metadata["nt_marker"];
       if (marker && byId.has(marker)) continue;
