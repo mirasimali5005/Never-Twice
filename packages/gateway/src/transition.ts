@@ -1,6 +1,6 @@
 // applyTransition: the one template every transition except T1 uses (ARCHITECTURE.md §3.2; AGENT_TASKS.md B field 12).
 // One transaction: compare-and-set on (state, lease_epoch); optional grant counter delta; one audit event.
-import { ObjectId, type Document, type Filter } from "mongodb";
+import { ObjectId, type ClientSession, type Document, type Filter } from "mongodb";
 import { allowedTransition, type Actor, type AuditEventType, type Intent, type IntentState, type TransitionId } from "@nt/contracts";
 import { CasMiss, majorityReader, tryTxn, type NtDb } from "@nt/db";
 import { auditEvent } from "./audit.ts";
@@ -21,7 +21,22 @@ export type TransitionSpec = {
   /** Signed deltas; only when the intent draws on a grant. */
   grant?: { id: string; held?: number; settled?: number };
   event: { type?: AuditEventType; actor: Actor; detail: Record<string, unknown> };
+  /** Reads inside the transaction before the compare-and-set (T2's obligation and grant checks). Throwing aborts. */
+  precheck?: (session: ClientSession) => Promise<void>;
+  /** Last statement inside the callback (BR_SETTLE_IN_TXN). Only a barrier may go here. */
+  beforeCommit?: () => void;
 };
+
+/** Pipeline expression that sets `result` on the newest attempt (attempt numbers are 1-based; ARCHITECTURE.md §3.4). */
+export function lastResult(result: Record<string, unknown>): Document {
+  return {
+    $map: {
+      input: "$attempts",
+      as: "a",
+      in: { $cond: [{ $eq: ["$$a.n", { $size: "$attempts" }] }, { $mergeObjects: ["$$a", { result: { $literal: result } }] }, "$$a"] },
+    },
+  };
+}
 
 /**
  * Returns the intent after the transition, or null when the compare-and-set matched nothing (the caller re-reads and
@@ -34,6 +49,7 @@ export async function applyTransition(db: NtDb, spec: TransitionSpec): Promise<I
   let after: Intent | null = null;
 
   const out = await tryTxn(db, async (session) => {
+    if (spec.precheck) await spec.precheck(session);
     after = await db.intents.findOneAndUpdate(
       { _id: spec.intentId, state: spec.from, lease_epoch: spec.epoch, ...(spec.extraFilter ?? {}) } as Filter<Intent>,
       [{ $set: { ...spec.set, state: { $literal: spec.to }, updated_at: "$$NOW" } }],
@@ -61,6 +77,7 @@ export async function applyTransition(db: NtDb, spec: TransitionSpec): Promise<I
       }),
       { session },
     );
+    spec.beforeCommit?.();
   });
 
   switch (out.kind) {

@@ -25,3 +25,11 @@ export { buildFrozenRequest, idempotencyKeyFor, providerFor } from "./frozen.ts"
 export { goodwillGrantId, goodwillGuard, holdGoodwill } from "./authority.ts";
 export { adoptExisting, quarantineReserved, type T11Reason } from "./adopt.ts";
 export { buildIntent, propose } from "./reserve.ts";
+export { barrier, barrierAfterMs } from "./barrier.ts";
+export { mutation } from "./mutation.ts";
+export { acquireLease, markDispatching, reconLeaseMs, takeOverExpired, type MarkResult } from "./lease.ts";
+export { failNoEffect, markUnknown, quarantine } from "./outcomes.ts";
+export { confirmQuarantined, settle, type Evidence } from "./settle.ts";
+export { dispatch, hashMatches, send } from "./dispatch.ts";
+export { lastResult } from "./transition.ts";
+export { createGatewayPart1, withDefaultHooks, type GatewayPart1 } from "./gateway.ts";
