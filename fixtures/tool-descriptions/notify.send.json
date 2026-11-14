@@ -1,0 +1,24 @@
+{
+  "tool_id": "notify.send",
+  "name": "NotifySim send message (SIMULATOR)",
+  "description": "Sends a written message (for example the decision letter the regulation requires) to a recipient. The tool is KEYLESS: it ignores any Idempotency-Key header, so sending the same request twice creates two messages. Each message carries the caller's metadata unchanged; the caller puts its effect marker in metadata.nt_marker.",
+  "base_url": "configured per deployment (the provider simulator origin)",
+  "auth": { "write": "Authorization: Bearer <write key> (needed for POST)", "read": "Authorization: Bearer <read key> (enough for every GET)" },
+  "endpoints": [
+    { "method": "POST", "path": "/v1/messages", "auth": "write", "summary": "Send a message. Body: { account, recipient, template, amount_minor?, currency?, metadata? }. 201 returns the message object." },
+    { "method": "GET", "path": "/v1/messages/{id}", "auth": "read", "summary": "One message by id, or 404." },
+    { "method": "GET", "path": "/v1/messages", "auth": "read", "summary": "List messages of an account in creation order. Query: account (required), recipient, created_gte (ISO-8601), starting_after (a message id), limit (default 10, maximum 20). Strongly consistent: a message is listed as soon as it is sent. Response: { data: [message], has_more: boolean, next_cursor: string | null }; pass next_cursor as starting_after to get the next page." },
+    { "method": "GET", "path": "/v1/search/messages", "auth": "read", "summary": "Search messages of an account. Query: account (required), marker (matches metadata.nt_marker exactly), recipient. Response: { data: [message] } (no pagination). Search is eventually consistent: it is updated asynchronously and can lag several seconds behind sends." }
+  ],
+  "object_schema": {
+    "id": "string, msg_...",
+    "object": "\"message\"",
+    "status": "\"sent\"",
+    "recipient": "string",
+    "template": "string",
+    "amount_minor": "integer or null",
+    "currency": "string or null",
+    "metadata": "object of string values; metadata.nt_marker is the caller's marker",
+    "created_at": "ISO-8601 string"
+  }
+}
