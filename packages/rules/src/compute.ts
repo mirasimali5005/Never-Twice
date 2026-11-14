@@ -27,6 +27,7 @@ import {
   ticketRefundCitation,
 } from "./appr.ts";
 import { goodwillCitation, goodwillEligibility } from "./goodwill.ts";
+import { computeRegimeObligations, selectRegime } from "./regime.ts";
 
 export type ComputeInput = {
   booking: Booking;
@@ -47,6 +48,13 @@ type Verdict =
 export function computeObligations(input: ComputeInput): ObligationDecision[] {
   const { booking, passenger, disruption, claimReceivedAt, flags, policy } = input;
   const appr = policy.statutory;
+  // Jurisdiction is data: a disruption that names one is computed from that rule table in the bundle (regime.ts); otherwise APPR below.
+  const regime = selectRegime(policy, disruption);
+  if (regime !== null) {
+    if (Number.isNaN(claimReceivedAt.getTime())) throw new RulesError("claimReceivedAt is not a valid date");
+    if (passenger.passenger_id !== booking.passenger_id) throw new RulesError("passenger does not belong to the booking record");
+    return computeRegimeObligations(input, regime);
+  }
   if (Number.isNaN(claimReceivedAt.getTime())) throw new RulesError("claimReceivedAt is not a valid date");
   if (passenger.passenger_id !== booking.passenger_id) throw new RulesError("passenger does not belong to the booking record");
   const derivedId = disruptionId(disruption.flight_no, disruption.scheduled_departure);

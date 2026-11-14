@@ -1,0 +1,226 @@
+{
+  "scenario": "EU1",
+  "policy_ids": [
+    "EU261-2004@2004-02-11"
+  ],
+  "note": "Synthetic. Fictional carrier Aurore Air (AU); invented people; fictional flights and distances. Tier 3 EU261 rule pack demonstration. Not loadable by the S0/S1 OpsRecord contract (scenario EU1, no goodwill pool): see report change proposal CP-EU261-1.",
+  "carrier": {
+    "code": "AU",
+    "name": "Aurore Air (fictional)",
+    "size": "LARGE"
+  },
+  "flights": [
+    {
+      "flight_no": "AU100",
+      "scheduled_departure_local_date": "2026-11-10",
+      "origin": "CDG",
+      "destination": "FCO",
+      "disruption": {
+        "disruption_id": "AU100-20261110",
+        "flight_no": "AU100",
+        "scheduled_departure": "2026-11-10T08:05:00.000Z",
+        "kind": "DELAY",
+        "cause_code": "CREW_SCHED",
+        "control_class": "WITHIN_CONTROL",
+        "notice_minutes_before_departure": 120,
+        "jurisdiction": "EU",
+        "facts": {
+          "distance_km": 1105,
+          "intra_union": true
+        }
+      }
+    },
+    {
+      "flight_no": "AU200",
+      "scheduled_departure_local_date": "2026-11-10",
+      "origin": "CDG",
+      "destination": "JFK",
+      "disruption": {
+        "disruption_id": "AU200-20261110",
+        "flight_no": "AU200",
+        "scheduled_departure": "2026-11-10T08:05:00.000Z",
+        "kind": "CANCELLATION",
+        "cause_code": "CREW_SCHED",
+        "control_class": "WITHIN_CONTROL",
+        "notice_minutes_before_departure": 4320,
+        "jurisdiction": "EU",
+        "facts": {
+          "distance_km": 5837,
+          "intra_union": false
+        }
+      }
+    },
+    {
+      "flight_no": "AU300",
+      "scheduled_departure_local_date": "2026-11-10",
+      "origin": "CDG",
+      "destination": "JFK",
+      "disruption": {
+        "disruption_id": "AU300-20261110",
+        "flight_no": "AU300",
+        "scheduled_departure": "2026-11-10T08:05:00.000Z",
+        "kind": "DELAY",
+        "cause_code": "WX_STORM",
+        "control_class": "OUTSIDE_CONTROL",
+        "notice_minutes_before_departure": 90,
+        "jurisdiction": "EU",
+        "facts": {
+          "distance_km": 5837,
+          "intra_union": false
+        }
+      }
+    }
+  ],
+  "bookings": [
+    {
+      "booking_ref": "EU01AA",
+      "passenger_id": "E01",
+      "carrier_code": "AU",
+      "carrier_size": "LARGE",
+      "flight_no": "AU100",
+      "ticket_price_minor": null,
+      "ticket_payment_ref": null,
+      "passenger": {
+        "passenger_id": "E01",
+        "name": "Margaux Delcourt",
+        "is_minor": false,
+        "arrival_delay_minutes": 215,
+        "payee_ref": "payee_E01",
+        "payout_rail": "instant",
+        "hardship_flags": [],
+        "refund_elected": false,
+        "other_regime_compensation": null,
+        "alternative_accepted_in_writing": null,
+        "denied_boarding": false,
+        "facts": {}
+      },
+      "disruption": {
+        "disruption_id": "AU100-20261110",
+        "flight_no": "AU100",
+        "scheduled_departure": "2026-11-10T08:05:00.000Z",
+        "kind": "DELAY",
+        "cause_code": "CREW_SCHED",
+        "control_class": "WITHIN_CONTROL",
+        "notice_minutes_before_departure": 120,
+        "jurisdiction": "EU",
+        "facts": {
+          "distance_km": 1105,
+          "intra_union": true
+        }
+      }
+    },
+    {
+      "booking_ref": "EU02AA",
+      "passenger_id": "E02",
+      "carrier_code": "AU",
+      "carrier_size": "LARGE",
+      "flight_no": "AU100",
+      "ticket_price_minor": null,
+      "ticket_payment_ref": null,
+      "passenger": {
+        "passenger_id": "E02",
+        "name": "Luca Ferrante",
+        "is_minor": false,
+        "arrival_delay_minutes": 179,
+        "payee_ref": "payee_E02",
+        "payout_rail": "instant",
+        "hardship_flags": [],
+        "refund_elected": false,
+        "other_regime_compensation": null,
+        "alternative_accepted_in_writing": null,
+        "denied_boarding": false,
+        "facts": {}
+      },
+      "disruption": {
+        "disruption_id": "AU100-20261110",
+        "flight_no": "AU100",
+        "scheduled_departure": "2026-11-10T08:05:00.000Z",
+        "kind": "DELAY",
+        "cause_code": "CREW_SCHED",
+        "control_class": "WITHIN_CONTROL",
+        "notice_minutes_before_departure": 120,
+        "jurisdiction": "EU",
+        "facts": {
+          "distance_km": 1105,
+          "intra_union": true
+        }
+      }
+    },
+    {
+      "booking_ref": "EU03AA",
+      "passenger_id": "E03",
+      "carrier_code": "AU",
+      "carrier_size": "LARGE",
+      "flight_no": "AU200",
+      "ticket_price_minor": null,
+      "ticket_payment_ref": null,
+      "passenger": {
+        "passenger_id": "E03",
+        "name": "Ines Marchand",
+        "is_minor": false,
+        "arrival_delay_minutes": 200,
+        "payee_ref": "payee_E03",
+        "payout_rail": "instant",
+        "hardship_flags": [],
+        "refund_elected": false,
+        "other_regime_compensation": null,
+        "alternative_accepted_in_writing": null,
+        "denied_boarding": false,
+        "facts": {
+          "rerouted_art8": true
+        }
+      },
+      "disruption": {
+        "disruption_id": "AU200-20261110",
+        "flight_no": "AU200",
+        "scheduled_departure": "2026-11-10T08:05:00.000Z",
+        "kind": "CANCELLATION",
+        "cause_code": "CREW_SCHED",
+        "control_class": "WITHIN_CONTROL",
+        "notice_minutes_before_departure": 4320,
+        "jurisdiction": "EU",
+        "facts": {
+          "distance_km": 5837,
+          "intra_union": false
+        }
+      }
+    },
+    {
+      "booking_ref": "EU04AA",
+      "passenger_id": "E04",
+      "carrier_code": "AU",
+      "carrier_size": "LARGE",
+      "flight_no": "AU300",
+      "ticket_price_minor": null,
+      "ticket_payment_ref": null,
+      "passenger": {
+        "passenger_id": "E04",
+        "name": "Theo Brandt",
+        "is_minor": false,
+        "arrival_delay_minutes": 400,
+        "payee_ref": "payee_E04",
+        "payout_rail": "instant",
+        "hardship_flags": [],
+        "refund_elected": false,
+        "other_regime_compensation": null,
+        "alternative_accepted_in_writing": null,
+        "denied_boarding": false,
+        "facts": {}
+      },
+      "disruption": {
+        "disruption_id": "AU300-20261110",
+        "flight_no": "AU300",
+        "scheduled_departure": "2026-11-10T08:05:00.000Z",
+        "kind": "DELAY",
+        "cause_code": "WX_STORM",
+        "control_class": "OUTSIDE_CONTROL",
+        "notice_minutes_before_departure": 90,
+        "jurisdiction": "EU",
+        "facts": {
+          "distance_km": 5837,
+          "intra_union": false
+        }
+      }
+    }
+  ]
+}

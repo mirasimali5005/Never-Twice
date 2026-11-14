@@ -4,6 +4,11 @@ import { RunId } from "./identity.ts";
 import { Minor } from "./money.ts";
 import { AdjudicationStatus, EntitlementType, GoodwillKind, HeldReason, NotOwedReason, Rail } from "./reasons.ts";
 
+/** Currency of an obligation decision. CAD for APPR and goodwill (the default); EUR for the EU261 rule pack (change proposal CP-EU261-1).
+ *  Payment-side documents (intent, proposal, frozen request, report, grant) remain CAD-only. */
+export const ObligationCurrency = z.enum(["CAD", "EUR"]);
+export type ObligationCurrency = z.infer<typeof ObligationCurrency>;
+
 /** What the pure rules engine returns [ADD-12]. amount_minor is 0 unless OWED. */
 export const ObligationDecision = z.object({
   effect_key: z.string(),
@@ -13,7 +18,7 @@ export const ObligationDecision = z.object({
   entitlement_type: EntitlementType,
   status: AdjudicationStatus,
   amount_minor: Minor.min(0),
-  currency: z.literal("CAD"),
+  currency: ObligationCurrency,
   payee_ref: z.string(),
   rail: Rail,
   reason_code: z.union([NotOwedReason, HeldReason]).nullable(),
@@ -23,7 +28,9 @@ export const ObligationDecision = z.object({
 });
 export type ObligationDecision = z.infer<typeof ObligationDecision>;
 
+/** The stored obligation is CAD only: an EUR decision cannot be stored, proposed or paid until payment-side EUR support exists (fail closed). */
 export const Obligation = ObligationDecision.extend({
+  currency: z.literal("CAD"),
   _id: z.string(),
   run_id: RunId,
   claim_ids: z.array(z.string()),
@@ -34,6 +41,10 @@ export type Obligation = z.infer<typeof Obligation>;
 export const DISRUPTION_KINDS = ["CANCELLATION", "DELAY", "DENIED_BOARDING"] as const;
 export const CONTROL_CLASSES = ["WITHIN_CONTROL", "OUTSIDE_CONTROL", "SAFETY_REQUIRED", "UNDETERMINED"] as const;
 
+/** A regime fact: a scalar read by a policy's band table (distance, intra-union flag, rerouting flag ...). Change proposal CP-EU261-1. */
+export const RegimeFact = z.union([z.number(), z.string(), z.boolean()]);
+export type RegimeFact = z.infer<typeof RegimeFact>;
+
 export const Disruption = z.object({
   disruption_id: z.string(),
   flight_no: z.string(),
@@ -42,6 +53,10 @@ export const Disruption = z.object({
   cause_code: z.string(),
   control_class: z.enum(CONTROL_CLASSES),
   notice_minutes_before_departure: z.number().int().nullable(),
+  /** Absent = the default statutory table (APPR). Present = key into PolicyBundle.regimes (e.g. "EU"). Change proposal CP-EU261-1. */
+  jurisdiction: z.string().optional(),
+  /** Flight-level facts a regime's band table reads (e.g. distance_km, intra_union). Change proposal CP-EU261-1. */
+  facts: z.record(z.string(), RegimeFact).optional(),
 });
 export type Disruption = z.infer<typeof Disruption>;
 
@@ -58,6 +73,8 @@ export const BookingPassenger = z.object({
   alternative_accepted_in_writing: z.object({ description: z.string(), value_minor: Minor, expires: z.boolean() }).nullable(),
   /** Beyond ARCHITECTURE.md §6.4: carried by the task A3 fixture records (orchestrator instruction at A3 merge). */
   denied_boarding: z.boolean(),
+  /** Passenger-level facts a regime's rule table reads (e.g. rerouted_art8). Change proposal CP-EU261-1. */
+  facts: z.record(z.string(), RegimeFact).optional(),
 });
 export type BookingPassenger = z.infer<typeof BookingPassenger>;
 
