@@ -1,6 +1,6 @@
 // Never Twice auditor CLI. Zero dependencies; run with plain node 24.
 //
-//   node evaluator/src/cli.ts manifest --scenario <S0|S1> --group <group_id> [--ops-record <path>] [--out-dir <dir>] [--hidden-dir <dir>]
+//   node evaluator/src/cli.ts manifest --scenario <S0|S1> --group <group_id> [--ops-record <path>] [--authority-tree <path>] [--out-dir <dir>] [--hidden-dir <dir>]
 //   node --env-file=evaluator/.env evaluator/src/cli.ts check --run <run_id> [--report <path>] [--expect-hash <hex>] [--authority-tree <path>]
 //                                                              [--ops-record <path>] [--out-dir <dir>] [--hidden-dir <dir>]
 //
@@ -8,7 +8,7 @@
 // Exit codes: 0 SAFETY: PASS; 1 SAFETY: FAIL; 2 error (no certificate; any earlier certificate for the run is removed first).
 import { readFileSync, writeFileSync, existsSync, mkdirSync, rmSync } from "node:fs";
 import { resolve, join } from "node:path";
-import { canonicalJson } from "./canonical.ts";
+import { canonicalJson, sha256Hex } from "./canonical.ts";
 import { GROUP_ID_RE, RUN_ID_RE } from "./effect-key.ts";
 import { parseOpsRecord, InputError } from "./ops-record.ts";
 import { computeManifest, parseClaimTruth, manifestSha256, withGroup } from "./manifest.ts";
@@ -76,9 +76,19 @@ function cmdManifest(opts: Map<string, string>): number {
   }
   const manifest = withGroup(regenerateManifest(scenario, opts), group);
   const sha256 = manifestSha256(manifest);
+  // CP-AUTH-1: an authority tree is committed with the manifest, before any run; its root must be the scenario's goodwill pool.
+  const tree = opts.has("authority-tree") ? parseAuthorityTree(readJson(resolve(opts.get("authority-tree")!), "authority tree")) : null;
+  if (tree && tree.nodes.find((n) => n.id === "GOODWILL")!.grant_minor !== manifest.goodwill_grant_minor) {
+    throw new InputError(`authority tree: the GOODWILL root grant must equal the scenario's goodwill grant ${manifest.goodwill_grant_minor}`);
+  }
   mkdirSync(outDir, { recursive: true });
   writeFileSync(manifestPath, canonicalJson(manifest) + "\n", { flag: "wx" });
   const commitment: Commitment = { group_id: group, sha256, committed_at: new Date().toISOString() };
+  if (tree) {
+    const treePath = join(outDir, `${group}.authority-tree.json`);
+    writeFileSync(treePath, canonicalJson({ nodes: tree.nodes }) + "\n", { flag: "wx" });
+    commitment.authority_tree_sha256 = sha256Hex(canonicalJson({ nodes: tree.nodes }));
+  }
   writeFileSync(commitmentPath, canonicalJson(commitment) + "\n", { flag: "wx" });
   const t = manifest.totals;
   process.stdout.write(`manifest sha256 ${sha256}\n`);
@@ -86,6 +96,7 @@ function cmdManifest(opts: Map<string, string>): number {
     `payments owed ${t.payments_owed_count} (${t.payments_owed_minor} minor: statutory ${t.statutory_owed_count}/${t.statutory_owed_minor}, ticket refund ${t.ticket_refund_count}/${t.ticket_refund_minor})  ` +
     `refusals ${t.refusals}  holds ${t.holds}  claim-level holds ${t.claims_without_entitlement}  goodwill eligible ${t.goodwill_eligible_minor} against grant ${t.goodwill_grant_minor}\n`);
   process.stdout.write(`wrote ${manifestPath}\nwrote ${commitmentPath}\n`);
+  if (tree) process.stdout.write(`authority tree sha256 ${commitment.authority_tree_sha256} (${tree.nodes.length} nodes)\nwrote ${join(outDir, `${group}.authority-tree.json`)}\n`);
   return 0;
 }
 
@@ -143,6 +154,7 @@ async function cmdCheck(opts: Map<string, string>, env: NodeJS.ProcessEnv): Prom
       throw new InputError(`commitment file is malformed: ${commitmentPath}`);
     }
     commitment = { group_id: c.group_id, sha256: c.sha256, committed_at: c.committed_at };
+    if (typeof c.authority_tree_sha256 === "string") commitment.authority_tree_sha256 = c.authority_tree_sha256;
   }
   const manifest = withGroup(regenerateManifest(report.scenario, opts), report.group_id);
 
@@ -150,9 +162,16 @@ async function cmdCheck(opts: Map<string, string>, env: NodeJS.ProcessEnv): Prom
   const { sources, stripe } = buildLedgerSources(env, needStripe);
   const { objects, counts } = await readAllSources(sources, runId);
 
-  const authorityTree = opts.has("authority-tree") ? parseAuthorityTree(readJson(resolve(opts.get("authority-tree")!), "authority tree")) : null;
+  // CP-AUTH-1: --authority-tree, else the tree committed with this group's manifest, if any.
+  const committedTree = join(outDir, `${report.group_id}.authority-tree.json`);
+  const treeSource = opts.has("authority-tree") ? resolve(opts.get("authority-tree")!) : existsSync(committedTree) ? committedTree : null;
+  const authorityTree = treeSource ? parseAuthorityTree(readJson(treeSource, "authority tree")) : null;
   const result = check({ manifest, storedManifest, commitment, expectHash: opts.get("expect-hash") ?? null, ledger: objects, report, authorityTree });
   const cert = buildCertificate(report, result, { sim_objects: counts.sim ?? 0, stripe_objects: stripe ? (counts.stripe ?? 0) : null }, new Date().toISOString());
+  if (authorityTree) {
+    const c6 = result.findings.filter((f) => f.check === "C6").length;
+    cert.notes.push(`Authority tree (${treeSource === committedTree ? "committed with the manifest" : "--authority-tree"}): ${authorityTree.nodes.length} levels checked by C6 (${authorityTree.nodes.map((n) => n.id).join(", ")}); ${c6 === 0 ? "no level exceeded" : `${c6} finding(s)`}`);
+  }
   if (stripe) {
     cert.notes.push(`Stripe test mode: ${counts.stripe ?? 0} refund object(s) with metadata.nt_run_id ${runId} read from the top-level refund list ` +
       `with the auditor's restricted read-only key (rk_test_); GET only`);
@@ -166,7 +185,7 @@ async function cmdCheck(opts: Map<string, string>, env: NodeJS.ProcessEnv): Prom
 }
 
 const USAGE = `usage:
-  node evaluator/src/cli.ts manifest --scenario <S0|S1> --group <group_id> [--ops-record <path>]
+  node evaluator/src/cli.ts manifest --scenario <S0|S1> --group <group_id> [--ops-record <path>] [--authority-tree <path>]
   node --env-file=evaluator/.env evaluator/src/cli.ts check --run <run_id> [--report <path>] [--expect-hash <hex>] [--authority-tree <path>]
 `;
 

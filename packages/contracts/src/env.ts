@@ -33,6 +33,8 @@ const ENV_SHAPE = {
   STRIPE_SECRET_KEY: z.string().regex(STRIPE_TEST_KEY_RE).optional(), // any other value: the process exits at start
   NT_RUN_ID: RunId.optional(),
   NT_ARM: Arm.optional(),
+  // Tier 3 (CP-AUTH-1): the goodwill grant node this process reserves under (e.g. GOODWILL/DESK_YYZ/AGENT_1). Unset: the single pool.
+  NT_AUTHORITY_GRANT: z.string().regex(/^GOODWILL(\/[A-Za-z0-9_.-]+)*$/, "NT_AUTHORITY_GRANT must be GOODWILL or GOODWILL/<node>/...").optional(),
   NT_CRASH_AT: z
     .string()
     .regex(/^(BR|CTRL)_[A-Z_]+(:\d+|@[A-Z0-9._-]+)$/)
@@ -82,7 +84,7 @@ const STRIPE_KEYS = { NT_STRIPE_ENABLED: true, STRIPE_SECRET_KEY: true } as cons
 const TEST_HOOK_KEYS = { NT_CRASH_AT: true, NT_MUTATION: true } as const;
 
 const runnerSchema = base
-  .pick({ ...COMMON_KEYS, ...MODEL_KEYS, ...TIMING_KEYS, ...STRIPE_KEYS, ...TEST_HOOK_KEYS, NT_MONGODB_URI_AGENT: true, NT_MONGODB_URI_GATEWAY: true, VOYAGE_API_KEY: true })
+  .pick({ ...COMMON_KEYS, ...MODEL_KEYS, ...TIMING_KEYS, ...STRIPE_KEYS, ...TEST_HOOK_KEYS, NT_MONGODB_URI_AGENT: true, NT_MONGODB_URI_GATEWAY: true, VOYAGE_API_KEY: true, NT_AUTHORITY_GRANT: true })
   .extend({ NT_RUN_ID: RunId, NT_ARM: Arm, NT_SIM_WRITE_KEY: requiredKey })
   .superRefine(checkInvariants)
   .transform((e) => ({
@@ -102,6 +104,7 @@ const reconcilerSchema = base
     NT_MONGODB_URI_INVESTIGATOR: true,
     NT_INVESTIGATOR_TIMEOUT_MS: true,
     VOYAGE_API_KEY: true,
+    NT_AUTHORITY_GRANT: true,
   })
   .extend({ NT_RUN_ID: RunId, NT_ARM: Arm, NT_SIM_WRITE_KEY: requiredKey, NT_SIM_READ_KEY: requiredKey })
   .superRefine(checkInvariants)

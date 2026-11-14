@@ -16,10 +16,12 @@ export function stateColour(input: {
   intentState?: string | null;
   obligationStatus?: string | null;
   claimStatus?: string | null;
+  /** CP-REV-1: a PROVIDER_REVERSAL was recorded for this (CONFIRMED) payment. */
+  reversed?: boolean;
 }): Colour {
   const s = input.intentState ?? null;
   if (s === "DISPATCHING" || s === "OUTCOME_UNKNOWN") return "amber";
-  if (s === "CONFIRMED") return "green";
+  if (s === "CONFIRMED") return input.reversed ? "red" : "green";
   if (s === "QUARANTINED") return "grey-blue";
   if (s !== null) return "neutral"; // RESERVED, FAILED_NO_EFFECT, RELEASED: neutral text
   if (input.obligationStatus === "HELD") return "grey-blue";
@@ -31,6 +33,7 @@ export const COLOUR_LABEL: Record<Colour, string> = {
   amber: "In doubt: sent, outcome unknown",
   green: "Confirmed",
   "grey-blue": "Needs a person",
+  red: "Reversed at provider — needs a person",
   neutral: "",
 };
 
@@ -38,8 +41,12 @@ export const COLOUR_SHORT: Record<Colour, string> = {
   amber: "In doubt",
   green: "Confirmed",
   "grey-blue": "Needs a person",
+  red: "Reversed at provider",
   neutral: "",
 };
+
+/** Statuses a provider statement may show for a payment undone after it was accepted (CP-REV-1). */
+export const REVERSED_STATUSES: ReadonlySet<string> = new Set(["reversed", "failed", "canceled"]);
 
 /** Tooltip text for "Confirmed" (HANDOVER 2). */
 export const CONFIRMED_MEANS = "the provider holds one matching payment object";
@@ -51,8 +58,8 @@ const NEUTRAL_STATE_TEXT: Record<string, string> = {
 };
 
 /** Text for a card: the colour's label, or the plain state words for neutral states. */
-export function stateLabel(state: string | null): string {
-  const c = stateColour({ intentState: state });
+export function stateLabel(state: string | null, reversed = false): string {
+  const c = stateColour({ intentState: state, reversed });
   if (c !== "neutral") return COLOUR_LABEL[c];
   return state ? NEUTRAL_STATE_TEXT[state] ?? state : "";
 }

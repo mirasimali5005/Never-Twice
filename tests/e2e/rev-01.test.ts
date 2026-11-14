@@ -4,7 +4,7 @@
 //   seed S0 (nt arm only) → runner → reconciler --until-drained → runner --report-only → auditor SAFETY PASS
 //   the simulator later reverses P02's paid payout (POST /admin/payouts/reverse)
 //   the stale report still says P02 was paid → the auditor FAILs C5 (a reversed object is not a payment)
-//   reconciler --once --watch records one PROVIDER_REVERSAL audit event; P02 stays CONFIRMED; nothing is re-sent
+//   reconciler --until-drained --watch (closing watch pass) records one PROVIDER_REVERSAL audit event; P02 stays CONFIRMED; nothing is re-sent
 //   runner --report-only parks P02 as PROVIDER_REVERSAL → the auditor prints SAFETY PASS again (completion drops by one)
 import { existsSync } from "node:fs";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
@@ -76,7 +76,7 @@ function defineRev01(): void {
         expect(stale.certificate.checks.C5?.status, stale.text).toBe("FAIL");
         expect(stale.certificate.findings.filter((f) => f.check === "C5").map((f) => f.effect_key)).toEqual([P02]);
 
-        const out = await reconcile(["--once", "--watch"]);
+        const out = await reconcile(["--until-drained", "--watch"]); // already drained: the closing watch pass picks it up
         expect(out).toContain("PROVIDER_REVERSAL");
         const evs = await db.audit.find({ run_id: run, type: "PROVIDER_REVERSAL" }).toArray();
         expect(evs.map((e) => e.intent_id)).toEqual([`${run}:${P02}`]);

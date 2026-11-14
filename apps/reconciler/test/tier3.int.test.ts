@@ -6,7 +6,7 @@ import type { Intent, PaymentProvider, ProviderObject } from "@nt/contracts";
 import { dbNow, openNtDb, type NtDb } from "@nt/db";
 import { startTestReplSet, type TestReplSet } from "@nt/db/testing";
 import { recordProviderReversal } from "@nt/gateway";
-import { tick, type LoopDeps } from "../src/loop.ts";
+import { runLoop, tick, type LoopDeps } from "../src/loop.ts";
 import type { ReconcilerGateway } from "../src/ports.ts";
 import { createMongoStore } from "../src/store.ts";
 import { CAPS, RUN, intent, obj } from "./support/fixtures.ts";
@@ -90,6 +90,21 @@ describe("reversal watch", () => {
     const again = await tick(deps(true));
     expect(again.reversals).toBe(0);
     expect(await db.audit.countDocuments({ run_id: RUN, type: "PROVIDER_REVERSAL" })).toBe(1);
+    expect(sends).toEqual([]);
+  });
+});
+
+describe("--until-drained with --watch ends with a watch pass (CP-REV-1)", () => {
+  test("a run that is already drained still records a new reversal with --watch, and does not without it", async () => {
+    const now = await dbNow(db);
+    const p24 = confirmed("P24", now);
+    await db.intents.insertOne(p24);
+    ledger.get(p24.evidence!.provider_object_id)!.status = "failed";
+    const opts = { untilDrained: true, once: false, intervalMs: 1 };
+    expect(await runLoop(deps(false), opts)).toBe(0);
+    expect(await db.audit.countDocuments({ intent_id: p24._id, type: "PROVIDER_REVERSAL" })).toBe(0);
+    expect(await runLoop(deps(true), opts)).toBe(0);
+    expect(await db.audit.countDocuments({ intent_id: p24._id, type: "PROVIDER_REVERSAL" })).toBe(1);
     expect(sends).toEqual([]);
   });
 });

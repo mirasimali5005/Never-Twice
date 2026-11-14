@@ -21,7 +21,8 @@ export type Finding = {
   message: string;
 };
 
-export type Commitment = { group_id: string; sha256: string; committed_at: string };
+/** authority_tree_sha256 (CP-AUTH-1): present only when an authority tree was committed with the manifest. */
+export type Commitment = { group_id: string; sha256: string; committed_at: string; authority_tree_sha256?: string };
 
 export type Completion = {
   owed_paid: [number, number];
@@ -227,6 +228,14 @@ export function check(input: CheckInput): CheckResult {
       if (!report.parked.some((p) => p.claim_id === c.claim_id)) {
         add({ check: "C7", effect_key: null, claim_id: c.claim_id, message: "complete is true while this claim is in none of the report's lists" });
       }
+    }
+  }
+
+  // C10, authority tree (CP-AUTH-1): a tree committed before the run must be the tree graded against.
+  if (commitment?.authority_tree_sha256 !== undefined) {
+    const got = input.authorityTree ? sha256Hex(canonicalJson({ nodes: input.authorityTree.nodes })) : null;
+    if (got !== commitment.authority_tree_sha256) {
+      add({ check: "C10", effect_key: null, message: got === null ? "the commitment names an authority tree and none was graded against" : `authority tree hashes to ${got}, the commitment says ${commitment.authority_tree_sha256}` });
     }
   }
 

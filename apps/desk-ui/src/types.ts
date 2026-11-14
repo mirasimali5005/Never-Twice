@@ -11,8 +11,9 @@ export type IntentState =
   | "FAILED_NO_EFFECT"
   | "QUARANTINED"
   | "RELEASED";
-export type Colour = "amber" | "green" | "grey-blue" | "neutral";
-export type ServerColour = "in_doubt" | "confirmed" | "needs_person";
+/** "red" (Tier 3, CP-REV-1) only for a CONFIRMED payment the provider later reversed: "Reversed at provider — needs a person". */
+export type Colour = "amber" | "green" | "grey-blue" | "red" | "neutral";
+export type ServerColour = "in_doubt" | "confirmed" | "needs_person" | "reversed";
 
 // `audited` is added by the desk API: true once <run_id>.certificate.json exists, so the UI polls the certificate only then.
 export type GroupRun = { run_id: string; arm: Arm; status: RunStatus; sim_account: string; fault_schedule: string; audited?: boolean };
@@ -37,7 +38,7 @@ export type RunSummary = {
   scenario: "S0" | "S1";
   status: RunStatus;
   intents_by_state: Record<IntentState, number>;
-  colours: { in_doubt: number; confirmed: number; needs_person: number };
+  colours: { in_doubt: number; confirmed: number; needs_person: number; reversed?: number };
   complete: boolean | null;
   report_generated_at: string | null;
 };
@@ -99,6 +100,8 @@ export type PaymentRow = {
   state: IntentState | null; // null for baseline arms
   colour: ServerColour | null;
   quarantine_reason: string | null;
+  /** CP-REV-1: the provider later reversed this confirmed payment (a PROVIDER_REVERSAL audit event). */
+  reversed_at_provider?: boolean;
   source: "nt" | "baseline";
 };
 
@@ -168,6 +171,8 @@ export type PaymentTrail = {
   obligation: Partial<CaseObligation> & { status: string };
   investigations: InvestigationRecord[];
   audit: AuditEvent[];
+  /** CP-REV-1: present when the provider later reversed this confirmed payment. */
+  reversal?: { status_now: string | null; provider_object_id: string | null; at: string } | null;
 };
 
 // NOT in ARCHITECTURE.md: the evidence trail of a baseline arm payment (what the control arm's own code did).

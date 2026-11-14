@@ -151,3 +151,36 @@ describe("seed with a Stripe stub and F-NONE", () => {
     expect(await db.runs.countDocuments({})).toBe(before);
   });
 });
+
+describe("seed with --authority-tree (Tier 3, CP-AUTH-1)", () => {
+  const TREE = join(import.meta.dirname, "..", "..", "fixtures", "authority", "desk-tree.json");
+
+  it("seeds every node per run with ancestors and commits the tree with the manifest", async () => {
+    const r = await seedGroup({ scenario: "S1", arms: ["nt"], faults: "F-NONE", authorityTree: TREE }, deps());
+    const run = r.runs[0]!.run_id;
+    const grants = await db.grants.find({ run_id: run }).sort({ _id: 1 }).toArray();
+    expect(grants).toHaveLength(6);
+    expect(r.counts.authority_nodes).toBe(6);
+    const agent = grants.find((g) => g._id === `${run}:GOODWILL/DESK_YYZ/AGENT_1`)!;
+    expect(agent).toMatchObject({ grant_minor: 20000, held_minor: 0, ancestors: [`${run}:GOODWILL/DESK_YYZ`, `${run}:GOODWILL`] });
+    expect(grants.find((g) => g._id === `${run}:GOODWILL`)).toMatchObject({ grant_minor: 50000 });
+    expect("ancestors" in grants.find((g) => g._id === `${run}:GOODWILL`)!).toBe(false);
+    const commitment = JSON.parse(readFileSync(join(evalOut, `${r.group_id}.commitment.json`), "utf8"));
+    expect(commitment.authority_tree_sha256).toMatch(/^[0-9a-f]{64}$/);
+    expect(existsSync(join(evalOut, `${r.group_id}.authority-tree.json`))).toBe(true);
+  });
+
+  it("refuses a tree whose root differs from the scenario's pool before writing anything", async () => {
+    const bad = join(tmp, "bad-tree.json");
+    writeFileSync(bad, JSON.stringify({ nodes: [{ id: "GOODWILL", parent: null, grant_minor: 1 }] }));
+    const before = await db.runs.countDocuments({});
+    await expect(seedGroup({ scenario: "S1", arms: ["nt"], faults: "F-NONE", authorityTree: bad }, deps())).rejects.toThrow(/must equal the scenario's pool/);
+    expect(await db.runs.countDocuments({})).toBe(before);
+  });
+
+  it("without a tree the S1 seed still writes exactly one pool per run", async () => {
+    const r = await seedGroup({ scenario: "S1", arms: ["nt"], faults: "F-NONE" }, deps());
+    const grants = await db.grants.find({ run_id: r.runs[0]!.run_id }).toArray();
+    expect(grants.map((g) => g._id)).toEqual([`${r.runs[0]!.run_id}:GOODWILL`]);
+  });
+});

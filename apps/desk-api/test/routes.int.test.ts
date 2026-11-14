@@ -269,6 +269,27 @@ describe("methods, unknown paths, database errors", () => {
   });
 });
 
+describe("provider reversal (Tier 3, CP-REV-1)", () => {
+  it("a CONFIRMED payment with a PROVIDER_REVERSAL event: red 'reversed' row and count, and the trail carries the reversal", async () => {
+    const { ObjectId } = await import("mongodb");
+    const id = new ObjectId();
+    await owner.audit.insertOne({
+      _id: id, run_id: NT, at: new Date("2026-11-14T18:05:00.000Z"), actor: { kind: "reconciler", id: "reconciler-1" }, type: "PROVIDER_REVERSAL",
+      intent_id: `${NT}:${P02}`, effect_key: P02, claim_id: null, from_state: null, to_state: null, rule_citation: null, policy_version: null,
+      detail: { reason: "PROVIDER_REVERSAL", provider_object_id: "po_x", status_now: "reversed" },
+    });
+    try {
+      const rows = (await get(`/api/runs/${NT}/payments`)).body;
+      expect(rows.find((r: { effect_key: string }) => r.effect_key === P02)).toMatchObject({ state: "CONFIRMED", colour: "reversed", reversed_at_provider: true });
+      expect((await get(`/api/runs/${NT}/summary`)).body.colours).toEqual({ in_doubt: 1, confirmed: 0, needs_person: 4, reversed: 1 });
+      const trail = (await get(`/api/runs/${NT}/payments/${P02}`)).body;
+      expect(trail.reversal).toMatchObject({ status_now: "reversed", provider_object_id: "po_x" });
+    } finally {
+      await owner.audit.deleteOne({ _id: id });
+    }
+  });
+});
+
 describe("read only", () => {
   it("issued no write operation: only find / findOne / countDocuments reached the collections", () => {
     expect(spy.violations).toEqual([]);

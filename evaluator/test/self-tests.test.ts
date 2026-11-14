@@ -4,6 +4,7 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import { check } from "../src/checker.ts";
+import { canonicalJson, sha256Hex } from "../src/canonical.ts";
 import { cleanS0, cleanS1, obj, paidOf, failing, K } from "./fixtures/synthetic.ts";
 
 test("clean S0 ledger and report: SAFETY PASS, no finding (EVL-01)", () => {
@@ -230,6 +231,16 @@ test("EM11 unknown node: a payment attributed to an authority not in the tree â†
   const { input, c } = withTree();
   c.metadata.nt_authority = "GOODWILL/DESK_Z/AGENT_9";
   assert.deepEqual(failing(check(input)), ["C6"]);
+});
+
+test("EM11 committed tree: the graded tree must hash to the commitment's authority_tree_sha256, else C10", () => {
+  const { input } = withTree();
+  input.commitment = { ...input.commitment!, authority_tree_sha256: sha256Hex(canonicalJson({ nodes: input.authorityTree!.nodes })) };
+  assert.deepEqual(check(input).findings, []);
+  input.authorityTree!.nodes[2].grant_minor += 100000; // loosened after commitment
+  assert.deepEqual(failing(check(input)), ["C10"]);
+  input.authorityTree = null; // committed but not graded against
+  assert.ok(failing(check(input)).includes("C10"));
 });
 
 test("removing each planted defect turns the case green again", () => {

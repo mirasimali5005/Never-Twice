@@ -30,6 +30,7 @@ export function ArmColumn(props: {
             <span className="count count--amber">{c.in_doubt} in doubt</span>
             <span className="count count--green">{c.confirmed} confirmed</span>
             <span className="count count--grey-blue">{c.needs_person} needs a person</span>
+            {(c.reversed ?? 0) > 0 && <span className="count count--red">{c.reversed} reversed at provider</span>}
           </span>
         )}
         {isControl && <span className="muted small">no write-ahead record, no investigation; a 2xx counts as paid</span>}

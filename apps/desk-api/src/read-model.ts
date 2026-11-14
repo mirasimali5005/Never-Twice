@@ -23,8 +23,20 @@ const ZERO_STATES = { RESERVED: 0, DISPATCHING: 0, OUTCOME_UNKNOWN: 0, CONFIRMED
 type StateCounts = typeof ZERO_STATES;
 
 const iso = (d: Date | null | undefined): string | null => (d instanceof Date ? d.toISOString() : null);
-const colourOf = (s: string | null): "in_doubt" | "confirmed" | "needs_person" | null =>
-  s === "CONFIRMED" ? "confirmed" : s === "DISPATCHING" || s === "OUTCOME_UNKNOWN" ? "in_doubt" : s === "QUARANTINED" ? "needs_person" : null;
+const colourOf = (s: string | null, reversed = false): "in_doubt" | "confirmed" | "needs_person" | "reversed" | null =>
+  s === "CONFIRMED" ? (reversed ? "reversed" : "confirmed") : s === "DISPATCHING" || s === "OUTCOME_UNKNOWN" ? "in_doubt" : s === "QUARANTINED" ? "needs_person" : null;
+
+/** Tier 3 (CP-REV-1): CONFIRMED intents the provider later reversed (one PROVIDER_REVERSAL audit event each), by intent id. */
+async function reversalsOf(c: DeskCollections, runId: string): Promise<Map<string, { status_now: string | null; provider_object_id: string | null; at: Date }>> {
+  const evs = await c.audit.find({ run_id: runId, type: "PROVIDER_REVERSAL" }).toArray();
+  const out = new Map<string, { status_now: string | null; provider_object_id: string | null; at: Date }>();
+  for (const e of evs) {
+    if (!e.intent_id) continue;
+    const d = (e.detail ?? {}) as Record<string, unknown>;
+    out.set(e.intent_id, { status_now: typeof d.status_now === "string" ? d.status_now : null, provider_object_id: typeof d.provider_object_id === "string" ? d.provider_object_id : null, at: e.at });
+  }
+  return out;
+}
 const passengerOf = (effectKey: string): string => effectKey.split(".")[1] ?? "";
 const entitlementOf = (effectKey: string): string => effectKey.split(".")[3] ?? "";
 
@@ -76,6 +88,7 @@ export async function runSummary(c: DeskCollections, run: RunRow) {
   const intents = await c.intents.find({ run_id: run._id }, { projection: { state: 1 } }).toArray();
   const by: StateCounts = { ...ZERO_STATES };
   for (const i of intents) if (i.state in by) by[i.state as keyof StateCounts] += 1;
+  const reversed = (await reversalsOf(c, run._id)).size;
   const heldObligations = await c.obligations.countDocuments({ run_id: run._id, status: "HELD" });
   const heldClaims = await c.claims.countDocuments({ run_id: run._id, status: "HELD" });
   const report = run.final_report;
@@ -88,8 +101,9 @@ export async function runSummary(c: DeskCollections, run: RunRow) {
     intents_by_state: by,
     colours: {
       in_doubt: by.DISPATCHING + by.OUTCOME_UNKNOWN,
-      confirmed: by.CONFIRMED,
-      needs_person: by.QUARANTINED + heldObligations + heldClaims,
+      confirmed: by.CONFIRMED - reversed, // a confirmed payment the provider later reversed is not counted as confirmed
+      needs_person: by.QUARANTINED + heldObligations + heldClaims + reversed,
+      ...(reversed > 0 ? { reversed } : {}), // CP-REV-1: "Reversed at provider — needs a person"; key present only when non-zero
     },
     complete: report ? report.complete : null,
     report_generated_at: report ? report.generated_at : null,
@@ -225,6 +239,7 @@ export async function paymentRows(c: DeskCollections, run: RunRow) {
   const intents = await c.intents.find({ run_id: run._id }).sort({ created_at: 1, _id: 1 }).toArray();
   const obls = await c.obligations.find({ run_id: run._id }, { projection: { rail: 1, effect_key: 1 } }).toArray();
   const railOf = new Map(obls.map((o) => [o._id, o.rail] as const));
+  const rev = await reversalsOf(c, run._id);
   return intents.map((i) => ({
     effect_key: i.effect_key,
     passenger_id: passengerOf(i.effect_key),
@@ -233,8 +248,9 @@ export async function paymentRows(c: DeskCollections, run: RunRow) {
     rail: railOf.get(i.obligation_id) ?? i.frozen_request.rail ?? null,
     provider: i.provider,
     state: i.state,
-    colour: colourOf(i.state),
+    colour: colourOf(i.state, rev.has(i._id)),
     quarantine_reason: i.quarantine?.reason ?? null,
+    ...(i.state === "CONFIRMED" && rev.has(i._id) ? { reversed_at_provider: true as const } : {}), // CP-REV-1; absent otherwise
     source: "nt" as const,
   }));
 }
@@ -249,7 +265,7 @@ function baselineRow(p: BaselinePayment) {
     provider: p.provider,
     state: null,
     colour: null,
-    quarantine_reason: null,
+    quarantine_reason: null, // a baseline's reversal shows from the provider statement (objects with a reversal status)
     source: "baseline" as const,
   };
 }
@@ -268,7 +284,8 @@ export async function paymentTrail(c: DeskCollections, run: RunRow, effectKey: s
     .find({ run_id: run._id, $or: [{ intent_id: marker }, { effect_key: effectKey, type: "OBLIGATION_DECIDED" }] })
     .sort({ _id: 1 })
     .toArray();
-  return { intent, obligation, investigations, audit };
+  const reversal = intent.state === "CONFIRMED" ? ((await reversalsOf(c, run._id)).get(marker) ?? null) : null;
+  return { intent, obligation, investigations, audit, ...(reversal ? { reversal } : {}) }; // CP-REV-1: reversal only when recorded
 }
 
 // ---- GET /api/runs/:run_id/payments/:effect_key (baseline arms): the `BaselineTrail` addition --------------------------------
@@ -335,7 +352,8 @@ export async function baselineTrail(c: DeskCollections, run: RunRow, effectKey: 
 
 // ---- GET /api/runs/:run_id/pool -------------------------------------------------------------------------------------
 export async function pool(c: DeskCollections, run: RunRow) {
-  const g = await c.grants.findOne({ run_id: run._id, kind: "GOODWILL_POOL" });
+  // The run's pool by _id: under hierarchical authority (CP-AUTH-1) every node of the tree is a GOODWILL_POOL document too.
+  const g = await c.grants.findOne({ _id: `${run._id}:GOODWILL` });
   if (!g) return null;
   return {
     run_id: run._id,
