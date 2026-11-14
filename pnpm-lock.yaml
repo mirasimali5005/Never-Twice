@@ -116,7 +116,11 @@ importers:
         specifier: 23.1.0
         version: 23.1.0(@types/node@24.19.2)
 
-  packages/recovery: {}
+  packages/recovery:
+    dependencies:
+      '@nt/contracts':
+        specifier: workspace:*
+        version: link:../contracts
 
   packages/rules:
     dependencies:
