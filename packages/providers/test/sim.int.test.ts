@@ -220,7 +220,7 @@ describe("C2-INT-02 sim_keyless (rail legacy)", () => {
     expect(posts.every((e) => e.body_sha256 === hashFrozenRequest(r))).toBe(true);
   });
 
-  it("the simulator ignores a key even when one is forced onto the wire (PAY-13), which is why the client throws instead of sending", async () => {
+  it("sim_keyless refuses to be handed a key and sends nothing (the legacy rail would ignore it: PAY-13)", async () => {
     const a = await sim.account();
     const k = await legacy(a);
     await expect(k.createPaymentOrRefund(req(a, { rail: "legacy" }), { idempotencyKey: "r7k2m9qa:X", timeoutMs: 1000 })).rejects.toBeInstanceOf(ProviderConfigError);

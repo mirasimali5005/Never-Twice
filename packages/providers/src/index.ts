@@ -23,7 +23,7 @@ export type ProviderEnv = {
   NT_RUN_ID?: string | undefined;
   account?: string | undefined;
   STRIPE_SECRET_KEY?: string | undefined;
-  /** Timeout for the Stripe SDK and the simulator's read requests, ms. */
+  /** Timeout for the Stripe SDK's default requests and the simulator's read requests, ms (default 5000 simulator, 15000 Stripe). */
   readTimeoutMs?: number | undefined;
 };
 
@@ -48,7 +48,15 @@ export async function createProvider(id: PaymentProvider["id"], env: ProviderEnv
       };
       return id === "sim_payout" ? SimPayoutProvider.create(o) : SimKeylessProvider.create(o);
     }
-    case "stripe_refund":
-      throw new ProviderConfigError("createProvider: stripe_refund is delivered by task C3");
+    case "stripe_refund": {
+      // Lazy import: simulator-only consumers never load the Stripe SDK. The constructor refuses any key that is not a test key.
+      const { StripeRefundProvider } = await import("./stripe-refund.ts");
+      const secretKey = need(env.STRIPE_SECRET_KEY, "STRIPE_SECRET_KEY");
+      return new StripeRefundProvider({
+        secretKey,
+        timeoutMs: env.readTimeoutMs ?? 15_000,
+        ...(env.NT_RUN_ID ? { runId: env.NT_RUN_ID } : {}),
+      });
+    }
   }
 }
