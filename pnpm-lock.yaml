@@ -73,7 +73,21 @@ importers:
         specifier: 11.3.0
         version: 11.3.0(bare-buffer@3.7.2)
 
-  packages/gateway: {}
+  packages/gateway:
+    dependencies:
+      '@nt/contracts':
+        specifier: workspace:*
+        version: link:../contracts
+      '@nt/db':
+        specifier: workspace:*
+        version: link:../db
+      mongodb:
+        specifier: 7.9.0
+        version: 7.9.0
+    devDependencies:
+      mongodb-memory-server:
+        specifier: 11.3.0
+        version: 11.3.0(bare-buffer@3.7.2)
 
   packages/providers:
     dependencies:
