@@ -1,0 +1,40 @@
+{
+  "request_sha256": "fe4f1ab56d0df94512b6e528f5b9c5692881c93d5602fc2249c3a94628f7ae6a",
+  "model": "claude-opus-5-5",
+  "prompt_version": "intake@1",
+  "recorded_at": "2026-11-14T17:19:22.147Z",
+  "response": {
+    "parsed_output": {
+      "claimant_names": [
+        "M. Okonkwo-Brandt"
+      ],
+      "booking_refs": [
+        "ZT4H9X"
+      ],
+      "flight_numbers": [
+        "NT101"
+      ],
+      "travel_date": "2026-11-10",
+      "passengers_claimed_for": [
+        {
+          "name": "Daniel Whitlok",
+          "relation": "client"
+        }
+      ],
+      "asserted_delay": "reached his final destination with a significant delay",
+      "asserted_cause": "The cancellation was, on the information available to us, within the carrier's control.",
+      "requested_amount": "in the amount corresponding to the delay recorded in your own systems",
+      "payee_change_request": {
+        "requested": false,
+        "quote": null
+      },
+      "hardship": {
+        "kind": "NONE",
+        "quote": null
+      },
+      "injection_suspected": false,
+      "language": "en",
+      "notes": "Filed by claims agency FairFlight Claims Recovery Inc. (file FF-2026-118834) under a letter of authority that is not reproduced; correspondence goes to the agency, but payment is asked to the passenger's account on record. The flight is reported as cancelled and the passenger re-accommodated; check the cancellation, the notice timing and the arrival delay in the airline's records."
+    }
+  }
+}

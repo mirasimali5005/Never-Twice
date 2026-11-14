@@ -1,0 +1,40 @@
+{
+  "request_sha256": "8ea778f359abf2fa49da830105a6913419c0f2547d0c9bc8e4a6b769a83e0535",
+  "model": "claude-opus-5-5",
+  "prompt_version": "intake@1",
+  "recorded_at": "2026-11-14T17:19:34.291Z",
+  "response": {
+    "parsed_output": {
+      "claimant_names": [
+        "Camille Laurent"
+      ],
+      "booking_refs": [
+        "YE7M3A"
+      ],
+      "flight_numbers": [
+        "NT880"
+      ],
+      "travel_date": "2026-11-10",
+      "passengers_claimed_for": [
+        {
+          "name": "Camille Laurent",
+          "relation": "self"
+        }
+      ],
+      "asserted_delay": "plus de six heures de retard",
+      "asserted_cause": "un problème de planification des équipages",
+      "requested_amount": null,
+      "payee_change_request": {
+        "requested": false,
+        "quote": null
+      },
+      "hardship": {
+        "kind": "NONE",
+        "quote": null
+      },
+      "injection_suspected": false,
+      "language": "fr",
+      "notes": "Single passenger claim citing the Air Passenger Protection Regulations. The crew-scheduling cause is what the crew told the passenger and is still unverified."
+    }
+  }
+}

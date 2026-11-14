@@ -1,0 +1,40 @@
+{
+  "request_sha256": "7602d903e2c462a9524f42162565ab969f3fe3c8aa604df14f460f97a60c577e",
+  "model": "claude-opus-5-5",
+  "prompt_version": "intake@1",
+  "recorded_at": "2026-11-14T17:19:38.242Z",
+  "response": {
+    "parsed_output": {
+      "claimant_names": [
+        "Noah Fraser"
+      ],
+      "booking_refs": [
+        "AJ6W5L"
+      ],
+      "flight_numbers": [
+        "NT455"
+      ],
+      "travel_date": "2026-11-10",
+      "passengers_claimed_for": [
+        {
+          "name": "Noah Fraser",
+          "relation": "self"
+        }
+      ],
+      "asserted_delay": "about five and a half hours late",
+      "asserted_cause": "So it was the weather and then the crew.",
+      "requested_amount": null,
+      "payee_change_request": {
+        "requested": false,
+        "quote": null
+      },
+      "hardship": {
+        "kind": "NONE",
+        "quote": null
+      },
+      "injection_suspected": false,
+      "language": "en",
+      "notes": "Writer reports a fog/de-icing weather hold followed by a crew time-out and wait for a replacement crew. Check the cause sequence against operational records."
+    }
+  }
+}

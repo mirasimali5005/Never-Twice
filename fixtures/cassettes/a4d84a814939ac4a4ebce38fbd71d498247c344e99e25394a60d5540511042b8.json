@@ -1,0 +1,40 @@
+{
+  "request_sha256": "a4d84a814939ac4a4ebce38fbd71d498247c344e99e25394a60d5540511042b8",
+  "model": "claude-opus-5-5",
+  "prompt_version": "intake@1",
+  "recorded_at": "2026-11-14T17:19:28.435Z",
+  "response": {
+    "parsed_output": {
+      "claimant_names": [
+        "Priya Raman"
+      ],
+      "booking_refs": [
+        "DX3F7Q"
+      ],
+      "flight_numbers": [
+        "NT101"
+      ],
+      "travel_date": "2026-11-10",
+      "passengers_claimed_for": [
+        {
+          "name": "Priya Raman",
+          "relation": "self"
+        }
+      ],
+      "asserted_delay": "arrived in Vancouver a little over four hours late",
+      "asserted_cause": null,
+      "requested_amount": null,
+      "payee_change_request": {
+        "requested": false,
+        "quote": null
+      },
+      "hardship": {
+        "kind": "NONE",
+        "quote": null
+      },
+      "injection_suspected": false,
+      "language": "en",
+      "notes": "Web form claim: flight cancelled 50 minutes before departure, passenger rebooked. Claim cites the Air Passenger Protection Regulations."
+    }
+  }
+}

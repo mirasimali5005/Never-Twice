@@ -1,0 +1,40 @@
+{
+  "request_sha256": "d4d667b0611a63301e850da366f9e39859da9292e4a1941bee267a08e3fc083c",
+  "model": "claude-opus-5-5",
+  "prompt_version": "intake@1",
+  "recorded_at": "2026-11-14T17:19:25.486Z",
+  "response": {
+    "parsed_output": {
+      "claimant_names": [
+        "Grace Liu"
+      ],
+      "booking_refs": [
+        "HV9C3T"
+      ],
+      "flight_numbers": [
+        "NT101"
+      ],
+      "travel_date": "2026-11-10",
+      "passengers_claimed_for": [
+        {
+          "name": "Grace Liu",
+          "relation": "self"
+        }
+      ],
+      "asserted_delay": "about 2 hours 10 minutes later than my original arrival time",
+      "asserted_cause": null,
+      "requested_amount": null,
+      "payee_change_request": {
+        "requested": false,
+        "quote": null
+      },
+      "hardship": {
+        "kind": "NONE",
+        "quote": null
+      },
+      "injection_suspected": false,
+      "language": "en",
+      "notes": "Cancellation with rebooking on a later flight on route YYZ-YVR; passenger reports arriving about 2h10m late. No amount stated."
+    }
+  }
+}

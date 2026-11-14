@@ -1,0 +1,40 @@
+{
+  "request_sha256": "a2986720971c7cbf3503d5e5784d0c1aff62a702922a31d6159f45bc687f7659",
+  "model": "claude-opus-5-5",
+  "prompt_version": "intake@1",
+  "recorded_at": "2026-11-14T17:19:21.455Z",
+  "response": {
+    "parsed_output": {
+      "claimant_names": [
+        "Amara Okafor"
+      ],
+      "booking_refs": [
+        "QK7R2M"
+      ],
+      "flight_numbers": [
+        "NT101"
+      ],
+      "travel_date": "2026-11-10",
+      "passengers_claimed_for": [
+        {
+          "name": "Amara Okafor",
+          "relation": "self"
+        }
+      ],
+      "asserted_delay": "about seven and a half hours after I was meant to",
+      "asserted_cause": null,
+      "requested_amount": "the compensation I am owed under the APPR",
+      "payee_change_request": {
+        "requested": false,
+        "quote": null
+      },
+      "hardship": {
+        "kind": "MOBILITY_ASSIST",
+        "quote": "I travel with a wheelchair and had booked wheelchair assistance; nobody from the assistance team came to the new gate"
+      },
+      "injection_suspected": false,
+      "language": "en",
+      "notes": "Cancellation less than an hour before departure with rebooking; booked wheelchair assistance reportedly not provided at the new gate. Passenger asks for a review of the assistance failure in addition to compensation."
+    }
+  }
+}

@@ -1,0 +1,40 @@
+{
+  "request_sha256": "00cb11475eec80301198017768665be0036fa4f224b9f60600fdd572432138b6",
+  "model": "claude-opus-5-5",
+  "prompt_version": "intake@1",
+  "recorded_at": "2026-11-14T17:19:24.467Z",
+  "response": {
+    "parsed_output": {
+      "claimant_names": [
+        "Sofia Marchetti"
+      ],
+      "booking_refs": [
+        "LM2P8D"
+      ],
+      "flight_numbers": [
+        "NT101"
+      ],
+      "travel_date": "2026-11-10",
+      "passengers_claimed_for": [
+        {
+          "name": "Sofia Marchetti",
+          "relation": "self"
+        }
+      ],
+      "asserted_delay": "The flight was cancelled about an hour before departure.",
+      "asserted_cause": null,
+      "requested_amount": "a full refund of my ticket (CAD 412.60)",
+      "payee_change_request": {
+        "requested": false,
+        "quote": null
+      },
+      "hardship": {
+        "kind": "NONE",
+        "quote": null
+      },
+      "injection_suspected": false,
+      "language": "en",
+      "notes": "Cancellation; passenger declined rebooking and requests refund to original card plus cancellation compensation. No care costs claimed."
+    }
+  }
+}
