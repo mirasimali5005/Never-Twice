@@ -4,7 +4,7 @@
 //   node --env-file=evaluator/.env evaluator/src/cli.ts check --run <run_id> [--report <path>] [--expect-hash <hex>]
 //                                                              [--ops-record <path>] [--out-dir <dir>] [--hidden-dir <dir>]
 //
-// Environment (check only), from evaluator/.env, never the root .env: EVAL_SIM_URL, EVAL_SIM_READ_KEY, EVAL_STRIPE_KEY (F4).
+// Environment (check only), from evaluator/.env, never the root .env: EVAL_SIM_URL, EVAL_SIM_READ_KEY, EVAL_STRIPE_KEY (rk_test_ only; F4).
 // Exit codes: 0 SAFETY: PASS; 1 SAFETY: FAIL; 2 error (no certificate; any earlier certificate for the run is removed first).
 import { readFileSync, writeFileSync, existsSync, mkdirSync, rmSync } from "node:fs";
 import { resolve, join } from "node:path";
@@ -17,6 +17,7 @@ import { parseFinalReport, ReportError } from "./report.ts";
 import { LedgerError, readAllSources } from "./ledger.ts";
 import type { LedgerSource } from "./ledger.ts";
 import { simLedgerSource } from "./ledger-sim.ts";
+import { stripeLedgerSource, resolveApiBase } from "./ledger-stripe.ts";
 import { check } from "./checker.ts";
 import type { Commitment } from "./checker.ts";
 import { buildCertificate, renderText } from "./certificate.ts";
@@ -88,15 +89,18 @@ function cmdManifest(opts: Map<string, string>): number {
   return 0;
 }
 
-/** Ledger sources for a run. F4 plugs the Stripe source in here (see ledger.ts). */
+/**
+ * Ledger sources for a run. Stripe (task F4) is read whenever EVAL_STRIPE_KEY is set, and is required when the
+ * report lists a stripe_refund payment. The Stripe key guard (^rk_test_) runs first, before any request.
+ * EVAL_STRIPE_API_BASE is a test seam and accepts only a loopback URL.
+ */
 function buildLedgerSources(env: NodeJS.ProcessEnv, needStripe: boolean): { sources: LedgerSource[]; stripe: boolean } {
+  const key = env.EVAL_STRIPE_KEY;
+  if (needStripe && !key) throw new LedgerError("the report lists a stripe_refund payment and EVAL_STRIPE_KEY is not set: cannot grade");
+  const stripe = key ? stripeLedgerSource({ key, apiBase: resolveApiBase(env.EVAL_STRIPE_API_BASE) }) : null;
   const sources: LedgerSource[] = [simLedgerSource({ baseUrl: env.EVAL_SIM_URL ?? "", readKey: env.EVAL_SIM_READ_KEY ?? "" })];
-  if (needStripe) {
-    if (!env.EVAL_STRIPE_KEY) throw new LedgerError("the report lists a stripe_refund payment and EVAL_STRIPE_KEY is not set");
-    // F4: replace this throw with `sources.push(stripeLedgerSource({ key: env.EVAL_STRIPE_KEY }))`.
-    throw new LedgerError("the report lists a stripe_refund payment and the Stripe ledger reader (task F4) is not implemented yet: cannot grade");
-  }
-  return { sources, stripe: false };
+  if (stripe) sources.push(stripe);
+  return { sources, stripe: stripe !== null };
 }
 
 async function cmdCheck(opts: Map<string, string>, env: NodeJS.ProcessEnv): Promise<number> {
@@ -133,6 +137,10 @@ async function cmdCheck(opts: Map<string, string>, env: NodeJS.ProcessEnv): Prom
 
   const result = check({ manifest, storedManifest, commitment, expectHash: opts.get("expect-hash") ?? null, ledger: objects, report });
   const cert = buildCertificate(report, result, { sim_objects: counts.sim ?? 0, stripe_objects: stripe ? (counts.stripe ?? 0) : null }, new Date().toISOString());
+  if (stripe) {
+    cert.notes.push(`Stripe test mode: ${counts.stripe ?? 0} refund object(s) with metadata.nt_run_id ${runId} read from the top-level refund list ` +
+      `with the auditor's restricted read-only key (rk_test_); GET only`);
+  }
   const text = renderText(cert);
   mkdirSync(outDir, { recursive: true });
   writeFileSync(certJson, JSON.stringify(cert, null, 2) + "\n");

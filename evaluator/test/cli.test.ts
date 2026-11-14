@@ -120,12 +120,12 @@ test("unreachable ledger and missing EVAL_SIM_* are errors, never passes", async
   assert.equal(b.code, 2);
 });
 
-test("a stripe_refund payment in the report without a Stripe reader is an error (F4 pending)", async () => {
+test("a stripe_refund payment in the report with no EVAL_STRIPE_KEY is an error (the Stripe reader itself: stripe-reader.test.ts)", async () => {
   const rep = report();
   (rep.paid as Record<string, unknown>[])[4].provider = "stripe_refund";
-  const r = await cli(["check", "--run", RUN, "--report", writeReport(rep), ...common()], { ...envOk(), EVAL_STRIPE_KEY: "rk_test_dummy" });
+  const r = await cli(["check", "--run", RUN, "--report", writeReport(rep), ...common()], envOk());
   assert.equal(r.code, 2);
-  assert.match(r.stderr, /F4/);
+  assert.match(r.stderr, /EVAL_STRIPE_KEY is not set/);
 });
 
 test("manifest edited after commitment, and commitment deleted: exit 1 with C10 (EVL-11)", async () => {
