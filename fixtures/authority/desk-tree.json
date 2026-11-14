@@ -1,0 +1,11 @@
+{
+  "description": "Fictional hierarchical goodwill authority (Tier 3, CP-AUTH-1): airline pool -> desk -> agents. The root grant equals the scenario's goodwill pool (S1: 50000). Seed with `pnpm seed -- --scenario S1 --authority-tree fixtures/authority/desk-tree.json`; run an agent with NT_AUTHORITY_GRANT=<node id>.",
+  "nodes": [
+    { "id": "GOODWILL", "parent": null, "grant_minor": 50000 },
+    { "id": "GOODWILL/DESK_YYZ", "parent": "GOODWILL", "grant_minor": 35000 },
+    { "id": "GOODWILL/DESK_YYZ/AGENT_1", "parent": "GOODWILL/DESK_YYZ", "grant_minor": 20000 },
+    { "id": "GOODWILL/DESK_YYZ/AGENT_2", "parent": "GOODWILL/DESK_YYZ", "grant_minor": 15000 },
+    { "id": "GOODWILL/DESK_YUL", "parent": "GOODWILL", "grant_minor": 15000 },
+    { "id": "GOODWILL/DESK_YUL/AGENT_3", "parent": "GOODWILL/DESK_YUL", "grant_minor": 15000 }
+  ]
+}

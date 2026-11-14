@@ -130,3 +130,14 @@ describe("parseEnv", () => {
     expect(parseEnv("runner", { ...COMMON, NT_CRASH_AT: "kill-now" }).ok).toBe(false);
   });
 });
+
+describe("NT_AUTHORITY_GRANT (Tier 3, CP-AUTH-1)", () => {
+  it("reaches the runner and the reconciler when set, is absent by default, and rejects a node outside GOODWILL", () => {
+    const r = parseEnv("runner", { ...COMMON, NT_AUTHORITY_GRANT: "GOODWILL/DESK_YYZ/AGENT_1" });
+    expect(r.ok && r.env.NT_AUTHORITY_GRANT).toBe("GOODWILL/DESK_YYZ/AGENT_1");
+    const d = parseEnv("runner", COMMON);
+    expect(d.ok && d.env.NT_AUTHORITY_GRANT).toBeUndefined();
+    expect(parseEnv("reconciler", { ...COMMON, NT_AUTHORITY_GRANT: "GOODWILL" }).ok).toBe(true);
+    expect(parseEnv("runner", { ...COMMON, NT_AUTHORITY_GRANT: "OTHER/AGENT" }).ok).toBe(false);
+  });
+});
