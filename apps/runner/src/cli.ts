@@ -56,7 +56,7 @@ export async function main(argv: string[], source: Record<string, string | undef
       return 1;
     }
     // The control arm builds its own report (packages/baselines); the generic builder would drop its paid list.
-    if (values["report-only"] && run.arm !== "control") return await runReportOnly(early, runId, REPO_ROOT, log);
+    if (values["report-only"] && run.arm !== "control" && run.arm !== "documented") return await runReportOnly(early, runId, REPO_ROOT, log);
 
     const parsed = parseEnv("runner", { ...source, NT_RUN_ID: runId, NT_ARM: run.arm });
     if (!parsed.ok) {
@@ -65,8 +65,8 @@ export async function main(argv: string[], source: Record<string, string | undef
     }
     const env = parsed.env;
 
-    if (run.arm === "control") {
-      // Arm A lives in packages/baselines (task E5). Run its CLI as a child with the same arguments and environment; a SIGKILL of the
+    if (run.arm === "control" || run.arm === "documented") {
+      // Arms A and B live in packages/baselines (task E5). Run its CLI as a child with the same arguments and environment; a SIGKILL of the
       // child (the judge's kill at CTRL_AFTER_PROVIDER_RESPONSE) is propagated so callers see the same death as the nt arm.
       const { spawnSync } = await import("node:child_process");
       const { fileURLToPath } = await import("node:url");

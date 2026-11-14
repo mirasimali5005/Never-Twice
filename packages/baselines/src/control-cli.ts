@@ -1,4 +1,4 @@
-// CLI for arm A (`control`), used until the runner (task E4) routes `--arm control` here:
+// CLI for the baseline arms A (`control`) and B (`documented`); the runner routes `--arm control|documented` here:
 //   pnpm run:control -- --run <control_run_id> [--arm control] [--pause-before-payout] [--report-only]
 // Honours the go file .nt/go-<group_id>.json (kill_at_passenger → NT_CRASH_AT=CTRL_AFTER_PROVIDER_RESPONSE@<effect_key>) and an
 // NT_CRASH_AT already in the environment. Never prints a key or a connection string.
@@ -12,6 +12,7 @@ import { createProvider } from "@nt/providers";
 import { loadPolicyBundle, parsePolicyBundle, DEFAULT_POLICY_IDS, type PolicyIds } from "@nt/rules";
 import type { PolicyBundle } from "@nt/contracts";
 import { buildBaselineReport, killSpecFor, runControl, writeReportFile } from "./control.ts";
+import { runDocumented } from "./documented.ts";
 
 const repoRoot = join(dirname(fileURLToPath(import.meta.url)), "../../..");
 
@@ -41,9 +42,9 @@ function die(msg: string, code = 2): never {
 async function main(): Promise<void> {
   const args = parseArgs(process.argv.slice(2));
   const runId = args.run ?? process.env["NT_RUN_ID"] ?? die("--run <run_id> is required");
-  if (args.arm !== null && args.arm !== "control") die(`this entry point runs arm control, not ${args.arm}`);
+  if (args.arm !== null && args.arm !== "control" && args.arm !== "documented") die(`this entry point runs arm control or documented, not ${args.arm}`);
 
-  const parsed = parseEnv("runner", { ...process.env, NT_RUN_ID: runId, NT_ARM: "control" });
+  const parsed = parseEnv("runner", { ...process.env, NT_RUN_ID: runId, NT_ARM: args.arm ?? "control" });
   if (!parsed.ok) die(`environment invalid:\n  ${parsed.errors.join("\n  ")}`);
   const env = parsed.env;
 
@@ -54,10 +55,12 @@ async function main(): Promise<void> {
   try {
     const run = await agent.runs.findOne({ _id: runId });
     if (!run) die(`no execution_runs document for ${runId}`);
-    if (run.arm !== "control") die(`run ${runId} is arm ${run.arm}, not control`);
+    if (run.arm !== "control" && run.arm !== "documented") die(`run ${runId} is arm ${run.arm}, not control or documented`);
+    if (args.arm !== null && args.arm !== run.arm) die(`--arm ${args.arm} does not match execution_runs.arm ${run.arm}`);
+    const arm = run.arm;
 
     const db = { claims: agent.claims, bookings: agent.bookings, runs: agent.runs, grants: gw.grants };
-    const log = (line: string): void => console.log(`[control ${runId}] ${line}`);
+    const log = (line: string): void => console.log(`[${arm} ${runId}] ${line}`);
 
     if (args.reportOnly) {
       const report = await buildBaselineReport(runId, { db });
@@ -89,7 +92,7 @@ async function main(): Promise<void> {
     const resuming = already > 0;
     if (resuming) log("restart: resuming every claim not marked done");
 
-    await runControl({
+    await (arm === "documented" ? runDocumented : runControl)({
       runId,
       db,
       model,
