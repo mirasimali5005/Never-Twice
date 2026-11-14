@@ -40,6 +40,8 @@ import { SimAdmin } from "./lib/sim-admin.ts";
 const SELF = join(REPO, "scripts", "kill-sweep.ts");
 const OUT_DIR = join(REPO, "out", "sweeps");
 const MIN = 60_000;
+/** Time allowed for `reconcile --until-drained` per start (TEST_PLAN: 60 s). A restart after a kill INSIDE a transaction waits for the server to abort the orphaned transaction (see the notes), so the sweep can be run with more. */
+let RECON_TIMEOUT_MS = MIN;
 
 /** S0's payout order: the first three payments. P11 is on the legacy keyless rail; P13 and P02 are on the instant rail. */
 const POSITIONS = [
@@ -258,12 +260,12 @@ async function runCell(cell: Cell): Promise<CellRecord> {
 
       // 2. The reconciler until the run is quiet. Armed for KS7, and for KS6 when the runner was not the one killed.
       const armRecon = ks.id === "KS7" || (ks.id === "KS6" && !rec.kill_fired);
-      const c1 = await step("reconcile_1", [entry, "--run", runId, "--until-drained"], reconEnv(armRecon), MIN);
+      const c1 = await step("reconcile_1", [entry, "--run", runId, "--until-drained"], reconEnv(armRecon), RECON_TIMEOUT_MS);
       let drainedCode = c1.code;
       if (armRecon && died(c1)) {
         rec.kill_fired = true;
         rec.killed_process = "reconciler";
-        const c2 = await step("reconcile_restart", [entry, "--run", runId, "--until-drained"], reconEnv(false), MIN);
+        const c2 = await step("reconcile_restart", [entry, "--run", runId, "--until-drained"], reconEnv(false), RECON_TIMEOUT_MS);
         drainedCode = c2.code;
       }
       if (drainedCode !== 0) failing.push(`reconciler did not drain: exit ${drainedCode}`);
@@ -431,7 +433,7 @@ function markdown(records: CellRecord[], meta: Record<string, unknown>, sum: Ret
     ? "Every instrumented single crash point that was reached, under three provider faults, ended in a state the auditor accepted or on the would-not-guess list (QUARANTINED)."
     : "The claim \"every instrumented single crash point under three provider faults ends in a state the auditor accepts or on the would-not-guess list\" is NOT supported by this run: see the cells above.");
   L.push("", `It covers one kill per run, one worker, recorded model outputs, the simulator, a local replica set and these three faults, in ${sum.kills_fired} of 63 cells where a kill actually fired. It says nothing about two crashes in one run, concurrent runners, a real processor, Stripe, other faults, or code locations without a barrier. Each cell is one deterministic execution; the sweep enumerates 63 cases, it is not a sample, and no failure rate is derived from it.`, "");
-  L.push(`Environment: ${String(meta.environment)}. Wall time ${(Number(meta.wall_ms) / MIN).toFixed(1)} min, parallelism ${String(meta.parallel)}.`, "");
+  L.push(`Environment: ${String(meta.environment)}. Wall time ${(Number(meta.wall_ms) / MIN).toFixed(1)} min, parallelism ${String(meta.parallel)}, reconcile --until-drained limit ${String(meta.reconcile_timeout_s)} s per start.`, "");
   return L.join("\n");
 }
 
@@ -457,7 +459,7 @@ function git(args: string[]): string {
 }
 
 async function main(): Promise<number> {
-  const a = parseArgs(process.argv.slice(2), ["parallel", "only", "deadline-min", "scan"]);
+  const a = parseArgs(process.argv.slice(2), ["parallel", "only", "deadline-min", "scan", "recon-timeout-s", "out-name"]);
   if (a.values.has("scan")) {
     await scanChild(a.values.get("scan")!);
     return 0;
@@ -470,6 +472,8 @@ async function main(): Promise<number> {
   const mode = stripeMode();
   if (mode.on) process.env.STRIPE_SECRET_KEY = mode.secretKey; // for the seed's ticket-purchase script; never printed
   console.error(`stripe: ${mode.on ? "TEST mode on for P03's ticket refund (faults and kills never target it)" : `OFF (${mode.why}); the gateway is expected to refuse to start (NT_STRIPE_ENABLED=false is not honoured)`}`);
+  RECON_TIMEOUT_MS = Number(a.values.get("recon-timeout-s") ?? 60) * 1000;
+  const outName = a.values.get("out-name") ?? "kill-sweep";
   const parallel = Math.max(1, Number(a.values.get("parallel") ?? 3));
   const deadlineMs = Number(a.values.get("deadline-min") ?? 25) * MIN;
   const only = a.values.get("only");
@@ -497,6 +501,7 @@ async function main(): Promise<number> {
     stripe_note: stripeNote,
     environment: `node ${process.version} ${process.platform}/${process.arch}; mongodb-memory-server replica set per cell; simulator per cell; ${stripeNote.split('.')[0]}; NT_MODEL_MODE=replay (cassettes); NT_RECONCILER_INVESTIGATOR=deterministic; NT_RECALL_ENABLED=false; NT_DISPATCH_TIMEOUT_MS=3000 NT_LEASE_MS=8000 NT_RECONCILE_INTERVAL_MS=500`,
     parallel,
+    reconcile_timeout_s: RECON_TIMEOUT_MS / 1000,
     deadline_min: deadlineMs / MIN,
     finished_at: new Date().toISOString(),
     wall_ms: Date.now() - started,
@@ -506,8 +511,8 @@ async function main(): Promise<number> {
     const sum = summarize(records);
     mkdirSync(OUT_DIR, { recursive: true });
     const m = meta();
-    writeFileSync(join(OUT_DIR, "kill-sweep.json"), `${JSON.stringify({ summary: sum, meta: m, cells: records }, null, 2)}\n`);
-    writeFileSync(join(OUT_DIR, "kill-sweep.md"), markdown(records, m, sum));
+    writeFileSync(join(OUT_DIR, `${outName}.json`), `${JSON.stringify({ summary: sum, meta: m, cells: records }, null, 2)}\n`);
+    writeFileSync(join(OUT_DIR, `${outName}.md`), markdown(records, m, sum));
     return sum;
   };
 
@@ -533,7 +538,7 @@ async function main(): Promise<number> {
   await Promise.all(Array.from({ length: Math.min(parallel, cells.length) }, worker));
   const sum = write();
   console.log(`kill sweep: PASS ${sum.PASS} | FAIL ${sum.FAIL} | NOT_REACHED ${sum.NOT_REACHED} | TIMEOUT ${sum.TIMEOUT} | NOT_RUN ${sum.NOT_RUN} | kills fired in ${sum.kills_fired} of 63 cells | ${((Date.now() - started) / MIN).toFixed(1)} min`);
-  console.log(`wrote ${join(OUT_DIR, "kill-sweep.json")} and kill-sweep.md`);
+  console.log(`wrote ${join(OUT_DIR, `${outName}.json`)} and kill-sweep.md`);
   return sum.FAIL + sum.TIMEOUT + sum.NOT_RUN > 0 ? 1 : 0;
 }
 
