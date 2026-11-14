@@ -17,7 +17,8 @@ const LABEL: Record<Action, string> = { go: "Crash", resume: "Recover", audit: "
 export function enabledFor(stage: StageName | null): Record<Exclude<Action, "reset">, boolean> {
   return {
     go: stage === "Paused",
-    resume: stage === "Crash",
+    // after the kill the killed payment stays DISPATCHING (the page says "Payments sending") until the restart marks it unknown
+    resume: stage === "Crash" || stage === "Payments sending",
     audit: stage === "Investigating" || stage === "Recovered",
     "late-commit": stage === "Recovered" || stage === "Audited",
   };
