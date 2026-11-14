@@ -1,0 +1,40 @@
+{
+  "request_sha256": "729f94dd8e4c34758b1a3ee81114dc63f85d43d70d1a4d5ae7c913522c4c2f70",
+  "model": "claude-opus-5-5",
+  "prompt_version": "intake@1",
+  "recorded_at": "2026-11-14T17:19:38.305Z",
+  "response": {
+    "parsed_output": {
+      "claimant_names": [
+        "Isabelle Roy"
+      ],
+      "booking_refs": [
+        "MV3X1C"
+      ],
+      "flight_numbers": [
+        "NT455"
+      ],
+      "travel_date": "2026-11-10",
+      "passengers_claimed_for": [
+        {
+          "name": "Isabelle Roy",
+          "relation": "self"
+        }
+      ],
+      "asserted_delay": "about five and a half hours late",
+      "asserted_cause": null,
+      "requested_amount": null,
+      "payee_change_request": {
+        "requested": false,
+        "quote": null
+      },
+      "hardship": {
+        "kind": "NONE",
+        "quote": null
+      },
+      "injection_suspected": false,
+      "language": "en",
+      "notes": "Single passenger web form claim, route YHZ to YYZ. No cause stated."
+    }
+  }
+}

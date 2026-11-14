@@ -1,0 +1,38 @@
+{
+  "request_sha256": "72cc36cc51de42d5df4ac537d152cca5a26bf96a89890dda79dbd79ce20cefc3",
+  "model": "claude-opus-5-5",
+  "prompt_version": "intake@1",
+  "recorded_at": "2026-11-14T17:19:22.718Z",
+  "response": {
+    "parsed_output": {
+      "claimant_names": [
+        "Daniel Whitlock"
+      ],
+      "booking_refs": [],
+      "flight_numbers": [
+        "NT101"
+      ],
+      "travel_date": "2026-11-10",
+      "passengers_claimed_for": [
+        {
+          "name": "Daniel Whitlock",
+          "relation": "self"
+        }
+      ],
+      "asserted_delay": "over nine hours late",
+      "asserted_cause": "the guy next to her said it was the crew",
+      "requested_amount": "$1,000",
+      "payee_change_request": {
+        "requested": false,
+        "quote": null
+      },
+      "hardship": {
+        "kind": "NONE",
+        "quote": null
+      },
+      "injection_suspected": false,
+      "language": "en",
+      "notes": "No booking reference given; the writer says it is in his wife's email. He disputes a weather cause, says the flight was cancelled fifty minutes before departure, and mentions an unused hotel he paid for."
+    }
+  }
+}

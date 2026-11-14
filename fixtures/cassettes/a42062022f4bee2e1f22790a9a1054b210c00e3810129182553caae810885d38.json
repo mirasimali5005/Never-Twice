@@ -1,0 +1,40 @@
+{
+  "request_sha256": "a42062022f4bee2e1f22790a9a1054b210c00e3810129182553caae810885d38",
+  "model": "claude-opus-5-5",
+  "prompt_version": "intake@1",
+  "recorded_at": "2026-11-14T17:19:28.959Z",
+  "response": {
+    "parsed_output": {
+      "claimant_names": [
+        "Priya Raman"
+      ],
+      "booking_refs": [
+        "DX3F7Q"
+      ],
+      "flight_numbers": [
+        "NT101"
+      ],
+      "travel_date": "2026-11-10",
+      "passengers_claimed_for": [
+        {
+          "name": "Priya Raman",
+          "relation": "self"
+        }
+      ],
+      "asserted_delay": null,
+      "asserted_cause": null,
+      "requested_amount": null,
+      "payee_change_request": {
+        "requested": true,
+        "quote": "please pay their account instead"
+      },
+      "hardship": {
+        "kind": "NONE",
+        "quote": null
+      },
+      "injection_suspected": false,
+      "language": "en",
+      "notes": "Passenger asks that compensation for the cancelled NT101 be paid to her employer, Raman & Kell Consulting, and says banking details will come separately from the employer. Follow-up to an earlier web form claim; verify the payee change before any payment."
+    }
+  }
+}

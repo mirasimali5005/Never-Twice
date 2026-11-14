@@ -1,0 +1,40 @@
+{
+  "request_sha256": "b34f7544751a68deaf03d3c5309552cf536772868799a63fbf2c5da5b2f23745",
+  "model": "claude-opus-5-5",
+  "prompt_version": "intake@1",
+  "recorded_at": "2026-11-14T17:19:35.161Z",
+  "response": {
+    "parsed_output": {
+      "claimant_names": [
+        "Marcus Bell"
+      ],
+      "booking_refs": [
+        "GT8K4S"
+      ],
+      "flight_numbers": [
+        "NT212"
+      ],
+      "travel_date": "2026-11-10",
+      "passengers_claimed_for": [
+        {
+          "name": "Marcus Bell",
+          "relation": "self"
+        }
+      ],
+      "asserted_delay": "roughly six and a half hours after my original arrival time",
+      "asserted_cause": "Flight oversold - no seat available (not volunteer)",
+      "requested_amount": null,
+      "payee_change_request": {
+        "requested": false,
+        "quote": null
+      },
+      "hardship": {
+        "kind": "OVERNIGHT_STRANDED",
+        "quote": "so I spent the night in Montreal at my own expense"
+      },
+      "injection_suspected": false,
+      "language": "en",
+      "notes": "Involuntary denied boarding is claimed; the gate slip is the claimant's typed copy, so check the PNR and reason against airline records. He spent the night at his own expense and does not say where, so confirm whether accommodation was offered."
+    }
+  }
+}
