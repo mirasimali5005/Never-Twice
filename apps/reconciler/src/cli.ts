@@ -1,3 +1,4 @@
+import type { ProviderId } from "@nt/contracts";
 // `pnpm reconcile -- --run <run_id> [--until-drained] [--once] [--watch]` (HANDOVER.md §11.1; AGENT_TASKS.md D2).
 // Worker id reconciler-<pid>. Polls every NT_RECONCILE_INTERVAL_MS. Stops cleanly on SIGTERM/SIGINT between intents.
 // Exit codes: 0 drained / stopped / one pass done; 2 bad arguments or environment; 1 an unexpected error.
@@ -44,19 +45,27 @@ export type GatewayFactory = (i: GatewayFactoryInput) => Promise<{ gateway: Reco
  * it asks the gateway package for a fully wired instance. Resolved by name at run time so this file typechecks before B3 merges.
  */
 export const defaultGatewayFactory: GatewayFactory = async (i) => {
-  const mod = (await import("@nt/gateway")) as Record<string, unknown>;
-  const factory = (mod["createGatewayFromEnv"] ?? mod["createGatewayForProcess"]) as
-    | ((o: { db: NtDb; runId: string; workerId: string; env: Record<string, unknown> }) => unknown)
-    | undefined;
-  const barrier = mod["barrier"] as Barrier | undefined;
-  if (typeof factory !== "function" || typeof barrier !== "function") {
-    throw new Error("@nt/gateway does not export createGatewayFromEnv and barrier yet (task B3); the reconciler cannot start");
-  }
-  const gw = (await factory(i)) as Partial<ReconcilerGateway>;
+  // Seam fix by the orchestrator: B3 exports createGatewayFromEnv(role, env, { runId, workerId }) and an async
+  // readOnlyProviderView(id, env). The read views are built once here (read key only) and exposed synchronously.
+  const mod = await import("@nt/gateway");
+  const env = i.env as Record<string, string | undefined> & { NT_STRIPE_ENABLED?: unknown };
+  const penv = { ...env, NT_RUN_ID: i.runId } as Parameters<typeof mod.readOnlyProviderView>[1];
+  const full = await mod.createGatewayFromEnv("reconciler", penv as Parameters<typeof mod.createGatewayFromEnv>[1], { runId: i.runId, workerId: i.workerId });
+  const ids: ProviderId[] = ["sim_payout", "sim_keyless"];
+  if (String(env.NT_STRIPE_ENABLED) === "true") ids.push("stripe_refund");
+  const views = new Map<ProviderId, ReturnType<ReconcilerGateway["readOnlyProviderView"]>>();
+  for (const id of ids) views.set(id, (await mod.readOnlyProviderView(id, penv)) as ReturnType<ReconcilerGateway["readOnlyProviderView"]>);
+  const gw = Object.assign(Object.create(null), full, {
+    readOnlyProviderView: (p: ProviderId) => {
+      const v = views.get(p);
+      if (!v) throw new Error(`no read-only view for provider ${p}`);
+      return v;
+    },
+  }) as Partial<ReconcilerGateway>;
   for (const m of ["dispatch", "takeOverExpired", "acquireLease", "settle", "quarantine", "recordLicence", "resend", "applyResendResult", "readOnlyProviderView", "capabilitiesOf"] as const) {
     if (typeof gw[m] !== "function") throw new Error(`@nt/gateway: gateway is missing ${m} (task B3)`);
   }
-  return { gateway: gw as ReconcilerGateway, barrier };
+  return { gateway: gw as ReconcilerGateway, barrier: mod.barrier as Barrier };
 };
 
 export async function main(argv: readonly string[], o: { gatewayFactory?: GatewayFactory; model?: ModelClient } = {}): Promise<number> {
