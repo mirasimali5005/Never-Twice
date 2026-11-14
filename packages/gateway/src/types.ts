@@ -17,6 +17,9 @@ export type GatewayConfig = {
   stripeEnabled: boolean;
   /** NT_INVESTIGATOR_TIMEOUT_MS; default 45000. Part of the reconciler's lease on OUTCOME_UNKNOWN. */
   investigatorTimeoutMs?: number;
+  /** Tier 3 (CP-AUTH-1): the grant this gateway reserves goodwill under (e.g. "GOODWILL/DESK_A/AGENT_1", run prefix optional).
+   *  Unset: the run's single pool `${run_id}:GOODWILL` (the default; S0/S1 unchanged). */
+  authorityGrantId?: string | null;
 };
 
 export type GatewayDeps = {

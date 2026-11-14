@@ -96,6 +96,7 @@ export type GatewayEnv = ProviderEnv & {
   NT_KEY_MARGIN_MS?: string | undefined;
   NT_INVESTIGATOR_TIMEOUT_MS?: string | undefined;
   NT_STRIPE_ENABLED?: string | undefined;
+  NT_AUTHORITY_GRANT?: string | undefined;
 };
 
 const num = (v: string | undefined, d: number) => (v === undefined || v === "" ? d : Number(v));
@@ -107,6 +108,7 @@ export function configFromEnv(env: GatewayEnv): GatewayConfig {
     keyMarginMs: num(env.NT_KEY_MARGIN_MS, 60000),
     investigatorTimeoutMs: num(env.NT_INVESTIGATOR_TIMEOUT_MS, 45000),
     stripeEnabled: String(env.NT_STRIPE_ENABLED ?? "true") !== "false", // parseEnv may hand over a boolean or a string
+    authorityGrantId: env.NT_AUTHORITY_GRANT || null, // CP-AUTH-1; unset = the single pool
   };
 }
 

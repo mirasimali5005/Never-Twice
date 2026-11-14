@@ -93,3 +93,22 @@ describe("reversal watch", () => {
     expect(sends).toEqual([]);
   });
 });
+
+describe("recovery guards under hierarchical authority (CP-AUTH-1)", () => {
+  test("a frozen or missing ancestor of the intent's grant reads as grantFrozen (AUTHORITY_REVOKED)", async () => {
+    const RUN2 = "rtest002";
+    await db.grants.insertMany([
+      { _id: `${RUN2}:GOODWILL`, run_id: RUN2, frozen: true },
+      { _id: `${RUN2}:GOODWILL/DESK_A`, run_id: RUN2, frozen: false, ancestors: [`${RUN2}:GOODWILL`] },
+      { _id: `${RUN2}:GOODWILL/DESK_A/AGENT_1`, run_id: RUN2, frozen: false, ancestors: [`${RUN2}:GOODWILL/DESK_A`, `${RUN2}:GOODWILL`] },
+      { _id: `${RUN2}:GOODWILL/DESK_B/AGENT_9`, run_id: RUN2, frozen: false, ancestors: [`${RUN2}:GOODWILL/DESK_B`, `${RUN2}:GOODWILL`] },
+    ] as never[]);
+    const s = createMongoStore({ gw: db, inv: db, runId: RUN2 });
+    const it1 = intent("P31", "sim_payout", { draws_on: `${RUN2}:GOODWILL/DESK_A/AGENT_1` });
+    expect((await s.guards(it1)).grantFrozen).toBe(true);
+    await db.grants.updateOne({ _id: `${RUN2}:GOODWILL` } as never, { $set: { frozen: false } });
+    expect((await s.guards(it1)).grantFrozen).toBe(false);
+    const it2 = intent("P32", "sim_payout", { draws_on: `${RUN2}:GOODWILL/DESK_B/AGENT_9` }); // DESK_B missing
+    expect((await s.guards(it2)).grantFrozen).toBe(true);
+  });
+});

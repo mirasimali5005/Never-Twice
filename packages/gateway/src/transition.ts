@@ -59,12 +59,22 @@ export async function applyTransition(db: NtDb, spec: TransitionSpec): Promise<I
     if (spec.grant) {
       const held = spec.grant.held ?? 0;
       const settled = spec.grant.settled ?? 0;
-      const g = await db.grants.updateOne(
+      // Every level of the grant chain moves by the same delta (CP-AUTH-1); a single pool is a chain of one. Each update is guarded.
+      const leaf = await db.grants.findOneAndUpdate(
         { _id: spec.grant.id, ...(held < 0 ? { held_minor: { $gte: -held } } : {}) },
         { $inc: { held_minor: held, settled_minor: settled } },
-        { session },
+        { session, returnDocument: "after" },
       );
-      if (g.modifiedCount !== 1) throw new InvariantViolation(`grant ${spec.grant.id} counters do not cover intent ${spec.intentId}`);
+      if (!leaf) throw new InvariantViolation(`grant ${spec.grant.id} counters do not cover intent ${spec.intentId}`);
+      const anc = (leaf as { ancestors?: unknown }).ancestors;
+      for (const id of Array.isArray(anc) ? (anc as string[]) : []) {
+        const g = await db.grants.updateOne(
+          { _id: id, ...(held < 0 ? { held_minor: { $gte: -held } } : {}) },
+          { $inc: { held_minor: held, settled_minor: settled } },
+          { session },
+        );
+        if (g.modifiedCount !== 1) throw new InvariantViolation(`grant ${id} (ancestor of ${spec.grant.id}) counters do not cover intent ${spec.intentId}`);
+      }
     }
     const a = after as Intent;
     await db.audit.insertOne(

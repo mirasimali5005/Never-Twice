@@ -59,6 +59,12 @@ export function createMongoStore(o: { gw: NtDb; inv: NtDb; runId: string }): Rec
       if (it.draws_on !== null) {
         const g = await gw.grants.findOne({ _id: it.draws_on } as Document);
         grantFrozen = g ? g.frozen !== false : true; // a missing grant is treated as frozen (conservative)
+        // CP-AUTH-1: any frozen or missing ancestor revokes authority too.
+        const anc = (g as { ancestors?: unknown } | null)?.ancestors;
+        if (!grantFrozen && Array.isArray(anc) && anc.length > 0) {
+          const ups = await gw.grants.find({ _id: { $in: anc } } as Document).toArray();
+          grantFrozen = ups.length !== anc.length || ups.some((u) => u.frozen !== false);
+        }
       }
       if (!ob) return { obligationStatus: "NOT_OWED", obligationReason: null, grantFrozen }; // missing → row 4, AUTHORITY_REVOKED
       return { obligationStatus: ob.status, obligationReason: ob.reason_code ?? null, grantFrozen };
