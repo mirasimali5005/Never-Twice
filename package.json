@@ -26,7 +26,7 @@
     "reconcile": "node -e \"console.error('TO IMPLEMENT: reconcile (task D2)');process.exit(1)\"",
     "evaluator:manifest": "node --env-file-if-exists=evaluator/.env evaluator/src/cli.ts manifest",
     "evaluator:check": "node --env-file-if-exists=evaluator/.env evaluator/src/cli.ts check",
-    "desk": "node -e \"console.error('TO IMPLEMENT: desk (task G1/G2)');process.exit(1)\"",
+    "desk": "concurrently -k -n api,ui -c blue,green \"tsx --env-file-if-exists=.env apps/desk-api/src/server.ts\" \"pnpm --filter @nt/desk-ui dev\"",
     "sweep:kill": "node -e \"console.error('TO IMPLEMENT: sweep:kill (task H2)');process.exit(1)\"",
     "sweep:concurrency": "node -e \"console.error('TO IMPLEMENT: sweep:concurrency (task H3)');process.exit(1)\"",
     "sweep:mutations": "node -e \"console.error('TO IMPLEMENT: sweep:mutations (task H3)');process.exit(1)\"",
