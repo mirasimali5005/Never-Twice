@@ -21,6 +21,7 @@ import { stripeLedgerSource, resolveApiBase } from "./ledger-stripe.ts";
 import { check } from "./checker.ts";
 import type { Commitment } from "./checker.ts";
 import { buildCertificate, renderText } from "./certificate.ts";
+import { gradeLetters, parseLetters, readMessages, renderLetters } from "./letters.ts";
 
 export const EVAL_DIR = resolve(import.meta.dirname, "..");
 export const REPO_ROOT = resolve(EVAL_DIR, "..");
@@ -114,7 +115,9 @@ async function cmdCheck(opts: Map<string, string>, env: NodeJS.ProcessEnv): Prom
   rmSync(certTxt, { force: true });
 
   const reportPath = opts.has("report") ? resolve(opts.get("report")!) : join(REPO_ROOT, "out", "reports", `${runId}.final-report.json`);
-  const report = parseFinalReport(readJson(reportPath, "final report"));
+  const rawReport = readJson(reportPath, "final report");
+  const report = parseFinalReport(rawReport);
+  const letters = parseLetters(rawReport); // CP-LETTER-1: graded separately, never as payments
   if (report.run_id !== runId) throw new ReportError(`report run_id ${report.run_id} differs from --run ${runId}`);
 
   const manifestPath = join(outDir, `${report.group_id}.manifest.json`);
@@ -141,7 +144,15 @@ async function cmdCheck(opts: Map<string, string>, env: NodeJS.ProcessEnv): Prom
     cert.notes.push(`Stripe test mode: ${counts.stripe ?? 0} refund object(s) with metadata.nt_run_id ${runId} read from the top-level refund list ` +
       `with the auditor's restricted read-only key (rk_test_); GET only`);
   }
-  const text = renderText(cert);
+  // Decision letters: read only when the report lists any (an older simulator has no /v1/messages). They never change SAFETY.
+  let lettersText = "";
+  if (letters.length > 0) {
+    const grade = gradeLetters(runId, letters, await readMessages({ baseUrl: env.EVAL_SIM_URL ?? "", readKey: env.EVAL_SIM_READ_KEY ?? "", runId }));
+    (cert as unknown as { letters: unknown }).letters = grade;
+    cert.notes.push(`decision letters graded separately (not payments): ${grade.status}; ${grade.reported} reported, ${grade.messages} NotifySim message(s)`);
+    lettersText = renderLetters(grade);
+  }
+  const text = renderText(cert) + lettersText;
   mkdirSync(outDir, { recursive: true });
   writeFileSync(certJson, JSON.stringify(cert, null, 2) + "\n");
   writeFileSync(certTxt, text);
