@@ -4,7 +4,7 @@ import { serve, type ServerType } from "@hono/node-server";
 import { pathToFileURL } from "node:url";
 import { connect } from "@nt/db";
 import { DEFAULT_EVALUATOR_OUT } from "./certificate-file.ts";
-import { DESK_HOST, DESK_PORT, loadDeskEnv, recordedFlag, type DeskEnv } from "./env.ts";
+import { DESK_HOST, DESK_PORT, databaseKind, loadDeskEnv, recordedFlag, type DeskEnv } from "./env.ts";
 import { createApp, type DeskDeps } from "./routes.ts";
 
 /** Deps from the validated environment; the database client opens on first use (a failed connect is retried per request). */
@@ -16,6 +16,7 @@ export function depsFromEnv(env: DeskEnv, recorded: boolean): () => Promise<Desk
       sim: { url: env.NT_SIM_URL, readKey: env.NT_SIM_READ_KEY },
       evaluatorOut: DEFAULT_EVALUATOR_OUT,
       recorded,
+      database: databaseKind(env.NT_MONGODB_URI_DESK),
     };
   };
 }

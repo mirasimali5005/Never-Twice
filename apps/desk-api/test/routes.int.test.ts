@@ -36,7 +36,7 @@ beforeAll(async () => {
   await writeFile(path.join(out, `${NT}.certificate.json`), `{"certificate_version":1,"run_id":"${NT}","safety":"PASS"}`);
   const s = spyOn(owner);
   spy = s.spy;
-  app = createApp({ cols: s.cols, sim: { url: sim.url, readKey: READ_KEY }, evaluatorOut: out, recorded: false, now: () => new Date("2026-11-14T18:02:31.004Z") });
+  app = createApp({ cols: s.cols, sim: { url: sim.url, readKey: READ_KEY }, evaluatorOut: out, recorded: false, database: "local", now: () => new Date("2026-11-14T18:02:31.004Z") });
 }, 180_000);
 
 afterAll(async () => {
@@ -52,9 +52,12 @@ describe("GET /api/groups/:group_id", () => {
     expect(status).toBe(200);
     expect(body).toMatchObject({ group_id: GROUP, scenario: "S0", recorded: false, intake_mode: "replay" });
     expect(body.runs.map((r: { run_id: string }) => r.run_id).sort()).toEqual(["r3c9v5tb", "r5h1w8ze", "r7k2m9qa"]);
-    expect(keys(body.runs[0])).toEqual(["arm", "fault_schedule", "run_id", "sim_account", "status"]);
+    expect(keys(body.runs[0])).toEqual(["arm", "audited", "fault_schedule", "run_id", "sim_account", "status"]);
     expect(body.manifest_sha256).toBe("7c1e5a09".padEnd(64, "0"));
     expect(body.manifest_committed_at).toBe("2026-11-14T17:57:40.118Z");
+    expect(body.database).toBe("local");
+    const audited = Object.fromEntries(body.runs.map((r: { run_id: string; audited: boolean }) => [r.run_id, r.audited]));
+    expect(audited).toEqual({ [NT]: true, [CONTROL]: false, r5h1w8ze: false });
     const m = (await mock("group.json")) as object;
     for (const k of keys(m)) expect(Object.keys(body)).toContain(k);
   });

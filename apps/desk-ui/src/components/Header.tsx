@@ -1,4 +1,4 @@
-import { shortHash } from "../format";
+import { formatStamp, shortHash } from "../format";
 import type { ApiResult } from "../api";
 import type { GroupView } from "../types";
 import type { StreamStatus } from "../useEvents";
@@ -6,7 +6,7 @@ import type { StreamStatus } from "../useEvents";
 const ARM_LABEL: Record<string, string> = {
   nt: "Never Twice",
   control: "Ordinary agent (control)",
-  nt_mutant: "Labelled mutant (test of the auditor)",
+  nt_mutant: "Labelled mutant M2 (test of the auditor)",
   documented: "Documented practice",
   rules_only: "Rules only",
 };
@@ -18,6 +18,7 @@ export function Header(props: {
   mock: boolean;
   stream: StreamStatus;
   intakeReplay: boolean;
+  onHowItWorks?: () => void;
 }) {
   const g = props.group && props.group.ok ? props.group.data : null;
   const { hash, commitment } = props.manifest;
@@ -30,10 +31,20 @@ export function Header(props: {
           <span className="brand__thesis">the claims desk that refuses to guess</span>
         </div>
         <div className="labels">
-          {g?.recorded && <span className="label label--recorded">Recorded run</span>}
+          {g?.recorded && (
+            <span className="label label--recorded">
+              RECORDED{g.recorded_at && formatStamp(g.recorded_at) ? ` ${formatStamp(g.recorded_at)}` : ""}
+            </span>
+          )}
+          {g?.database === "local" && <span className="label label--local" title="Not the Atlas sandbox: this desk reads a local database">LOCAL DATABASE</span>}
           {props.mock && <span className="label label--mock">Mock data</span>}
           <span className="label">Compensation provider: simulator</span>
           {props.intakeReplay && <span className="label">Intake: replayed from a recording</span>}
+          {props.onHowItWorks && (
+            <button type="button" className="label label--button" onClick={props.onHowItWorks} title="beat 13: what is built, what is simulated">
+              How it works
+            </button>
+          )}
           <span className={`dot dot--${props.stream}`} title={`event stream: ${props.stream}`} aria-label={`event stream ${props.stream}`} />
         </div>
       </div>

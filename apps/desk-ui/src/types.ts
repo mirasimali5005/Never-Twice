@@ -14,13 +14,18 @@ export type IntentState =
 export type Colour = "amber" | "green" | "grey-blue" | "neutral";
 export type ServerColour = "in_doubt" | "confirmed" | "needs_person";
 
-export type GroupRun = { run_id: string; arm: Arm; status: RunStatus; sim_account: string; fault_schedule: string };
+// `audited` is added by the desk API: true once <run_id>.certificate.json exists, so the UI polls the certificate only then.
+export type GroupRun = { run_id: string; arm: Arm; status: RunStatus; sim_account: string; fault_schedule: string; audited?: boolean };
 // `manifest_sha256` and `intake_mode` are NOT in ARCHITECTURE.md section 9. They are optional: the UI uses them if G1 adds them.
 export type GroupView = {
   group_id: string;
   scenario: "S0" | "S1";
   recorded: boolean;
   runs: GroupRun[];
+  /** Which database the desk API reads: the Atlas sandbox or a local one (derived from the connection host; never the URI). */
+  database?: "atlas_sandbox" | "local";
+  /** Set by a recorded run (demo:replay): when it was recorded. */
+  recorded_at?: string;
   manifest_sha256?: string;
   intake_mode?: "live" | "record" | "replay";
 };
@@ -138,9 +143,10 @@ export type InvestigationRecord = {
   epoch: number;
   investigator: "llm" | "deterministic";
   hypothesis: string | null;
-  steps: InvestigationStep[];
-  match: "MATCH" | "NO_MATCH" | "CONTRADICTION";
-  decision: { kind: "SETTLE" | "REDISPATCH_SAME_KEY" | "QUARANTINE"; row: number; reason?: string; detail?: string };
+  steps: InvestigationStep[] | null;
+  // An open record (the investigation is running) carries match, decision and closed_at as null.
+  match: "MATCH" | "NO_MATCH" | "CONTRADICTION" | null;
+  decision: { kind: "SETTLE" | "REDISPATCH_SAME_KEY" | "QUARANTINE"; row: number; reason?: string; detail?: string } | null;
   licence: string | null;
   recalled: unknown[];
   opened_at: string;

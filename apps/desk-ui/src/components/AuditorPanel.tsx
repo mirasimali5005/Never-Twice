@@ -1,5 +1,5 @@
 import { CHECK_WORDS, CONFIRMED_SENTENCE } from "../copy";
-import { formatMinor, shortHash } from "../format";
+import { formatMinor, formatMoney, shortHash } from "../format";
 import type { ApiResult } from "../api";
 import type { Certificate, GroupRun } from "../types";
 
@@ -8,12 +8,22 @@ type Entry = { run: GroupRun; cert: ApiResult<Certificate> | null };
 const TAB_LABEL: Record<string, string> = { nt_mutant: "Mutant run", nt: "Never Twice", control: "Ordinary agent" };
 const ORDER = ["nt_mutant", "nt", "control"];
 
+/** What each labelled mutation does, in words. M2 is the one the demo runs. */
+export const MUTATION_WORDS: Record<string, string> = { M2: "marks unknown outcomes confirmed without evidence" };
+
+/** The mutation id of a labelled mutant run. The certificate names it in a note when it can; the demo's mutant is M2. */
 export function mutationName(c: Certificate): string | null {
   for (const n of c.notes) {
-    const m = n.match(/NT_MUTATION=(M\d)/);
+    const m = n.match(/NT_MUTATION=(M\d+)/);
     if (m) return m[1];
   }
-  return c.arm === "nt_mutant" ? "" : null;
+  return c.arm === "nt_mutant" ? "M2" : null;
+}
+
+/** "Labelled mutant M2: marks unknown outcomes confirmed without evidence — a test of the auditor" */
+export function mutantLabel(id: string): string {
+  const what = MUTATION_WORDS[id];
+  return `Labelled mutant ${id}${what ? `: ${what}` : ""} — a test of the auditor`;
 }
 
 /** The finding's own message up to the first colon is its one-line reason; fall back to the check's words. */
@@ -32,7 +42,13 @@ const SCOPES = [
   ["auditor", "its own read key, no database credential"],
 ] as const;
 
-export function AuditorPanel(props: { entries: Entry[]; selectedArm: string; onSelect: (arm: string) => void }) {
+export function AuditorPanel(props: {
+  entries: Entry[];
+  selectedArm: string;
+  onSelect: (arm: string) => void;
+  /** The ticket refund's amount in cents, from the Never Twice run's payment of provider stripe_refund (the certificate has no amount). */
+  stripeAmountMinor?: number | null;
+}) {
   const entries = [...props.entries].sort((a, b) => ORDER.indexOf(a.run.arm) - ORDER.indexOf(b.run.arm));
   const sel = entries.find((e) => e.run.arm === props.selectedArm) ?? entries.find((e) => auditable(e.cert)) ?? entries[0];
   const cert = sel && auditable(sel.cert) ? sel.cert.data : null;
@@ -88,7 +104,7 @@ export function AuditorPanel(props: { entries: Entry[]; selectedArm: string; onS
       </div>
 
       <div className="auditor__verdict">
-        {mut !== null && <div className="mutant">MUTANT RUN{mut ? ` — ${mut}` : ""} — test of the auditor</div>}
+        {mut !== null && <div className="mutant">{mutantLabel(mut)}</div>}
         <div className={`verdict verdict--${pass ? "pass" : "fail"}`}>SAFETY: {cert.safety}</div>
         <div className="small muted">
           {TAB_LABEL[cert.arm] ?? cert.arm} · run <span className="mono">{cert.run_id}</span>
@@ -134,7 +150,12 @@ export function AuditorPanel(props: { entries: Entry[]; selectedArm: string; onS
           {cert.ledger.stripe_objects !== null && cert.ledger.stripe_objects > 0 && (
             <>
               {" "}
-              · <b className="stripe">read from Stripe (test mode)</b>: ticket refund, {cert.ledger.stripe_objects} object
+              ·{" "}
+              <b className="stripe">
+                {props.stripeAmountMinor != null && cert.ledger.stripe_objects === 1 ? `${formatMoney(props.stripeAmountMinor)} ` : ""}ticket refund read from
+                Stripe (test mode)
+              </b>
+              {cert.ledger.stripe_objects === 1 ? "" : `, ${cert.ledger.stripe_objects} objects`}
             </>
           )}
         </div>

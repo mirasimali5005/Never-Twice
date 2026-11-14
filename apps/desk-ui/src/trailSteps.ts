@@ -26,12 +26,14 @@ export function attemptResultWords(a: Attempt): string {
 }
 
 export function matchWords(m: InvestigationRecord["match"]): string {
+  if (m == null) return "not decided yet";
   if (m === "MATCH") return "MATCH: one object agrees on marker, amount, currency and payee";
   if (m === "NO_MATCH") return "NO_MATCH: no object agrees on marker, amount, currency and payee";
   return "CONTRADICTION: the provider's records do not agree";
 }
 
 export function decisionWords(d: InvestigationRecord["decision"]): string {
+  if (d == null) return "Investigating…";
   if (d.kind === "SETTLE") return `SETTLE (row ${d.row}): confirm on this evidence, send nothing`;
   if (d.kind === "REDISPATCH_SAME_KEY") return `REDISPATCH_SAME_KEY (row ${d.row}): send the identical request again under the same key`;
   return `QUARANTINE (row ${d.row}): ${quarantineWords(d.reason)}`;
@@ -49,7 +51,7 @@ export function trailSteps(trail: PaymentTrail): Step[] {
       obligation.rule_citation ? `, ${obligation.rule_citation}` : ""
     }; one frozen request, ${keyWords}`,
   });
-  for (const a of intent.attempts) {
+  for (const a of intent.attempts ?? []) {
     steps.push({
       kind: "sent",
       label: `Send ${a.n}`,
@@ -57,14 +59,24 @@ export function trailSteps(trail: PaymentTrail): Step[] {
       tone: a.result?.kind === "ACCEPTED" ? "good" : "warn",
     });
   }
-  if (intent.state === "DISPATCHING" && investigations.length === 0) {
+  if (intent.state === "DISPATCHING" && (investigations ?? []).length === 0) {
     steps.push({ kind: "pending", label: "Pending", text: "The send was marked before it left; no answer was recorded. The investigation has not started.", tone: "warn" });
-  } else if (intent.state === "OUTCOME_UNKNOWN" && investigations.length === 0) {
+  } else if (intent.state === "OUTCOME_UNKNOWN" && (investigations ?? []).length === 0) {
     steps.push({ kind: "pending", label: "Waiting", text: "Outcome unknown; the investigation has not started.", tone: "warn" });
   }
-  for (const inv of investigations) {
-    steps.push({ kind: "hypothesis", label: "Hypothesis", text: `${inv.hypothesis ?? "none recorded"}  (investigator: ${inv.investigator})` });
-    for (const s of inv.steps) {
+  for (const inv of investigations ?? []) {
+    if (!inv) continue;
+    const who = inv.investigator === "deterministic" ? "investigator: deterministic, not produced by the model" : `investigator: ${inv.investigator ?? "unknown"}`;
+    if (inv.decision == null) {
+      // An open record: the desk API returns it as soon as the investigation starts, with match, decision and closed_at null.
+      steps.push({ kind: "pending", label: "Investigating…", text: inv.hypothesis ? `Hypothesis: ${inv.hypothesis}  (${who})` : "The investigation is running; no hypothesis recorded yet.", tone: "warn" });
+      for (const s of inv.steps ?? []) {
+        steps.push({ kind: "query", label: "Query", text: `${s.tool}: ${s.summary} · ${s.record_count} ${s.record_count === 1 ? "record" : "records"}` });
+      }
+      continue;
+    }
+    steps.push({ kind: "hypothesis", label: "Hypothesis", text: `${inv.hypothesis ?? "none recorded"}  (${who})` });
+    for (const s of inv.steps ?? []) {
       steps.push({ kind: "query", label: "Query", text: `${s.tool}: ${s.summary} · ${s.record_count} ${s.record_count === 1 ? "record" : "records"}` });
     }
     steps.push({ kind: "matcher", label: "Matcher", text: matchWords(inv.match), tone: inv.match === "MATCH" ? "good" : inv.match === "NO_MATCH" ? "warn" : "stop" });

@@ -27,7 +27,7 @@ body {
 h1, h2 { margin: 0; }
 .mono { font-family: var(--mono); font-size: 0.92em; }
 .muted { color: var(--muted); }
-.small { font-size: 0.82rem; }
+.small { font-size: 0.88rem; }
 .ok { color: var(--green); }
 .bad { color: var(--red); }
 .tag { display: inline-block; padding: 0 6px; border: 1px solid var(--muted); border-radius: 3px; font-size: 0.7rem; font-weight: 700; letter-spacing: 0.06em; color: var(--muted); vertical-align: middle; }
@@ -116,8 +116,8 @@ h1, h2 { margin: 0; }
 .trail__head--grey-blue { background: var(--blue-bg); }
 .trail__reason { font-weight: 600; font-size: 1rem; }
 .steps { margin: 0; padding: 0; list-style: none; }
-.step { display: grid; grid-template-columns: 78px 1fr; gap: 6px; padding: 2px 0; font-size: 0.92rem; border-bottom: 1px dotted var(--line); }
-.step__label { font-weight: 800; font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.04em; color: var(--muted); padding-top: 3px; }
+.step { display: grid; grid-template-columns: 78px 1fr; gap: 6px; padding: 2px 0; font-size: 1rem; border-bottom: 1px dotted var(--line); }
+.step__label { font-weight: 800; font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.04em; color: var(--muted); padding-top: 3px; }
 .step__text { overflow-wrap: anywhere; }
 .step--good .step__text { color: #0e5a30; font-weight: 600; }
 .step--stop .step__text { color: #33485f; font-weight: 700; }
@@ -174,3 +174,19 @@ h1, h2 { margin: 0; }
   .claimtext { max-height: 82px; }
   .obl__amount { font-size: 2rem; }
 }
+
+.panel-failed { padding: 6px 10px; border: 1px dashed var(--red); border-radius: 4px; background: var(--red-bg); color: var(--red); font-size: 0.9rem; font-weight: 600; }
+
+/* beat 3 list, LOCAL DATABASE, beat 13 card */
+.label--local { background: #ffe2c2; border-color: #b45a00; color: #6b3300; }
+.label--button { font: inherit; font-size: 0.8rem; font-weight: 700; cursor: pointer; color: var(--ink); }
+.choice { flex: none; display: flex; align-items: baseline; gap: 14px; flex-wrap: wrap; padding: 5px 12px; background: var(--panel); border: 2px solid var(--ink); border-radius: 6px; font-size: 1.05rem; }
+.choice ul { display: flex; gap: 8px 16px; flex-wrap: wrap; margin: 0; padding: 0; list-style: none; }
+.choice__id { font-weight: 800; }
+.modal { position: fixed; inset: 0; z-index: 10; display: flex; align-items: center; justify-content: center; background: rgba(20, 24, 31, 0.55); padding: 16px; }
+.modal__card { background: var(--panel); border: 2px solid var(--ink); border-radius: 8px; padding: 14px 18px; max-width: 880px; max-height: 100%; overflow: auto; font-size: 1.1rem; }
+.modal__head { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 6px; }
+.modal__head h2 { font-size: 1.5rem; }
+.how { margin: 0; padding-left: 20px; display: grid; gap: 6px; }
+.how__intent { margin-top: 10px; padding: 6px 10px; background: #eef0f3; border-radius: 5px; font-size: 1rem; overflow-wrap: anywhere; }
+.how__foot { margin-top: 10px; padding-top: 6px; border-top: 1px solid var(--line); font-weight: 700; }

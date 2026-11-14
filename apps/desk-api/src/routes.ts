@@ -5,6 +5,7 @@ import type { Context } from "hono";
 import { cors } from "hono/cors";
 import { EFFECT_KEY_RE, GROUP_ID_RE, RUN_ID_RE } from "@nt/contracts";
 import { readCertificate, readCommitment } from "./certificate-file.ts";
+import type { DatabaseKind } from "./env.ts";
 import { ProviderUnreachable, readStatement, type ProviderStatement, type SimAccess } from "./provider-statement.ts";
 import {
   BASELINE_ARMS,
@@ -29,6 +30,8 @@ export type DeskDeps = {
   evaluatorOut: string;
   /** Banner "Recorded run": this process serves a recorded run from disk. */
   recorded: boolean;
+  /** Which database this process reads (derived from the connection host; never the URI). Omitted: the group view does not say. */
+  database?: DatabaseKind;
   now?: () => Date;
   sse?: SseOptions;
 };
@@ -88,7 +91,13 @@ export function createApp(source: DepsSource): Hono {
     if (!view) return notFound(c, "UNKNOWN_GROUP");
     // Addition to section 9: the pre-run commitment, so the screen can show the manifest hash before any audit exists.
     const commitment = await readCommitment(d.evaluatorOut, groupId);
-    return c.json(commitment.kind === "found" ? { ...view, ...commitment.value } : view);
+    // Additions: `database` (the screen shows LOCAL DATABASE when it is not the Atlas sandbox) and, per run, `audited` (a certificate
+    // file exists), so the screen asks for a certificate only when there is one instead of polling a 404.
+    const runs = await Promise.all(
+      view.runs.map(async (r) => ({ ...r, audited: (await readCertificate(d.evaluatorOut, r.run_id)).kind !== "absent" })),
+    );
+    const out = { ...view, runs, ...(d.database ? { database: d.database } : {}) };
+    return c.json(commitment.kind === "found" ? { ...out, ...commitment.value } : out);
   });
 
   app.get("/api/runs/:run_id/summary", withRun(async (c, d, run) => c.json(await runSummary(d.cols, run))));

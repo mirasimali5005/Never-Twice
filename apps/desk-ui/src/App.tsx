@@ -3,7 +3,10 @@ import { api, MOCK } from "./api";
 import { ArmColumn } from "./components/ArmColumn";
 import { AuditorPanel, auditable } from "./components/AuditorPanel";
 import { DecisionCard } from "./components/DecisionCard";
+import { ErrorBoundary } from "./components/ErrorBoundary";
 import { Header } from "./components/Header";
+import { ChoiceStrip } from "./components/ChoiceStrip";
+import { HowItWorks } from "./components/HowItWorks";
 import certNt from "./mocks/certificate.nt.json";
 import { mockElapsed, restartMock } from "./mocks/engine";
 import type { ApiResult } from "./api";
@@ -18,6 +21,7 @@ const MANIFEST_PARAM = q.get("manifest");
 export function App() {
   const [picked, setPicked] = useState<string | null>(null);
   const [armSel, setArmSel] = useState<string>(ARM_PARAM ?? "nt");
+  const [howOpen, setHowOpen] = useState(false);
   const [override, setOverride] = useState<boolean | null>(null); // null: the case file collapses by itself once payments exist
 
   const groupNow = useResource(GROUP_ID, () => api.group(GROUP_ID!), 0, 3000);
@@ -57,6 +61,7 @@ export function App() {
   const entries = [nt, control, mutant].flatMap((r, i) => (r ? [{ run: r, cert: [ntData, controlData, mutantData][i].certificate }] : []));
   const anyAudited = entries.some((e) => auditable(e.cert));
   const paymentsStarted = (ntData.payments?.ok ? ntData.payments.data.length : 0) > 0 || (controlData.payments?.ok ? controlData.payments.data.length : 0) > 0;
+  const stripeAmountMinor = (ntData.payments?.ok ? ntData.payments.data : []).find((p) => p.provider === "stripe_refund")?.amount_minor ?? null;
   const compact = override ?? (paymentsStarted || anyAudited);
 
   const certForManifest = entries.map((e) => (auditable(e.cert) ? e.cert.data : null)).find((c) => c !== null) ?? null;
@@ -101,19 +106,37 @@ export function App() {
 
   return (
     <div className="desk">
-      <Header groupId={GROUP_ID} group={group} manifest={manifest} mock={MOCK} stream={ntData.stream} intakeReplay={intakeReplay} />
+      <ErrorBoundary name="header" resetKey={group}>
+        <Header groupId={GROUP_ID} group={group} manifest={manifest} mock={MOCK} stream={ntData.stream} intakeReplay={intakeReplay} onHowItWorks={() => setHowOpen(true)} />
+      </ErrorBoundary>
       {groupNow && !groupNow.ok && (
         <div className="banner banner--error">
           Desk API unavailable ({groupNow.error}){groupKept ? ": what you see is the last data received" : ". Nothing below is shown as zero or green"}.
         </div>
       )}
-      <DecisionCard claim={shownClaim} claims={claims?.ok ? claims.data : []} compact={compact} onToggle={() => setOverride(!compact)} />
+      <ErrorBoundary name="case file" resetKey={shownClaim}>
+        <DecisionCard claim={shownClaim} claims={claims?.ok ? claims.data : []} compact={compact} onToggle={() => setOverride(!compact)} />
+      </ErrorBoundary>
+      {!paymentsStarted && !anyAudited && (
+        <ErrorBoundary name="passenger list">
+          <ChoiceStrip scenario={groupKept?.scenario ?? null} />
+        </ErrorBoundary>
+      )}
       <main className="cols">
-        <ArmColumn title="Ordinary agent (control)" kind="control" run={control} data={controlData} selectedKey={selectedKey} onSelect={setPicked} groupReady={groupKept !== null} />
-        <ArmColumn title="Never Twice" kind="nt" run={nt} data={ntData} selectedKey={selectedKey} onSelect={setPicked} groupReady={groupKept !== null} />
+        <ErrorBoundary name="control column" resetKey={controlData}>
+          <ArmColumn title="Ordinary agent (control)" kind="control" run={control} data={controlData} selectedKey={selectedKey} onSelect={setPicked} groupReady={groupKept !== null} />
+        </ErrorBoundary>
+        <ErrorBoundary name="Never Twice column" resetKey={ntData}>
+          <ArmColumn title="Never Twice" kind="nt" run={nt} data={ntData} selectedKey={selectedKey} onSelect={setPicked} groupReady={groupKept !== null} />
+        </ErrorBoundary>
       </main>
-      <AuditorPanel entries={entries} selectedArm={armSel} onSelect={setArmSel} />
-      {MOCK && (
+      <ErrorBoundary name="auditor" resetKey={entries}>
+        <AuditorPanel entries={entries} selectedArm={armSel} onSelect={setArmSel} stripeAmountMinor={stripeAmountMinor} />
+      </ErrorBoundary>
+      <ErrorBoundary name="how it works">
+        <HowItWorks open={howOpen} onClose={() => setHowOpen(false)} trail={ntData.trail} goodwill={groupKept?.scenario === "S1"} />
+      </ErrorBoundary>
+      {MOCK && q.get("clock") === "1" && (
         <div className="mockclock" aria-hidden>
           mock clock {Math.floor(mockElapsed())} s · r restarts
         </div>
