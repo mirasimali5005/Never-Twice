@@ -53,3 +53,13 @@ export function formatClock(iso: string | null | undefined): string {
 export function passengerOfKey(effectKey: string): string {
   return effectKey.split(".")[1] ?? effectKey;
 }
+
+const MONTHS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+/** "14 Nov 2026 12:51" in the viewer's clock (date and time of a recording). Never throws on a bad date. */
+export function formatStamp(iso: string | null | undefined): string {
+  if (!iso) return "";
+  const d = new Date(iso);
+  if (Number.isNaN(d.getTime())) return "";
+  const p = (n: number) => String(n).padStart(2, "0");
+  return `${d.getDate()} ${MONTHS[d.getMonth()]} ${d.getFullYear()} ${p(d.getHours())}:${p(d.getMinutes())}`;
+}

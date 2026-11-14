@@ -21,3 +21,15 @@ export function loadDeskEnv(source: Record<string, string | undefined> = process
 export function recordedFlag(source: Record<string, string | undefined> = process.env): boolean {
   return source["NT_DESK_RECORDED"] === "true";
 }
+
+export type DatabaseKind = "atlas_sandbox" | "local";
+
+/**
+ * Which database the desk API reads, from the HOST of the connection string only (never returned: no user, password, host name or
+ * query leaves this function). An Atlas cluster is `*.mongodb.net`; anything else (localhost, 127.0.0.1, a container name) is local.
+ */
+export function databaseKind(uri: string | undefined): DatabaseKind {
+  const m = /^mongodb(?:\+srv)?:\/\/(?:[^@/]*@)?([^/?]+)/i.exec(uri ?? "");
+  const hosts = (m?.[1] ?? "").split(",").map((h) => h.trim().toLowerCase().replace(/:\d+$/, ""));
+  return hosts.length > 0 && hosts.every((h) => h.endsWith(".mongodb.net")) ? "atlas_sandbox" : "local";
+}

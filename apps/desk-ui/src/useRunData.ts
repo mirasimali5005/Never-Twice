@@ -36,6 +36,16 @@ export function useResource<T>(
   return state && state.key === key ? state.result : null;
 }
 
+/** 2 s after the first miss, doubling to a 10 s ceiling. */
+export function certificateBackoffMs(misses: number): number {
+  return Math.min(2000 * 2 ** Math.max(0, misses - 1), 10000);
+}
+
+/** 404 NOT_AUDITED is an expected answer ("not audited yet"), not a failure. */
+export function isNotAudited(r: ApiResult<unknown> | null): boolean {
+  return r !== null && !r.ok && (r.status === 404 || r.error === "NOT_AUDITED");
+}
+
 /** The screen follows one entitlement: P02's statutory payment until a card is clicked. */
 export function defaultKey(rows: { effect_key: string; passenger_id: string; entitlement_type: string }[]): string | null {
   const p02 = rows.find((r) => r.passenger_id === "P02" && r.entitlement_type !== "TICKET_REFUND");
@@ -75,10 +85,20 @@ export function useRunData(run: GroupRun | undefined, pickedKey: string | null, 
   const selectedKey = pickedKey ?? (payments?.ok ? defaultKey(payments.data) : null);
   const trail = useResource(full && id && selectedKey ? `t:${id}:${selectedKey}` : null, () => api.payment(id!, selectedKey!), version, poll);
 
-  // slow the certificate poll once one exists
+  // The certificate. The desk API says per run whether a certificate file exists (`audited`); until then there is nothing to ask for,
+  // so no request is made (a 404 per poll was logged as a red network error each time). Without that field (mock, a recording) the
+  // poll backs off: 2 s, 4 s, 8 s, then every 10 s while the answer is 404 NOT_AUDITED, and every 8 s once a certificate exists.
+  const [certMisses, setCertMisses] = useState(0);
+  const certKey = id && run?.audited !== false ? `c:${id}` : null;
   const [certFound, setCertFound] = useState(false);
-  const certificate = useResource(id ? `c:${id}` : null, () => api.certificate(id!), version, certFound ? 8000 : 2000);
-  useEffect(() => setCertFound(certificate?.ok === true), [certificate]);
+  const certInterval = certFound ? 8000 : certificateBackoffMs(certMisses);
+  const certificate = useResource(certKey, () => api.certificate(id!), version, certInterval);
+  useEffect(() => {
+    if (certificate === null) return;
+    setCertFound(certificate.ok);
+    if (certificate.ok) setCertMisses(0);
+    else if (isNotAudited(certificate)) setCertMisses((n) => Math.min(n + 1, 8));
+  }, [certificate]);
 
   return { selectedKey, summary, payments, statement, certificate, trail, stream };
 }
