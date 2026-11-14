@@ -55,7 +55,8 @@ export async function main(argv: string[], source: Record<string, string | undef
       log(`--arm ${flagArm} does not match execution_runs.arm ${run.arm}; refusing to start`);
       return 1;
     }
-    if (values["report-only"]) return await runReportOnly(early, runId, REPO_ROOT, log);
+    // The control arm builds its own report (packages/baselines); the generic builder would drop its paid list.
+    if (values["report-only"] && run.arm !== "control") return await runReportOnly(early, runId, REPO_ROOT, log);
 
     const parsed = parseEnv("runner", { ...source, NT_RUN_ID: runId, NT_ARM: run.arm });
     if (!parsed.ok) {
