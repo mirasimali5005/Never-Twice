@@ -48,7 +48,8 @@ export const ClaimHoldReason = z.enum(CLAIM_HOLD_REASONS);
 export type ClaimHoldReason = z.infer<typeof ClaimHoldReason>;
 
 // UNMATCHED_PROVIDER_OBJECT is never stored on an intent (there is none): the invariant scan records it as an ANOMALY audit event.
-// PROBE_NOT_ADMITTED arises only in Tier 3; PROVIDER_REVERSAL is PLANNED.
+// PROBE_NOT_ADMITTED arises only in Tier 3. PROVIDER_REVERSAL (Tier 3, CP-REV-1) is never stored on an intent either: a CONFIRMED
+// intent is immutable, so a later reversal at the provider is recorded as a PROVIDER_REVERSAL audit event and the report parks it.
 export const QUARANTINE_REASONS = [
   "KEY_WINDOW_EXPIRED",
   "NO_DEDUPE_NO_EVIDENCE",
@@ -121,6 +122,7 @@ export const AUDIT_EVENT_TYPES = [
   "ANOMALY", // HANDOVER.md §16 invariant scan
   "OBLIGATION_HELD", // HANDOVER.md §8.2: OWED → HELD by the orchestrator or a person
   "GRANT_FROZEN", // gateway.freezeGrant
+  "PROVIDER_REVERSAL", // Tier 3 (CP-REV-1): a CONFIRMED intent's provider object later reports a reversal status; no state change
 ] as const;
 export const AuditEventType = z.enum(AUDIT_EVENT_TYPES);
 export type AuditEventType = z.infer<typeof AuditEventType>;

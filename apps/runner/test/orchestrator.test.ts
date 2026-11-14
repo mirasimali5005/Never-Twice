@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import type { Obligation } from "@nt/contracts";
+import type { Intent, Obligation } from "@nt/contracts";
 import { payoutOrder } from "../src/orchestrator.ts";
 import { deriveReport } from "../src/final-report.ts";
 
@@ -42,6 +42,20 @@ describe("payoutOrder (E4-UNIT-03)", () => {
 describe("deriveReport mapping (E4-UNIT-05, E4-UNIT-06)", () => {
   const run = { _id: "r1234567", group_id: "g1234567", arm: "nt" as const, scenario: "S1" as const };
   const none = { run, claims: [], obligations: [], intents: [], budgetRefusedKeys: new Set<string>(), generatedAt: "2026-11-14T00:00:00.000Z" };
+
+  it("CP-REV-1: a CONFIRMED intent with a PROVIDER_REVERSAL event is parked (PROVIDER_REVERSAL), never paid", () => {
+    const owed = ob("P02", "APPR_DELAY", day, "C1");
+    const intent = {
+      _id: `r1234567:${owed.effect_key}`, run_id: "r1234567", effect_key: owed.effect_key, state: "CONFIRMED", amount_minor: owed.amount_minor,
+      currency: "CAD", payee_ref: owed.payee_ref, provider: "sim_payout", evidence: { provider_object_id: "po_1" },
+    } as unknown as Intent;
+    const claims = [{ claim_id: "C1", status: "RESOLVED", hold_reason: null, effect_keys: [owed.effect_key] }];
+    expect(deriveReport({ ...none, obligations: [owed], intents: [intent], claims }).paid).toHaveLength(1);
+    const r = deriveReport({ ...none, obligations: [owed], intents: [intent], claims, reversedIntentIds: new Set([intent._id]) });
+    expect(r.paid).toEqual([]);
+    expect(r.parked).toEqual([{ effect_key: owed.effect_key, claim_id: null, reason_code: "PROVIDER_REVERSAL", amount_minor: owed.amount_minor }]);
+    expect(r.complete).toBe(true);
+  });
 
   it("an empty run is complete and carries group_id", () => {
     expect(deriveReport(none)).toMatchObject({ group_id: "g1234567", run_id: "r1234567", complete: true, paid: [], parked: [], unresolved: [] });

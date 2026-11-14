@@ -37,3 +37,4 @@ export { applyResendResult, recordLicence, resend, MAX_ATTEMPTS } from "./resend
 export { freezeGrant, releaseReserved } from "./human.ts";
 export { scanInvariants, type InvariantReport, type InvariantViolation as InvariantFinding } from "./invariants.ts";
 export { readOnlyProviderView, type ProviderReadView } from "./read-view.ts";
+export { recordProviderReversal, reversalEventId, reversedIntentIds, type ReversalRecord } from "./reversal.ts";

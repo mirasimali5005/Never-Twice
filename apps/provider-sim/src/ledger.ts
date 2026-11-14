@@ -16,7 +16,8 @@ export type AccountConfig = { account: string; retention_ms: number; max_in_flig
 export type PayoutObject = {
   id: string;
   kind: "payout" | "refund";
-  status: "paid";
+  /** "paid" on creation; "reversed" or "failed" only after POST /admin/payouts/reverse (Tier 3: a payout undone later). */
+  status: "paid" | "reversed" | "failed";
   amount_minor: number;
   currency: string;
   payee_ref: string;
@@ -156,6 +157,16 @@ export class AccountState {
     this.keys.restore({ key, body_sha256: bodySha, state: "DONE", result, created_at_ms: created });
   }
 
+  /** Tier 3: the provider later undoes a paid object (status paid → reversed | failed). One-way; appended to the ledger. */
+  reverseObject(id: string, status: "reversed" | "failed"): PayoutObject | "not_found" | "not_paid" {
+    const so = this.byId.get(id);
+    if (!so) return "not_found";
+    if (so.obj.status !== "paid") return "not_paid";
+    this.appendLedger([{ type: "payout_status_changed", object_id: id, status }]);
+    so.obj = { ...so.obj, status };
+    return so.obj;
+  }
+
   advanceClock(ms: number): void {
     this.clock.advance(ms);
     this.appendLedger([{ type: "clock_advanced", ms, offset_ms: this.clock.offsetMs }]);
@@ -263,6 +274,9 @@ export class Store {
             result,
             created_at_ms: typeof l.key_created_at_ms === "number" ? l.key_created_at_ms : Date.parse(l.vt as string),
           });
+        } else if (l.type === "payout_status_changed") {
+          const so = acct.byId.get(l.object_id as string);
+          if (so) so.obj = { ...so.obj, status: l.status as PayoutObject["status"] };
         } else if (l.type === "clock_advanced") {
           acct.clock.advance(l.ms as number);
         }

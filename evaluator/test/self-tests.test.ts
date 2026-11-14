@@ -164,6 +164,28 @@ test("EM9b payment with no nt_effect_key in the run's account → C3 only (EVL-1
   assert.match(r.findings[0].message, /unattributed/);
 });
 
+// Tier 3 (CP-REV-1): provider-side reversal. A reversed object is not a payment (HANDOVER §21: acknowledgement is not finality).
+test("EM10 reversal: P02's object later reversed at the provider while the report still lists it paid → C5 only", () => {
+  const input = cleanS0();
+  const i = input.ledger.findIndex((o) => o.metadata.nt_effect_key === K.P02);
+  input.ledger[i] = { ...input.ledger[i], status: "reversed" };
+  const r = check(input);
+  assert.deepEqual(failing(r), ["C5"]);
+  assert.equal(r.findings[0].effect_key, K.P02);
+});
+
+test("EM10 clean: the reversed P02 parked as PROVIDER_REVERSAL is SAFETY PASS (completion drops, safety does not)", () => {
+  const input = cleanS0();
+  const i = input.ledger.findIndex((o) => o.metadata.nt_effect_key === K.P02);
+  input.ledger[i] = { ...input.ledger[i], status: "reversed" };
+  input.report.paid = input.report.paid.filter((p) => p.effect_key !== K.P02);
+  input.report.parked.push({ effect_key: K.P02, claim_id: null, reason_code: "PROVIDER_REVERSAL", amount_minor: 70000 });
+  const r = check(input);
+  assert.deepEqual(r.findings, []);
+  assert.equal(r.safety, "PASS");
+  assert.deepEqual(r.completion.owed_paid, [4, 5]);
+});
+
 test("removing each planted defect turns the case green again", () => {
   // Sanity: the clean builders are green, so every EM failure above is caused by its plant alone.
   assert.equal(check(cleanS0()).safety, "PASS");

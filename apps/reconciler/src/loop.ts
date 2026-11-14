@@ -3,7 +3,7 @@
 // gateway, so several reconcilers on one run are safe (REC-07). Intents are processed one at a time, ordered by _id.
 import type { Intent } from "@nt/contracts";
 import { investigate } from "./investigate.ts";
-import { watchOne, type WatchDeps } from "./watcher.ts";
+import { watchOne, watchReversal, type WatchDeps } from "./watcher.ts";
 
 export type LoopDeps = WatchDeps & {
   runId: string;
@@ -19,7 +19,7 @@ export type LoopDeps = WatchDeps & {
   flushEmbeddings?: () => Promise<void>;
 };
 
-export type TickResult = { orphans: number; takeovers: number; investigated: number; watched: number; errors: number };
+export type TickResult = { orphans: number; takeovers: number; investigated: number; watched: number; reversals: number; errors: number };
 
 const byId = (a: Intent, b: Intent) => (a._id < b._id ? -1 : a._id > b._id ? 1 : 0);
 
@@ -39,7 +39,7 @@ async function each(d: LoopDeps, list: Intent[], step: string, fn: (it: Intent) 
 }
 
 export async function tick(d: LoopDeps): Promise<TickResult> {
-  const r: TickResult = { orphans: 0, takeovers: 0, investigated: 0, watched: 0, errors: 0 };
+  const r: TickResult = { orphans: 0, takeovers: 0, investigated: 0, watched: 0, reversals: 0, errors: 0 };
 
   // 1. Orphans: RESERVED, no live lease, created more than one lease period ago → dispatch (all T2 checks re-run there; T11 if they fail).
   r.orphans = await each(d, await d.store.orphans(d.runId, d.leaseMs), "orphan", async (it) => {
@@ -67,6 +67,10 @@ export async function tick(d: LoopDeps): Promise<TickResult> {
   // 4. Watch (Tier 2): QUARANTINED with an absence-class reason → deterministic evidence → T12 on MATCH.
   if (d.watch) {
     r.watched = await each(d, await d.store.watchable(d.runId), "watch", (it) => watchOne(d, it), r);
+    // 5. Reversal watch (Tier 3, CP-REV-1): CONFIRMED with no PROVIDER_REVERSAL yet → re-read the confirmed object → audit event only.
+    if (d.store.confirmedUnreversed) {
+      r.reversals = await each(d, await d.store.confirmedUnreversed(d.runId), "reversal", (it) => watchReversal(d, it), r);
+    }
   }
   return r;
 }
@@ -85,8 +89,8 @@ export async function runLoop(d: LoopDeps, o: RunOptions): Promise<number> {
     if (d.stopping?.()) return 0;
     if (o.untilDrained && (await d.store.unresolvedCount(d.runId)) === 0) return 0;
     const r = await tick(d);
-    if (r.orphans + r.takeovers + r.investigated + r.watched + r.errors > 0) {
-      d.log?.(`[${d.workerId}] tick: orphans=${r.orphans} takeovers=${r.takeovers} investigated=${r.investigated} watched=${r.watched} errors=${r.errors}`);
+    if (r.orphans + r.takeovers + r.investigated + r.watched + r.reversals + r.errors > 0) {
+      d.log?.(`[${d.workerId}] tick: orphans=${r.orphans} takeovers=${r.takeovers} investigated=${r.investigated} watched=${r.watched} reversals=${r.reversals} errors=${r.errors}`);
     }
     if (o.once) return 0;
     if (o.untilDrained && (await d.store.unresolvedCount(d.runId)) === 0) return 0;

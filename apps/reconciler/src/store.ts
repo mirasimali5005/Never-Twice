@@ -46,6 +46,11 @@ export function createMongoStore(o: { gw: NtDb; inv: NtDb; runId: string }): Rec
     watchable: (runId) =>
       intents.find({ run_id: runId, state: "QUARANTINED", "quarantine.reason": { $in: [...ABSENCE_CLASS] } }, sorted).toArray(),
 
+    async confirmedUnreversed(runId) {
+      const done = await gw.audit.distinct("intent_id", { run_id: runId, type: "PROVIDER_REVERSAL" } as Document);
+      return intents.find({ run_id: runId, state: "CONFIRMED", _id: { $nin: done.filter((x): x is string => typeof x === "string") } }, sorted).toArray();
+    },
+
     unresolvedCount: (runId) => intents.countDocuments({ run_id: runId, state: { $in: [...UNRESOLVED] } }),
 
     async guards(it: Intent): Promise<RecoveryGuards> {
