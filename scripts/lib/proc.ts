@@ -72,8 +72,10 @@ export function startDetached(opts: {
   args: string[];
   cwd: string;
   env?: Record<string, string>;
+  /** Default `<ntDir>/logs`; the demo scripts pass `out/logs`. */
+  logDir?: string;
 }): number {
-  const logDir = join(opts.ntDir, "logs");
+  const logDir = opts.logDir ?? join(opts.ntDir, "logs");
   mkdirSync(logDir, { recursive: true });
   const fd = openSync(join(logDir, `${opts.name}.log`), "a");
   try {

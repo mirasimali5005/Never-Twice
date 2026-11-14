@@ -1,15 +1,16 @@
-// pnpm demo:start [--no-wait] [--with-reconcilers]
-// Starts what the demo needs and is available: the simulator (if not running), the desk API (if built), one runner per run of the
-// current group with --pause-before-payout. Pieces that are not built yet are reported, not failed on. Pid files in .nt/pids/.
+// pnpm demo:start [--no-wait]
+// Starts what the demo needs: the simulator (if not running), the desk (`pnpm desk`: API 4020 + UI 5173, if not running), one runner per run
+// of the current group with --pause-before-payout (intake in replay; the mutant carries M2). Prints the desk URL with ?group=<group_id>.
+// Logs: out/logs/<name>.log. Pid files: .nt/pids/<name>.pid.
 import { existsSync } from "node:fs";
 import { parseArgs, runMain, UsageError } from "./lib/args.ts";
 import { dbLabel, openOwnerDb, simUrl } from "./lib/env.ts";
-import { DESK_SERVER, NT_DIR, RECONCILER_MAIN, ROOT, RUNNER_CLI, SIM_SERVER } from "./lib/paths.ts";
+import { NT_DIR, ROOT, RUNNER_CLI, SIM_SERVER } from "./lib/paths.ts";
 import { isAlive, listPids, startDetached } from "./lib/proc.ts";
 import { SimAdmin } from "./lib/sim-admin.ts";
 import { readCurrent } from "./lib/state.ts";
+import { DESK_API, DESK_URL, LOG_DIR, TSX, sleep } from "./demo/lib.ts";
 
-const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
 const NODE = process.execPath;
 const ENVFILE = "--env-file-if-exists=.env";
 
@@ -25,8 +26,18 @@ async function httpUp(url: string): Promise<boolean> {
   }
 }
 
+async function waitFor(fn: () => Promise<boolean>, ms: number): Promise<boolean> {
+  const until = Date.now() + ms;
+  while (Date.now() < until) {
+    if (await fn()) return true;
+    await sleep(250);
+  }
+  return fn();
+}
+
 await runMain(async () => {
   const a = parseArgs(process.argv.slice(2), []);
+  const t0 = Date.now();
   const cur = readCurrent(NT_DIR);
   if (!cur) throw new UsageError("no current group: run `pnpm demo:reset -- --scenario S0|S1` first");
   console.log(`database: ${dbLabel()}   group ${cur.group_id}   scenario ${cur.scenario}`);
@@ -35,17 +46,23 @@ await runMain(async () => {
   const sim = new SimAdmin(simUrl(), "unused");
   if (await sim.healthy()) console.log("simulator: already running");
   else {
-    const pid = startDetached({ ntDir: NT_DIR, name: "sim", command: NODE, args: [ENVFILE, SIM_SERVER], cwd: ROOT });
-    for (let i = 0; i < 50 && !(await sim.healthy()); i++) await sleep(200);
-    console.log((await sim.healthy()) ? `simulator: started (pid ${pid})` : "simulator: started but not answering /healthz yet; see .nt/logs/sim.log");
+    const pid = startDetached({ ntDir: NT_DIR, name: "sim", command: NODE, args: [ENVFILE, SIM_SERVER], cwd: ROOT, logDir: LOG_DIR });
+    const up = await waitFor(() => sim.healthy(), 10_000);
+    console.log(up ? `simulator: started (pid ${pid})` : "simulator: started but not answering /healthz yet; see out/logs/sim.log");
   }
 
-  // Desk API
-  if (!existsSync(DESK_SERVER)) console.log("desk-api: not built yet (task G1): skipped; use `pnpm demo:tty`");
-  else if (await httpUp("http://127.0.0.1:4020/")) console.log("desk-api: already running");
-  else console.log(`desk-api: started (pid ${startDetached({ ntDir: NT_DIR, name: "desk", command: NODE, args: [ENVFILE, DESK_SERVER], cwd: ROOT })})`);
+  // Desk (API + UI), through `pnpm desk` in its own process group.
+  const apiUp = await httpUp(`${DESK_API}/`);
+  const uiUp = await httpUp(`${DESK_URL}/`);
+  if (apiUp && uiUp) console.log("desk: already running (API 4020, UI 5173)");
+  else if (apiUp || uiUp) console.log(`desk: only the ${apiUp ? "API" : "UI"} answers; restart \`pnpm desk\` in its own terminal`);
+  else {
+    const pid = startDetached({ ntDir: NT_DIR, name: "desk", command: "pnpm", args: ["desk"], cwd: ROOT, logDir: LOG_DIR });
+    const up = await waitFor(async () => (await httpUp(`${DESK_API}/`)) && (await httpUp(`${DESK_URL}/`)), 30_000);
+    console.log(up ? `desk: started (pid ${pid})` : "desk: started but not answering yet; see out/logs/desk.log");
+  }
 
-  // Runners, one per run, paused before payout. Intake in replay; the mutant carries M2.
+  // Runners, one per run, paused before payout. Intake in replay; the mutant carries M2 (the reconciler never does).
   if (!existsSync(RUNNER_CLI)) console.log("runners: apps/runner/src/cli.ts not built yet (task E4): skipped");
   else {
     for (const [arm, runId] of Object.entries(cur.runs)) {
@@ -54,24 +71,11 @@ await runMain(async () => {
         console.log(`${name}: already running`);
         continue;
       }
-      const env: Record<string, string> = { NT_MODEL_MODE: "replay", NT_RUN_ID: runId, NT_ARM: arm };
+      const env: Record<string, string> = { NT_MODEL_MODE: "replay", NT_MODEL_BACKEND: process.env.NT_MODEL_BACKEND || "cli", NT_RUN_ID: runId, NT_ARM: arm };
       if (arm === "nt_mutant") env.NT_MUTATION = "M2";
-      const pid = startDetached({ ntDir: NT_DIR, name, command: NODE, args: [ENVFILE, RUNNER_CLI, "--run", runId, "--arm", arm, "--pause-before-payout"], cwd: ROOT, env });
+      const pid = startDetached({ ntDir: NT_DIR, name, command: TSX, args: [ENVFILE, RUNNER_CLI, "--run", runId, "--arm", arm, "--pause-before-payout"], cwd: ROOT, env, logDir: LOG_DIR });
       console.log(`${name}: started (pid ${pid}) run ${runId}`);
     }
-  }
-
-  if (a.flags.has("with-reconcilers")) {
-    if (!existsSync(RECONCILER_MAIN)) console.log("reconcilers: apps/reconciler/src/main.ts not built yet (task D2): skipped");
-    else
-      for (const arm of ["nt", "nt_mutant"]) {
-        const runId = cur.runs[arm];
-        if (runId && !running(`reconciler-${arm}`)) {
-          const env: Record<string, string> = { NT_RUN_ID: runId, NT_ARM: arm, NT_MODEL_MODE: "live" };
-          if (arm === "nt_mutant") env.NT_MUTATION = "M2";
-          console.log(`reconciler-${arm}: started (pid ${startDetached({ ntDir: NT_DIR, name: `reconciler-${arm}`, command: NODE, args: [ENVFILE, RECONCILER_MAIN, "--run", runId], cwd: ROOT, env })})`);
-        }
-      }
   }
 
   // Wait until the runners report PAUSED (status in execution_runs).
@@ -80,16 +84,18 @@ await runMain(async () => {
     const db = await openOwnerDb("desk");
     try {
       const ids = Object.values(cur.runs);
-      const deadline = Date.now() + 60_000;
+      const deadline = Date.now() + 90_000;
       let paused = 0;
       while (Date.now() < deadline) {
         paused = await db.runs.countDocuments({ _id: { $in: ids }, status: "PAUSED" });
         if (paused >= runners.length) break;
-        await sleep(1000);
+        await sleep(500);
       }
-      console.log(paused >= runners.length ? `${paused} runners paused before payout` : `only ${paused} of ${runners.length} runners paused after 60 s; see .nt/logs/runner-*.log`);
+      console.log(paused >= runners.length ? `${paused} runners paused before payout` : `only ${paused} of ${runners.length} runners paused after 90 s; see out/logs/runner-*.log`);
     } finally {
       await db.close();
     }
   }
+  console.log(`\nDESK  ${DESK_URL}/?group=${cur.group_id}   (${((Date.now() - t0) / 1000).toFixed(1)} s)`);
+  console.log(`next: pnpm demo:go -- --kill-at P02`);
 });
