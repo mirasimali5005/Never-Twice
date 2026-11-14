@@ -5,6 +5,7 @@ import { AuditorPanel, auditable } from "./components/AuditorPanel";
 import { AuditorSummary } from "./components/AuditorSummary";
 import { Cases } from "./components/Cases";
 import { Comparison } from "./components/Comparison";
+import { DemoControls } from "./components/DemoControls";
 import { Hero, type StageName } from "./components/Hero";
 import { Investigation } from "./components/Investigation";
 import { trailPhase } from "./components/Timeline";
@@ -154,6 +155,11 @@ export function App() {
       <ErrorBoundary name="hero" resetKey={group}>
         <Hero group={groupKept} stage={stage} mock={MOCK} stream={ntData.stream} intakeReplay={intakeReplay} onHowItWorks={() => setHowOpen(true)} onEvidence={openTech} />
       </ErrorBoundary>
+      {!MOCK && groupKept && !groupKept.recorded && (
+        <ErrorBoundary name="demo controls">
+          <DemoControls stage={stage} scenario={groupKept.scenario ?? null} />
+        </ErrorBoundary>
+      )}
       {groupNow && !groupNow.ok && (
         <div className="banner banner--error" role="alert">
           Desk API unavailable ({groupNow.error}){groupKept ? ": what you see is the last data received" : ". Nothing below is shown as zero or green"}.

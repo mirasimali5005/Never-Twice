@@ -390,3 +390,25 @@ svg { flex: none; vertical-align: -2px; }
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { animation: none !important; transition: none !important; scroll-behavior: auto !important; }
 }
+
+/* ───────── presenter demo controls (only while `pnpm demo:control` answers) ───────── */
+.ctl { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 14px; padding: 8px 14px; border-radius: var(--radius-sm); }
+.ctl__title { margin-right: 2px; }
+.ctl__btns { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; }
+.ctl__group { display: inline-flex; align-items: center; gap: 4px; }
+.ctl__btn { display: inline-flex; align-items: center; gap: 6px; font: inherit; font-size: 0.8rem; font-weight: 650; padding: 5px 12px; border-radius: 999px; border: 1px solid var(--line-2); background: rgba(255, 255, 255, 0.04); color: var(--ink); cursor: pointer; box-shadow: var(--hi); transition: background-color 0.2s var(--ease), border-color 0.2s var(--ease); }
+.ctl__btn:hover:not(:disabled) { background: var(--raise); border-color: rgba(255, 255, 255, 0.24); }
+.ctl__btn:disabled { opacity: 0.38; cursor: not-allowed; }
+.ctl__btn--red:not(:disabled) { color: var(--red-ink); border-color: var(--red-line); background: var(--red-bg); }
+.ctl__btn--small { font-size: 0.72rem; padding: 3px 10px; color: var(--muted); }
+.ctl__sel { font: inherit; font-size: 0.74rem; padding: 3px 6px; border-radius: 8px; border: 1px solid var(--line-2); background: var(--panel-solid); color: var(--ink-2); }
+.ctl__state { display: inline-flex; align-items: center; gap: 10px; margin-left: auto; font-size: 0.78rem; }
+.ctl__run { display: inline-flex; align-items: center; gap: 6px; color: var(--ink-2); font-variant-numeric: tabular-nums; }
+.ctl__spin { animation: ctlspin 0.9s linear infinite; }
+@keyframes ctlspin { to { transform: rotate(360deg); } }
+.ctl__last { display: inline-flex; align-items: center; gap: 6px; font: inherit; font-size: 0.78rem; font-weight: 650; padding: 2px 9px; border-radius: 999px; border: 1px solid var(--line); background: transparent; cursor: pointer; }
+.ctl__last--ok { color: var(--green-ink); border-color: var(--green-line); }
+.ctl__last--bad { color: var(--red-ink); border-color: var(--red-line); }
+.ctl__chev--open { transform: rotate(180deg); }
+.ctl__err { color: var(--red-ink); }
+.ctl__tail { flex-basis: 100%; margin: 0; max-height: 220px; overflow: auto; padding: 8px 10px; border-radius: 8px; border: 1px solid var(--line); background: rgba(0, 0, 0, 0.35); font-family: var(--mono); font-size: 0.72rem; line-height: 1.45; color: var(--ink-2); white-space: pre-wrap; }
