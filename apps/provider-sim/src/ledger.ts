@@ -27,6 +27,25 @@ export type PayoutObject = {
 
 export type StoredObject = { seq: number; obj: PayoutObject };
 
+/** NotifySim (Tier 3, task C4): a keyless message, e.g. the written decision letter. Not a payment. */
+export type MessageObject = {
+  id: string;
+  object: "message";
+  status: "sent";
+  recipient: string;
+  template: string;
+  amount_minor: number | null;
+  currency: string | null;
+  metadata: Record<string, string>;
+  created_at: string;
+};
+
+export type StoredMessage = { seq: number; msg: MessageObject };
+
+export function messageId(account: string, seq: number): string {
+  return "msg_" + sha256Hex(`${account}:msg:${seq}`).slice(0, 16);
+}
+
 export type RequestLogEntry = {
   seq: number;
   at: string;
@@ -69,6 +88,9 @@ export class AccountState {
   held: HeldRequest[] = [];
   objects: StoredObject[] = []; // creation order
   byId = new Map<string, StoredObject>();
+  messages: StoredMessage[] = []; // NotifySim, creation order
+  msgById = new Map<string, StoredMessage>();
+  msgOrdinal = 0; // count of message requests that passed validation
   ledgerSeq = 0;
   requestSeq = 0;
   ordinal = 0; // count of payout requests that passed validation
@@ -87,7 +109,7 @@ export class AccountState {
     const at = new Date().toISOString();
     const vt = this.clock.nowIso();
     const text = lines
-      .map((l) => JSON.stringify({ seq: l.type === "payout_created" ? (l.seq as number) : ++this.ledgerSeq, at, vt, account: this.config.account, ...l }))
+      .map((l) => JSON.stringify({ seq: l.type === "payout_created" || l.type === "message_created" ? (l.seq as number) : ++this.ledgerSeq, at, vt, account: this.config.account, ...l }))
       .join("\n");
     fs.appendFileSync(this.ledgerPath, text + "\n");
   }
@@ -142,6 +164,27 @@ export class AccountState {
     return obj;
   }
 
+  /** NotifySim: commit a message (ledger message_created). Keyless: no key record is ever stored. */
+  commitMessage(args: { recipient: string; template: string; amount_minor: number | null; currency: string | null; metadata: Record<string, string> }): MessageObject {
+    const seq = ++this.ledgerSeq;
+    const msg: MessageObject = {
+      id: messageId(this.config.account, seq),
+      object: "message",
+      status: "sent",
+      recipient: args.recipient,
+      template: args.template,
+      amount_minor: args.amount_minor,
+      currency: args.currency,
+      metadata: args.metadata,
+      created_at: this.clock.nowIso(),
+    };
+    this.appendLedger([{ type: "message_created", seq, message: msg }]);
+    const sm: StoredMessage = { seq, msg };
+    this.messages.push(sm);
+    this.msgById.set(msg.id, sm);
+    return msg;
+  }
+
   private keyCreatedAt(key: string, bodySha: string): number {
     // The record may be IN_PROGRESS (late commit): keep its creation time; otherwise it is created now.
     const rec = this.keys.lookup(key, this.clock.now(), Number.MAX_SAFE_INTEGER);
@@ -163,8 +206,12 @@ export class AccountState {
 
   /** Objects as the state hash sees them: sorted by id. */
   stateHash(): { objects: number; state_hash: string } {
-    const sorted = this.objects.map((o) => o.obj).sort((a, b) => (a.id < b.id ? -1 : a.id > b.id ? 1 : 0));
-    return { objects: sorted.length, state_hash: sha256Hex(canonicalJson(sorted)) };
+    const byId = <T extends { id: string }>(a: T, b: T) => (a.id < b.id ? -1 : a.id > b.id ? 1 : 0);
+    const sorted = this.objects.map((o) => o.obj).sort(byId);
+    if (this.messages.length === 0) return { objects: sorted.length, state_hash: sha256Hex(canonicalJson(sorted)) };
+    // NotifySim messages are part of the state (canary 4 of probe admission compares this hash before and after a probe).
+    const msgs = this.messages.map((m) => m.msg).sort(byId);
+    return { objects: sorted.length + msgs.length, state_hash: sha256Hex(canonicalJson({ objects: sorted, messages: msgs })) };
   }
 
   /** Truncate this account's files; keep its configuration and its (monotone) clock offset. */
@@ -174,6 +221,9 @@ export class AccountState {
     this.faults = [];
     this.objects = [];
     this.byId.clear();
+    this.messages = [];
+    this.msgById.clear();
+    this.msgOrdinal = 0;
     this.keys.clear();
     this.requestLog = [];
     this.requestSeq = 0;
@@ -212,6 +262,15 @@ export class Store {
     acct.writeCreated();
     this.accounts.set(config.account, acct);
     return acct;
+  }
+
+  /** NotifySim: global lookup of a message by id. */
+  findMessage(id: string): { acct: AccountState; sm: StoredMessage } | undefined {
+    for (const a of this.accounts.values()) {
+      const sm = a.msgById.get(id);
+      if (sm) return { acct: a, sm };
+    }
+    return undefined;
   }
 
   /** Global lookup by object id (ids are unique across accounts). */
@@ -254,6 +313,11 @@ export class Store {
           const so: StoredObject = { seq, obj };
           acct.objects.push(so);
           acct.byId.set(obj.id, so);
+        } else if (l.type === "message_created") {
+          const msg = l.message as MessageObject;
+          const sm: StoredMessage = { seq, msg };
+          acct.messages.push(sm);
+          acct.msgById.set(msg.id, sm);
         } else if (l.type === "key_stored") {
           const result = l.result as StoredResult;
           acct.keys.restore({
@@ -272,6 +336,9 @@ export class Store {
       acct.requestSeq = acct.requestLog.reduce((m, r) => Math.max(m, r.seq), 0);
       acct.ordinal = acct.requestLog.filter(
         (r) => r.method === "POST" && r.path === "/v1/payouts" && r.outcome !== "INVALID" && r.outcome !== "UNAUTHORIZED",
+      ).length;
+      acct.msgOrdinal = acct.requestLog.filter(
+        (r) => r.method === "POST" && r.path === "/v1/messages" && r.outcome !== "INVALID" && r.outcome !== "UNAUTHORIZED",
       ).length;
       this.accounts.set(config.account, acct);
     }

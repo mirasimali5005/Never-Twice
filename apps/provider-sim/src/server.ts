@@ -29,6 +29,8 @@ function resolveAccount(rc: RC, store: Store): AccountState | null {
   if (m) return store.get(decodeURIComponent(m[1]!)) ?? null;
   const o = /^\/v1\/payouts\/([^/]+)$/.exec(rc.pathname);
   if (o) return store.findObject(decodeURIComponent(o[1]!))?.acct ?? null;
+  const msg = /^\/v1\/messages\/([^/]+)$/.exec(rc.pathname);
+  if (msg) return store.findMessage(decodeURIComponent(msg[1]!))?.acct ?? null;
   if (rc.raw) {
     try {
       const b = JSON.parse(Buffer.from(rc.raw).toString("utf8")) as { account?: unknown };
