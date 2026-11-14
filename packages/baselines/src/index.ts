@@ -1,4 +1,5 @@
-// @nt/baselines: the baseline arms (task E5). Tier 1: arm A `control`. Arms B and R are Tier 2 and not built yet.
+// @nt/baselines: the baseline arms (task E5). Arm A `control` (Tier 1), arm B `documented` (Tier 2). Arm R `rules_only` is the nt path with
+// the regex extractor in @nt/agents (createRegexModelClient), wired in apps/runner.
 export {
   runControl,
   buildBaselineReport,
@@ -14,3 +15,4 @@ export {
   type BaselineGoodwillStep,
   type DecidedClaim,
 } from "./control.ts";
+export { runDocumented, stableKey, DOCUMENTED_MAX_RETRIES, type DocumentedDeps } from "./documented.ts";

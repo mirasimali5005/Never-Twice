@@ -3,7 +3,7 @@
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { parseArgs } from "node:util";
-import { createModelClient } from "@nt/agents";
+import { createModelClient, createRegexModelClient } from "@nt/agents";
 import { Arm, parseEnv, type PolicyBundle } from "@nt/contracts";
 import { closeAll, connect, type NtDb, type RoleEnv as DbRoleEnv } from "@nt/db";
 import { DEFAULT_POLICY_IDS, loadPolicyBundle, parsePolicyBundle } from "@nt/rules";
@@ -56,7 +56,7 @@ export async function main(argv: string[], source: Record<string, string | undef
       return 1;
     }
     // The control arm builds its own report (packages/baselines); the generic builder would drop its paid list.
-    if (values["report-only"] && run.arm !== "control") return await runReportOnly(early, runId, REPO_ROOT, log);
+    if (values["report-only"] && run.arm !== "control" && run.arm !== "documented") return await runReportOnly(early, runId, REPO_ROOT, log);
 
     const parsed = parseEnv("runner", { ...source, NT_RUN_ID: runId, NT_ARM: run.arm });
     if (!parsed.ok) {
@@ -65,8 +65,8 @@ export async function main(argv: string[], source: Record<string, string | undef
     }
     const env = parsed.env;
 
-    if (run.arm === "control") {
-      // Arm A lives in packages/baselines (task E5). Run its CLI as a child with the same arguments and environment; a SIGKILL of the
+    if (run.arm === "control" || run.arm === "documented") {
+      // Arms A and B live in packages/baselines (task E5). Run its CLI as a child with the same arguments and environment; a SIGKILL of the
       // child (the judge's kill at CTRL_AFTER_PROVIDER_RESPONSE) is propagated so callers see the same death as the nt arm.
       const { spawnSync } = await import("node:child_process");
       const { fileURLToPath } = await import("node:url");
@@ -79,12 +79,12 @@ export async function main(argv: string[], source: Record<string, string | undef
       return r.status ?? 1;
     }
     if (!ORCHESTRATED_ARMS.includes(run.arm)) {
-      // documented and rules_only arms are Tier 2 and not built.
       log(`arm ${run.arm} is not available in this build (Tier 2)`);
       return 1;
     }
 
-    const model = createModelClient({ NT_MODEL: env.NT_MODEL, NT_MODEL_MODE: env.NT_MODEL_MODE, NT_MODEL_BACKEND: env.NT_MODEL_BACKEND, NT_MODEL_CASSETTE_DIR: env.NT_MODEL_CASSETTE_DIR });
+    // Arm R (`rules_only`): the same orchestrator, gateway and rules, with a regular-expression parser where the model would be.
+    const model = run.arm === "rules_only" ? createRegexModelClient() : createModelClient({ NT_MODEL: env.NT_MODEL, NT_MODEL_MODE: env.NT_MODEL_MODE, NT_MODEL_BACKEND: env.NT_MODEL_BACKEND, NT_MODEL_CASSETTE_DIR: env.NT_MODEL_CASSETTE_DIR });
     const { gateway } = await buildGateway(env, runId, RUNNER_WORKER);
     const policy = await loadPolicy(early);
     return await runArm({ runId, arm: run.arm, pauseBeforePayout: values["pause-before-payout"] === true }, { db: early, gateway, model, policy, repoRoot: REPO_ROOT, log });

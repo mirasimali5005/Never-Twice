@@ -154,12 +154,12 @@ const STATUTORY = new Set(["APPR_DELAY", "APPR_DENIED_BOARDING", "APPR_REFUND_CO
 /** the statutory entitlement types the judge's kill may target */
 export const isStatutory = (t: string): boolean => STATUTORY.has(t);
 
-function providerIdFor(d: Pick<BaselineDecision, "entitlement_type" | "rail">, stripeEnabled: boolean): ProviderId {
+export function providerIdFor(d: Pick<BaselineDecision, "entitlement_type" | "rail">, stripeEnabled: boolean): ProviderId {
   if (d.entitlement_type === "TICKET_REFUND" && stripeEnabled) return "stripe_refund";
   return d.rail === "instant" ? "sim_payout" : "sim_keyless";
 }
 
-function frozenFor(d: BaselineDecision, provider: ProviderId, runId: string): FrozenRequest {
+export function frozenFor(d: BaselineDecision, provider: ProviderId, runId: string): FrozenRequest {
   const stripe = provider === "stripe_refund";
   return {
     provider,
@@ -174,7 +174,7 @@ function frozenFor(d: BaselineDecision, provider: ProviderId, runId: string): Fr
   };
 }
 
-function describe(r: DispatchResult): { outcome: BaselineAttempt["outcome"]; text: string; objectId: string | null } {
+export function describe(r: DispatchResult): { outcome: BaselineAttempt["outcome"]; text: string; objectId: string | null } {
   switch (r.kind) {
     case "ACCEPTED":
       return { outcome: "ACCEPTED", text: `provider answered 2xx, payment applied (${r.object.id})`, objectId: r.object.id };
@@ -197,30 +197,25 @@ export function killSpecFor(passenger: string | null, decided: DecidedClaim[]): 
   return null;
 }
 
-/** Runs arm A over the claims of its run. Idempotent in the only sense this arm has: a restart resumes every claim not marked done. */
-export async function runControl(deps: BaselineDeps): Promise<void> {
-  const log = deps.log ?? (() => {});
-  const now = deps.now ?? (() => new Date());
-  const newKey = deps.newKey ?? (() => randomUUID());
-  const maxRetries = deps.maxRetries ?? 2;
-  const timeoutMs = deps.dispatchTimeoutMs ?? 3000;
-  const barrier = deps.barrier ?? ((name, effectKey) => controlBarrier(name, effectKey));
-  const { runId, db } = deps;
+type DecideDeps = Pick<BaselineDeps, "model" | "policy">;
+export type Decided = {
+  held: string | null;
+  extraction: ClaimExtraction | null;
+  resolution: { booking_ref: string; passenger_ids: string[]; method: string; similarity: number } | null;
+  flags: { payeeChangeRequested: boolean; goodwillProposed: "OVERNIGHT_STRANDED" | "MOBILITY_ASSIST" | null };
+  decisions: BaselineDecision[];
+};
 
-  await db.runs.updateOne({ _id: runId }, [{ $set: { status: "RUNNING", started_at: { $ifNull: ["$started_at", now()] } } }]);
-
-  const claims = await db.claims.find({ run_id: runId }).sort({ received_at: 1, claim_id: 1 }).toArray();
-  const bookings = await db.bookings.find({ run_id: runId }).toArray();
-  const baselineOf = (c: unknown): BaselineDoc | undefined => (c as ClaimWithBaseline).baseline;
-
-  // ---- phase 1: extract, resolve, compute, for every claim not marked done (a restart re-runs them from the top, as naive code does)
-  const decided: DecidedClaim[] = [];
-  for (const claim of claims) {
-    if (baselineOf(claim)?.done) continue;
+/** Extract, resolve and compute one claim (the intake and rules shared by arms A and B, which are the same code as Never Twice's). */
+export async function decideClaim(
+  deps: DecideDeps,
+  claim: { claim_id: string; channel: string; raw_text: string; received_at: Date },
+  bookings: readonly Booking[],
+): Promise<Decided> {
     const res = await extractClaim(deps.model, { claim_id: claim.claim_id, channel: claim.channel, text: claim.raw_text });
     let held: string | null = null;
     let extraction: ClaimExtraction | null = null;
-    let decisions: BaselineDecision[] = [];
+    const decisions: BaselineDecision[] = [];
     let resolution: { booking_ref: string; passenger_ids: string[]; method: string; similarity: number } | null = null;
     let flags = { payeeChangeRequested: false, goodwillProposed: null as "OVERNIGHT_STRANDED" | "MOBILITY_ASSIST" | null };
     if (res.kind === "HELD") {
@@ -262,6 +257,30 @@ export async function runControl(deps: BaselineDeps): Promise<void> {
         }
       }
     }
+  return { held, extraction, resolution, flags, decisions };
+}
+
+/** Runs arm A over the claims of its run. Idempotent in the only sense this arm has: a restart resumes every claim not marked done. */
+export async function runControl(deps: BaselineDeps): Promise<void> {
+  const log = deps.log ?? (() => {});
+  const now = deps.now ?? (() => new Date());
+  const newKey = deps.newKey ?? (() => randomUUID());
+  const maxRetries = deps.maxRetries ?? 2;
+  const timeoutMs = deps.dispatchTimeoutMs ?? 3000;
+  const barrier = deps.barrier ?? ((name, effectKey) => controlBarrier(name, effectKey));
+  const { runId, db } = deps;
+
+  await db.runs.updateOne({ _id: runId }, [{ $set: { status: "RUNNING", started_at: { $ifNull: ["$started_at", now()] } } }]);
+
+  const claims = await db.claims.find({ run_id: runId }).sort({ received_at: 1, claim_id: 1 }).toArray();
+  const bookings = await db.bookings.find({ run_id: runId }).toArray();
+  const baselineOf = (c: unknown): BaselineDoc | undefined => (c as ClaimWithBaseline).baseline;
+
+  // ---- phase 1: extract, resolve, compute, for every claim not marked done (a restart re-runs them from the top, as naive code does)
+  const decided: DecidedClaim[] = [];
+  for (const claim of claims) {
+    if (baselineOf(claim)?.done) continue;
+    const { held, extraction, resolution, flags, decisions } = await decideClaim(deps, claim, bookings);
     const prior = baselineOf(claim);
     const baseline: BaselineDoc = {
       done: false,
@@ -422,6 +441,8 @@ export async function buildBaselineReport(runId: string, deps: Pick<BaselineDeps
     for (const p of b.payments) {
       if (p.result === "PAID" && p.provider_object_id) {
         paidKeys.add(p.effect_key);
+        // one provider object reported once: two claims for one entitlement that the provider deduplicated name the same object
+        if (paid.some((x) => x.effect_key === p.effect_key && x.provider_object_id === p.provider_object_id)) continue;
         paid.push({
           effect_key: p.effect_key,
           marker: marker(runId, p.effect_key),
