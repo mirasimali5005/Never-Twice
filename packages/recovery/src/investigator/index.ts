@@ -3,10 +3,20 @@
 import type { Intent, Investigator, ModelClient, PastInvestigation, ReadOnlyEvidenceTools } from "@nt/contracts";
 import type { WitnessEvidence } from "./collector.ts";
 import { collectDeterministic, type DeterministicOptions } from "./deterministic.ts";
+import { collectLlm } from "./llm.ts";
 import { createReadOnlyEvidenceTools, type ReadOnlyProviderView } from "./tools.ts";
 
 export { EvidenceCollector, type WitnessEvidence, type QueryOutcome } from "./collector.ts";
 export { collectDeterministic, createDeterministicInvestigator, DETERMINISTIC_HYPOTHESIS, type DeterministicOptions } from "./deterministic.ts";
+export {
+  collectLlm,
+  FollowUpEnvelope,
+  HYPOTHESIS_MAX,
+  INVESTIGATOR_PROMPT_VERSION,
+  INVESTIGATOR_SYSTEM_PROMPT,
+  PlanEnvelope,
+  type LlmInvestigatorOptions,
+} from "./llm.ts";
 export {
   createReadOnlyEvidenceTools,
   defaultListSince,
@@ -31,7 +41,10 @@ export type CreateInvestigatorOptions = DeterministicOptions & {
   provider?: ReadOnlyProviderView;
   /** Required for mode "llm". */
   model?: ModelClient;
+  /** NT_INVESTIGATOR_TIMEOUT_MS; the model path is abandoned after it and the deterministic investigator answers. */
   timeoutMs?: number;
+  /** llm only: make the optional call 2 (default true). */
+  followUp?: boolean;
 };
 
 /** An Investigator (assignable to the contracts type) whose collect returns WitnessEvidence. */
@@ -47,8 +60,14 @@ export function createInvestigator(o: CreateInvestigatorOptions): WitnessInvesti
   const det: DeterministicOptions = {};
   if (o.pageSize !== undefined) det.pageSize = o.pageSize;
   if (o.maxPages !== undefined) det.maxPages = o.maxPages;
-  if (o.mode !== "deterministic") throw new Error(`investigator mode ${o.mode} is not built yet`);
-  const collect: WitnessInvestigator["collect"] = (it, tools) => collectDeterministic(it, tools, det);
+  let collect: WitnessInvestigator["collect"];
+  if (o.mode === "deterministic") collect = (it, tools) => collectDeterministic(it, tools, det);
+  else if (o.mode === "llm") {
+    const model = o.model;
+    if (model === undefined) throw new Error("createInvestigator: mode llm needs a ModelClient");
+    const followUp = o.followUp ?? true;
+    collect = (it, tools, opts) => collectLlm(it, tools, opts, { model, followUp, deterministic: det });
+  } else throw new Error(`createInvestigator: unknown mode ${String(o.mode)}`);
   return {
     kind: o.mode,
     timeoutMs,

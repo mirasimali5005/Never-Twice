@@ -6,7 +6,8 @@ import { LIST_PAGE_CAP, TOOL_ARGS, defaultListSince, isInvestigationTool, type T
 /** CollectedEvidence plus why the model path was abandoned (null when it was not, or when no model path ran). */
 export type WitnessEvidence = CollectedEvidence & { fallback_reason: string | null };
 
-export type QueryOutcome = { ok: true; record_count: number } | { ok: false; error: string };
+/** dropped: the query never reached a tool (unknown tool or invalid args); otherwise the tool ran and its read failed. */
+export type QueryOutcome = { ok: true; record_count: number } | { ok: false; error: string; dropped: boolean };
 
 export class EvidenceCollector {
   readonly #records = new Map<string, ProviderObject>();
@@ -45,13 +46,13 @@ export class EvidenceCollector {
     if (!isInvestigationTool(tool)) {
       const error = `dropped: unknown tool ${JSON.stringify(String(tool)).slice(0, 80)}`;
       this.note(String(tool).slice(0, 80), args, error);
-      return { ok: false, error };
+      return { ok: false, error, dropped: true };
     }
     const parsed = TOOL_ARGS[tool].safeParse(args ?? {});
     if (!parsed.success) {
       const error = `dropped: invalid args (${parsed.error.issues.map((i) => `${i.path.join(".") || "args"}: ${i.message}`).join("; ").slice(0, 200)})`;
       this.note(tool, args, error);
-      return { ok: false, error };
+      return { ok: false, error, dropped: true };
     }
     return this.#runValid(tools, tool, parsed.data as never);
   }
@@ -87,9 +88,9 @@ export class EvidenceCollector {
     } catch (e) {
       const error = `failed: ${e instanceof Error ? e.message : String(e)}`.slice(0, 300);
       this.#steps.push({ tool, input: args, summary: error, record_count: 0 });
-      return { ok: false, error };
+      return { ok: false, error, dropped: false };
     }
-    return { ok: false, error: "unreachable" };
+    return { ok: false, error: "unreachable", dropped: false };
   }
 
   async #list(tools: ReadOnlyEvidenceTools, a: ToolArgs["list_provider_payments_by_payee"]): Promise<QueryOutcome> {
@@ -131,7 +132,7 @@ export class EvidenceCollector {
       summary: `list by payee (consistent): ${pages} page(s), ${count} record(s), ${tail}`,
       record_count: count,
     });
-    return error !== null ? { ok: false, error } : { ok: true, record_count: count };
+    return error !== null ? { ok: false, error, dropped: false } : { ok: true, record_count: count };
   }
 
   result(investigator: "llm" | "deterministic", hypothesis: string | null, fallback_reason: string | null = null): WitnessEvidence {
