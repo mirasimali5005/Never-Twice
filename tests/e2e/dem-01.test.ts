@@ -156,7 +156,7 @@ function defineDem01(): void {
       expect(report?.group_id).toBe(seeded.group_id);
       expect(report?.refused.map((r) => ({ key: r.effect_key, why: r.reason_code }))).toEqual([expect.objectContaining({ why: "DELAY_UNDER_3H" })]);
       expect(report?.refused[0]?.effect_key).toMatch(/\.P04\./);
-      expect(report?.complete).toBe(false); // P11 is parked, so the run is not reported complete (property P6)
+      expect(report?.complete).toBe(true); // HANDOVER §14: complete when nothing is RESERVED/DISPATCHING/OUTCOME_UNKNOWN; a parked (QUARANTINED) payment is resolved to a person, not unresolved (property P6)
       expect(report?.parked.map((p) => p.effect_key)).toContain(K.P11);
       expect((await db.runs.findOne({ _id: run.nt }))?.status).toBe("ENDED");
 

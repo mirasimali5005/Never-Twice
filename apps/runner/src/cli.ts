@@ -64,9 +64,22 @@ export async function main(argv: string[], source: Record<string, string | undef
     }
     const env = parsed.env;
 
+    if (run.arm === "control") {
+      // Arm A lives in packages/baselines (task E5). Run its CLI as a child with the same arguments and environment; a SIGKILL of the
+      // child (the judge's kill at CTRL_AFTER_PROVIDER_RESPONSE) is propagated so callers see the same death as the nt arm.
+      const { spawnSync } = await import("node:child_process");
+      const { fileURLToPath } = await import("node:url");
+      const script = fileURLToPath(new URL("../../../packages/baselines/src/control-cli.ts", import.meta.url));
+      const fwd: string[] = [];
+      const argv = process.argv.slice(2);
+      for (let i = 0; i < argv.length; i++) { if (argv[i] === "--arm") { i++; continue; } fwd.push(argv[i]!); }
+      const r = spawnSync(process.execPath, [script, ...fwd], { stdio: "inherit", env: process.env });
+      if (r.signal === "SIGKILL") process.kill(process.pid, "SIGKILL");
+      return r.status ?? 1;
+    }
     if (!ORCHESTRATED_ARMS.includes(run.arm)) {
-      // control and documented: packages/baselines (task E5); rules_only: runArm with E5's extractor. Hook them in here.
-      log(`arm ${run.arm} is not available in this build (task E5)`);
+      // documented and rules_only arms are Tier 2 and not built.
+      log(`arm ${run.arm} is not available in this build (Tier 2)`);
       return 1;
     }
 
