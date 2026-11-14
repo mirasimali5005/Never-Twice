@@ -49,6 +49,18 @@ describe("authority gate", () => {
     expect(await w.db.audit.countDocuments({ run_id: run2, type: "BUDGET_REFUSED" })).toBe(1);
   });
 
+  it("a restarted runner re-proposing goodwill that is already reserved, with the pool full, adopts it and records no refusal (S1 finding)", async () => {
+    const run = freshRun();
+    await seedGrant(w.db, run);
+    const obs = [gw(run, 15000, "G10"), gw(run, 20000, "G01"), gw(run, 15000, "G05")];
+    await w.db.obligations.insertMany(obs);
+    await reserveAll(run, obs); // pool now exactly full: 50000 held
+    const again = await propose(depsFor(w.db, run), proposalFor(obs[1]!)); // 20000 would not fit any more
+    expect(again.kind).toBe("ADOPTED");
+    expect(await grantOf(run)).toMatchObject({ held_minor: 50000 });
+    expect(await w.db.audit.countDocuments({ run_id: run, type: "BUDGET_REFUSED" })).toBe(0);
+  });
+
   it("a frozen grant refuses goodwill the same way", async () => {
     const run = freshRun();
     await seedGrant(w.db, run, { frozen: true });

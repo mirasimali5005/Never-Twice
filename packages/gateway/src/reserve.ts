@@ -127,6 +127,11 @@ export async function propose(deps: GatewayDeps, input: ProposedPayment): Promis
       });
     } catch (e) {
       if (e instanceof BudgetRefused) {
+        // The guard ran before the insert, so an intent that already exists for this key (a restarted runner re-proposing
+        // goodwill that is reserved or already paid) would be refused instead of adopted. The transaction aborted, so no
+        // counter moved: adopt the existing intent if there is one, and record a refusal only when there is none.
+        const existing = await adoptExisting(deps, intent._id, intent.frozen_request_sha256, claimId);
+        if (existing) return existing;
         return refuse(deps, p, "AWAITING_BUDGET", { amount_minor: intent.amount_minor, grant_id: intent.draws_on });
       }
       throw e;
