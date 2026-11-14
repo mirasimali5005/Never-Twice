@@ -1,0 +1,16 @@
+{
+  "name": "@nt/provider-sim",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Never Twice provider SIMULATOR (not a real payment processor). Imports nothing from the workspace.",
+  "scripts": {
+    "start": "node src/server.ts",
+    "typecheck": "tsc --noEmit -p tsconfig.json",
+    "test": "vitest run --root ../.. apps/provider-sim/test"
+  },
+  "dependencies": {
+    "hono": "4.13.18",
+    "@hono/node-server": "2.1.8"
+  }
+}
