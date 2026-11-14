@@ -1,0 +1,65 @@
+import { describe, expect, it } from "vitest";
+import type { Obligation } from "@nt/contracts";
+import { payoutOrder } from "../src/orchestrator.ts";
+import { deriveReport } from "../src/final-report.ts";
+
+const day = 86_400_000;
+const base = new Date("2026-11-11T00:00:00Z");
+function ob(pax: string, type: Obligation["entitlement_type"], due: number | null, claim: string, ref = "REF"): Obligation {
+  const effect_key = `${ref}.${pax}.NT101-20261110.${type}`;
+  return { _id: `r1234567:${effect_key}`, run_id: "r1234567", effect_key, booking_ref: ref, passenger_id: pax, disruption_id: "NT101-20261110", entitlement_type: type, status: "OWED", amount_minor: 100, currency: "CAD", payee_ref: `payee_${pax}`, rail: "instant", reason_code: null, rule_citation: "c", policy_version: "p", due_by: due === null ? null : new Date(base.getTime() + due), claim_ids: [claim], decided_at: base } as Obligation;
+}
+
+describe("payoutOrder (E4-UNIT-03)", () => {
+  const received = new Map([["C1", new Date("2026-11-11T09:00:00Z")], ["C2", new Date("2026-11-11T10:00:00Z")], ["C3", new Date("2026-11-11T13:15:00Z")]]);
+
+  it("orders by due_by, then received_at, then statutory before goodwill of the same passenger, then effect_key", () => {
+    const owed = [
+      ob("P05", "GOODWILL", 30 * day, "C3", "RW6N1K"),
+      ob("P06", "APPR_DELAY", 30 * day, "C3", "RW6N1K"),
+      ob("P05", "APPR_DELAY", 30 * day, "C3", "RW6N1K"),
+      ob("P02", "APPR_DELAY", 30 * day, "C2", "ZT4H9X"),
+      ob("P10", "APPR_DENIED_BOARDING", 2 * day, "C3", "GT8K4S"),
+      ob("P13", "APPR_DELAY", 30 * day, "C1", "KS2R9B"),
+    ];
+    expect(payoutOrder(owed, received).map((o) => `${o.passenger_id}:${o.entitlement_type}`)).toEqual([
+      "P10:APPR_DENIED_BOARDING",
+      "P13:APPR_DELAY",
+      "P02:APPR_DELAY",
+      "P05:APPR_DELAY",
+      "P05:GOODWILL", // right after P05's statutory payment, before P06's
+      "P06:APPR_DELAY",
+    ]);
+  });
+
+  it("a null due_by sorts last and the input is not mutated", () => {
+    const owed = [ob("P01", "APPR_DELAY", null, "C1", "A"), ob("P02", "APPR_DELAY", day, "C3", "B")];
+    expect(payoutOrder(owed, received).map((o) => o.passenger_id)).toEqual(["P02", "P01"]);
+    expect(owed[0]?.passenger_id).toBe("P01");
+  });
+});
+
+describe("deriveReport mapping (E4-UNIT-05, E4-UNIT-06)", () => {
+  const run = { _id: "r1234567", group_id: "g1234567", arm: "nt" as const, scenario: "S1" as const };
+  const none = { run, claims: [], obligations: [], intents: [], budgetRefusedKeys: new Set<string>(), generatedAt: "2026-11-14T00:00:00.000Z" };
+
+  it("an empty run is complete and carries group_id", () => {
+    expect(deriveReport(none)).toMatchObject({ group_id: "g1234567", run_id: "r1234567", complete: true, paid: [], parked: [], unresolved: [] });
+  });
+
+  it("a claim that is not adjudicated yet blocks completion and appears in no list", () => {
+    const r = deriveReport({ ...none, claims: [{ claim_id: "C1", status: "EXTRACTED", hold_reason: null, effect_keys: [] }] });
+    expect(r.complete).toBe(false);
+    expect(Object.values(r).flat().length).toBeGreaterThan(0);
+    expect(r.parked).toEqual([]);
+  });
+
+  it("an owed obligation with no intent is unresolved NO_INTENT; a refusal is listed with its citation", () => {
+    const owed = ob("P02", "APPR_DELAY", day, "C1");
+    const refused = { ...ob("P04", "APPR_DELAY", day, "C1"), status: "NOT_OWED", reason_code: "DELAY_UNDER_3H", amount_minor: 0 } as Obligation;
+    const r = deriveReport({ ...none, obligations: [owed, refused], claims: [{ claim_id: "C1", status: "RESOLVED", hold_reason: null, effect_keys: [owed.effect_key, refused.effect_key] }] });
+    expect(r.unresolved).toEqual([{ effect_key: owed.effect_key, state: "NO_INTENT" }]);
+    expect(r.refused).toEqual([{ effect_key: refused.effect_key, reason_code: "DELAY_UNDER_3H", rule_citation: "c" }]);
+    expect(r.complete).toBe(false);
+  });
+});

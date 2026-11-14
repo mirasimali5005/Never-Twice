@@ -75,7 +75,33 @@ importers:
 
   apps/reconciler: {}
 
-  apps/runner: {}
+  apps/runner:
+    dependencies:
+      '@nt/agents':
+        specifier: workspace:*
+        version: link:../../packages/agents
+      '@nt/contracts':
+        specifier: workspace:*
+        version: link:../../packages/contracts
+      '@nt/db':
+        specifier: workspace:*
+        version: link:../../packages/db
+      '@nt/gateway':
+        specifier: workspace:*
+        version: link:../../packages/gateway
+      '@nt/providers':
+        specifier: workspace:*
+        version: link:../../packages/providers
+      '@nt/rules':
+        specifier: workspace:*
+        version: link:../../packages/rules
+      mongodb:
+        specifier: 7.9.0
+        version: 7.9.0
+    devDependencies:
+      '@types/node':
+        specifier: 24.19.2
+        version: 24.19.2
 
   packages/agents:
     dependencies:
