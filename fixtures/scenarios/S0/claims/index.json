@@ -1,0 +1,32 @@
+[
+  {
+    "claim_id": "C02",
+    "channel": "email",
+    "received_at": "2026-11-11T10:40:00Z",
+    "file": "C02.txt"
+  },
+  {
+    "claim_id": "C04",
+    "channel": "email",
+    "received_at": "2026-11-11T11:20:00Z",
+    "file": "C04.txt"
+  },
+  {
+    "claim_id": "C05",
+    "channel": "web_form",
+    "received_at": "2026-11-11T12:02:00Z",
+    "file": "C05.json"
+  },
+  {
+    "claim_id": "C11",
+    "channel": "web_form",
+    "received_at": "2026-11-11T15:30:00Z",
+    "file": "C11.json"
+  },
+  {
+    "claim_id": "C13",
+    "channel": "web_form",
+    "received_at": "2026-11-11T08:05:00Z",
+    "file": "C13.json"
+  }
+]

@@ -1,0 +1,20 @@
+{
+  "id": "F-DEMO",
+  "description": "P11 legacy rail: late commit held until released. P13: request dropped. Each once, matched on payee_ref. Install on every simulator account in the group.",
+  "faults": [
+    {
+      "match": {
+        "payee_ref": "payee_P11"
+      },
+      "fault": "LATE_COMMIT_ON_RELEASE",
+      "times": 1
+    },
+    {
+      "match": {
+        "payee_ref": "payee_P13"
+      },
+      "fault": "DROP_REQUEST",
+      "times": 1
+    }
+  ]
+}

@@ -1,0 +1,19 @@
+{
+  "_id": "NT-GOODWILL@1",
+  "policy_id": "NT-GOODWILL",
+  "version": "1",
+  "kind": "GOODWILL",
+  "currency": "CAD",
+  "fictional": true,
+  "description": "Fictional discretionary hardship top-up of the fictional carrier Northern Tern Airlines. Not a statutory entitlement.",
+  "tariff": {
+    "OVERNIGHT_STRANDED": 15000,
+    "MOBILITY_ASSIST": 20000
+  },
+  "eligibility_source": "booking.passenger.hardship_flags",
+  "one_per_passenger_per_disruption": true,
+  "pool_grant_minor": {
+    "S0": 0,
+    "S1": 50000
+  }
+}

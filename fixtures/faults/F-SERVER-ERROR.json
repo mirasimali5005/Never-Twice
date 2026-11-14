@@ -1,0 +1,13 @@
+{
+  "id": "F-SERVER-ERROR",
+  "description": "First payout request: committed, then 500.",
+  "faults": [
+    {
+      "match": {
+        "ordinal": 1
+      },
+      "fault": "SERVER_ERROR_AFTER_APPLY",
+      "times": 1
+    }
+  ]
+}
