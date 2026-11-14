@@ -1,1 +1,19 @@
-export {};
+// @nt/contracts: the frozen shared contracts (ARCHITECTURE.md §6). Imports zod and node:crypto only, nothing internal.
+export * from "./states.ts";
+export * from "./reasons.ts";
+export * from "./barriers.ts";
+export * from "./money.ts";
+export * from "./canonical.ts";
+export * from "./identity.ts";
+export * from "./frozen-request.ts";
+export * from "./provider.ts";
+export * from "./intent.ts";
+export * from "./obligation.ts";
+export * from "./audit.ts";
+export * from "./proposal.ts";
+export * from "./recovery.ts";
+export * from "./model.ts";
+export * from "./report.ts";
+export * from "./documents.ts";
+export * from "./fixtures.ts";
+export * from "./env.ts";
