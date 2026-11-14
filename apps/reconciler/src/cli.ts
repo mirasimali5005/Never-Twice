@@ -104,7 +104,8 @@ export async function main(argv: readonly string[], o: { gatewayFactory?: Gatewa
     const { gateway, barrier } = await (o.gatewayFactory ?? defaultGatewayFactory)({ db: gwDb, runId: args.runId, workerId, env });
     let model = o.model;
     if (model === undefined && mode === "llm") {
-      model = createModelClient(env);
+      // The investigation runs live by default even when intake replays recorded outputs (NT_INVESTIGATOR_MODEL_MODE overrides).
+      model = createModelClient({ ...env, NT_MODEL_MODE: (process.env.NT_INVESTIGATOR_MODEL_MODE ?? "live") as typeof env.NT_MODEL_MODE });
     }
     const collect = makeCollect({ gateway, mode, model, timeoutMs: env.NT_INVESTIGATOR_TIMEOUT_MS });
     const deps: LoopDeps = {
