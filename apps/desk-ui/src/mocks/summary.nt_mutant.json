@@ -1,0 +1,23 @@
+{
+  "run_id": "r5h1w8ze",
+  "group_id": "g4x8p2nd",
+  "arm": "nt_mutant",
+  "scenario": "S0",
+  "status": "ENDED",
+  "intents_by_state": {
+    "RESERVED": 0,
+    "DISPATCHING": 0,
+    "OUTCOME_UNKNOWN": 0,
+    "CONFIRMED": 5,
+    "FAILED_NO_EFFECT": 0,
+    "QUARANTINED": 0,
+    "RELEASED": 0
+  },
+  "colours": {
+    "in_doubt": 0,
+    "confirmed": 5,
+    "needs_person": 0
+  },
+  "complete": true,
+  "report_generated_at": "2026-11-14T18:02:22.300Z"
+}

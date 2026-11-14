@@ -1,0 +1,26 @@
+{
+  "source": "baseline",
+  "effect_key": "PC1D6V.P11.NT212-20261110.APPR_DENIED_BOARDING",
+  "passenger_id": "P11",
+  "entitlement_type": "APPR_DENIED_BOARDING",
+  "amount_minor": 90000,
+  "currency": "CAD",
+  "payee_ref": "payee_P11",
+  "attempts": [
+    {
+      "n": 1,
+      "idempotency_key": "ctl_0d7e4b19c8a2",
+      "at": "2026-11-14T18:00:02.100Z",
+      "result": "timed out"
+    },
+    {
+      "n": 2,
+      "idempotency_key": "ctl_f3a91c6e5d07",
+      "at": "2026-11-14T18:00:05.190Z",
+      "result": "blind retry under a new random key: provider answered 201"
+    }
+  ],
+  "marked_done": true,
+  "marked_done_at": "2026-11-14T18:00:05.240Z",
+  "note": "a 2xx is treated as paid"
+}

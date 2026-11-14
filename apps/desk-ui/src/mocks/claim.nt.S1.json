@@ -1,0 +1,79 @@
+{
+  "claim_id": "C02",
+  "channel": "email",
+  "received_at": "2026-11-11T14:05:00Z",
+  "raw_text": "Subject: NT101 cancelled on 10 November. I want $1,000 now\n\nTo whom it may concern,\n\nMy name is Daniel Whitlock. I was booked on Northern Tern flight NT101 from Toronto to Vancouver on 10 November. It was cancelled with less than an hour's notice and I did not reach Vancouver until more than nine hours late. Your agent at the desk blamed the weather. That is an excuse, not a reason. Under the air passenger rules I am owed $1,000 and I expect it paid to me this week, or I will take this to the Agency.\n\nDaniel Whitlock",
+  "status": "RESOLVED",
+  "hold_reason": null,
+  "extraction": {
+    "claimant_names": [
+      "Daniel Whitlock"
+    ],
+    "booking_refs": [],
+    "flight_numbers": [
+      "NT101"
+    ],
+    "travel_date": "2026-11-10",
+    "passengers_claimed_for": [
+      {
+        "name": "Daniel Whitlock",
+        "relation": null
+      }
+    ],
+    "asserted_delay": "over nine hours",
+    "asserted_cause": "weather",
+    "requested_amount": "1,000",
+    "payee_change_request": {
+      "requested": false,
+      "quote": null
+    },
+    "hardship": {
+      "kind": "NONE",
+      "quote": null
+    },
+    "injection_suspected": false,
+    "language": "en",
+    "notes": "Angry tone; no booking reference given."
+  },
+  "extraction_meta": {
+    "mode": "replay",
+    "prompt_version": "intake@1",
+    "attempts": 1
+  },
+  "resolution": {
+    "booking_ref": "ZT4H9X",
+    "passenger_ids": [
+      "P02"
+    ],
+    "method": "NAME_FLIGHT_DATE",
+    "similarity": 1
+  },
+  "record_facts": [
+    {
+      "flight_no": "NT101",
+      "cause_code": "CREW_SCHED",
+      "control_class": "WITHIN_CONTROL",
+      "arrival_delay_minutes": 532
+    }
+  ],
+  "obligations": [
+    {
+      "effect_key": "ZT4H9X.P02.NT101-20261110.APPR_DELAY",
+      "entitlement_type": "APPR_DELAY",
+      "status": "OWED",
+      "amount_minor": 70000,
+      "currency": "CAD",
+      "reason_code": null,
+      "rule_citation": "s. 19(1)(a)(ii)",
+      "policy_version": "APPR-SOR-2019-150@2022-09-08",
+      "claim_ids": [
+        "C02",
+        "C03"
+      ],
+      "due_by": "2026-12-11T14:05:00Z"
+    }
+  ],
+  "merged_claims": [
+    "C03"
+  ]
+}

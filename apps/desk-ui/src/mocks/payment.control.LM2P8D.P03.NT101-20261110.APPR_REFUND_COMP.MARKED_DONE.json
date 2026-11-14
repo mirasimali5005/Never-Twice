@@ -1,0 +1,20 @@
+{
+  "source": "baseline",
+  "effect_key": "LM2P8D.P03.NT101-20261110.APPR_REFUND_COMP",
+  "passenger_id": "P03",
+  "entitlement_type": "APPR_REFUND_COMP",
+  "amount_minor": 40000,
+  "currency": "CAD",
+  "payee_ref": "payee_P03",
+  "attempts": [
+    {
+      "n": 1,
+      "idempotency_key": "ctl_7a20c4e8f1b5",
+      "at": "2026-11-14T18:00:44.100Z",
+      "result": "provider answered 201"
+    }
+  ],
+  "marked_done": true,
+  "marked_done_at": "2026-11-14T18:00:44.160Z",
+  "note": "a 2xx is treated as paid"
+}

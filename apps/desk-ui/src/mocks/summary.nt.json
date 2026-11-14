@@ -1,0 +1,23 @@
+{
+  "run_id": "r7k2m9qa",
+  "group_id": "g4x8p2nd",
+  "arm": "nt",
+  "scenario": "S0",
+  "status": "ENDED",
+  "intents_by_state": {
+    "RESERVED": 0,
+    "DISPATCHING": 0,
+    "OUTCOME_UNKNOWN": 0,
+    "CONFIRMED": 4,
+    "FAILED_NO_EFFECT": 0,
+    "QUARANTINED": 1,
+    "RELEASED": 0
+  },
+  "colours": {
+    "in_doubt": 0,
+    "confirmed": 4,
+    "needs_person": 1
+  },
+  "complete": true,
+  "report_generated_at": "2026-11-14T18:02:20.511Z"
+}

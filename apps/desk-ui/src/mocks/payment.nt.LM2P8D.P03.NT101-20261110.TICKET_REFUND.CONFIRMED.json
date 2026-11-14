@@ -1,0 +1,117 @@
+{
+  "source": "nt",
+  "intent": {
+    "_id": "r7k2m9qa:LM2P8D.P03.NT101-20261110.TICKET_REFUND",
+    "run_id": "r7k2m9qa",
+    "effect_key": "LM2P8D.P03.NT101-20261110.TICKET_REFUND",
+    "obligation_id": "r7k2m9qa:LM2P8D.P03.NT101-20261110.TICKET_REFUND",
+    "entitlement_type": "TICKET_REFUND",
+    "amount_minor": 41260,
+    "currency": "CAD",
+    "payee_ref": "payee_P03",
+    "provider": "stripe_refund",
+    "idempotency_key": "r7k2m9qa:LM2P8D.P03.NT101-20261110.TICKET_REFUND",
+    "frozen_request_sha256": "8e2c6a0f4d8b1357a9c3e7f1b5d0286c4a8e2f6b0d3195c7a1e5f9b3d7c0284a",
+    "state": "CONFIRMED",
+    "lease": null,
+    "lease_epoch": 1,
+    "attempts": [
+      {
+        "n": 1,
+        "licence": "FIRST_SEND",
+        "epoch": 1,
+        "at": "2026-11-14T18:00:09.300Z",
+        "request_sha256": "8e2c6a0f4d8b1357a9c3e7f1b5d0286c4a8e2f6b0d3195c7a1e5f9b3d7c0284a",
+        "result": {
+          "kind": "ACCEPTED",
+          "cause": null,
+          "code": null,
+          "replayed": false,
+          "provider_object_id": "re_3mockticketrefund01"
+        }
+      }
+    ],
+    "evidence": {
+      "source": "RESPONSE",
+      "provider_object_id": "re_3mockticketrefund01",
+      "status": "succeeded",
+      "amount_minor": 41260,
+      "currency": "CAD",
+      "payee_ref": "payee_P03",
+      "marker": "r7k2m9qa:LM2P8D.P03.NT101-20261110.TICKET_REFUND",
+      "retrieved_at": "2026-11-14T18:00:09.412Z"
+    },
+    "rejection": null,
+    "quarantine": null,
+    "policy_version": "APPR-SOR-2019-150@2022-09-08",
+    "rule_citation": "s. 18",
+    "first_dispatch_at": "2026-11-14T18:00:09.300Z",
+    "last_send_at": "2026-11-14T18:00:09.300Z",
+    "parent_ref": "pi_3mockparentpayment"
+  },
+  "obligation": {
+    "_id": "r7k2m9qa:LM2P8D.P03.NT101-20261110.TICKET_REFUND",
+    "run_id": "r7k2m9qa",
+    "effect_key": "LM2P8D.P03.NT101-20261110.TICKET_REFUND",
+    "status": "OWED",
+    "amount_minor": 41260,
+    "currency": "CAD",
+    "payee_ref": "payee_P03",
+    "rail": "instant",
+    "reason_code": null,
+    "rule_citation": "s. 18",
+    "policy_version": "APPR-SOR-2019-150@2022-09-08",
+    "claim_ids": [
+      "C04"
+    ],
+    "due_by": "2026-12-11T14:05:00Z"
+  },
+  "investigations": [],
+  "audit": [
+    {
+      "type": "OBLIGATION_DECIDED",
+      "from_state": null,
+      "to_state": null,
+      "actor": {
+        "kind": "orchestrator",
+        "id": "runner-1"
+      }
+    },
+    {
+      "type": "INTENT_RESERVED",
+      "from_state": null,
+      "to_state": "RESERVED",
+      "actor": {
+        "kind": "gateway",
+        "id": "runner-1"
+      }
+    },
+    {
+      "type": "TRANSITION",
+      "from_state": "RESERVED",
+      "to_state": "DISPATCHING",
+      "actor": {
+        "kind": "gateway",
+        "id": "runner-1"
+      },
+      "detail": {
+        "transition": "T2",
+        "epoch": 1
+      }
+    },
+    {
+      "type": "TRANSITION",
+      "from_state": "DISPATCHING",
+      "to_state": "CONFIRMED",
+      "actor": {
+        "kind": "gateway",
+        "id": "runner-1"
+      },
+      "detail": {
+        "transition": "T3",
+        "epoch": 1,
+        "evidence_source": "RESPONSE"
+      }
+    }
+  ]
+}

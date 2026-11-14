@@ -1,0 +1,53 @@
+[
+  {
+    "claim_id": "C02",
+    "channel": "email",
+    "received_at": "2026-11-11T14:05:00Z",
+    "status": "RESOLVED",
+    "hold_reason": null,
+    "effect_keys": [
+      "ZT4H9X.P02.NT101-20261110.APPR_DELAY"
+    ]
+  },
+  {
+    "claim_id": "C04",
+    "channel": "email",
+    "received_at": "2026-11-11T15:10:00Z",
+    "status": "RESOLVED",
+    "hold_reason": null,
+    "effect_keys": [
+      "LM2P8D.P03.NT101-20261110.APPR_REFUND_COMP",
+      "LM2P8D.P03.NT101-20261110.TICKET_REFUND"
+    ]
+  },
+  {
+    "claim_id": "C05",
+    "channel": "web-form",
+    "received_at": "2026-11-11T16:40:00Z",
+    "status": "RESOLVED",
+    "hold_reason": null,
+    "effect_keys": [
+      "HV9C3T.P04.NT101-20261110.APPR_DELAY"
+    ]
+  },
+  {
+    "claim_id": "C11",
+    "channel": "web-form",
+    "received_at": "2026-11-11T09:12:00Z",
+    "status": "RESOLVED",
+    "hold_reason": null,
+    "effect_keys": [
+      "PC1D6V.P11.NT212-20261110.APPR_DENIED_BOARDING"
+    ]
+  },
+  {
+    "claim_id": "C13",
+    "channel": "web-form",
+    "received_at": "2026-11-11T10:30:00Z",
+    "status": "RESOLVED",
+    "hold_reason": null,
+    "effect_keys": [
+      "KS2R9B.P13.NT880-20261110.APPR_DELAY"
+    ]
+  }
+]

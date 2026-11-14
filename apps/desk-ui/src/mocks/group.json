@@ -1,0 +1,28 @@
+{
+  "group_id": "g4x8p2nd",
+  "scenario": "S0",
+  "recorded": false,
+  "runs": [
+    {
+      "run_id": "r7k2m9qa",
+      "arm": "nt",
+      "status": "ENDED",
+      "sim_account": "acct_r7k2m9qa",
+      "fault_schedule": "F-DEMO"
+    },
+    {
+      "run_id": "r3c9v5tb",
+      "arm": "control",
+      "status": "ENDED",
+      "sim_account": "acct_r3c9v5tb",
+      "fault_schedule": "F-DEMO"
+    },
+    {
+      "run_id": "r5h1w8ze",
+      "arm": "nt_mutant",
+      "status": "ENDED",
+      "sim_account": "acct_r5h1w8ze",
+      "fault_schedule": "F-DEMO"
+    }
+  ]
+}
