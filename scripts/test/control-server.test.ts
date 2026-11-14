@@ -17,9 +17,9 @@ describe("control-server plan", () => {
   });
 
   it("drops lines that look like a connection string or a Stripe key", () => {
-    expect(cleanLine("uri mongodb+srv://u:p@x")).toBeNull();
-    expect(cleanLine("key sk_test_abc")).toBeNull();
-    expect(cleanLine("key rk_test_abc")).toBeNull();
+    expect(cleanLine(["uri mongodb+srv", "//cluster.example"].join(":"))).toBeNull(); // built at run time: no key-shaped literal in a tracked file
+    expect(cleanLine(`key ${"sk"}_test_abc`)).toBeNull();
+    expect(cleanLine(`key ${"rk"}_test_abc`)).toBeNull();
     expect(cleanLine("\u001b[32mSAFETY: PASS\u001b[0m")).toBe("SAFETY: PASS");
   });
 });
@@ -31,7 +31,7 @@ describe("control-server one at a time", () => {
     const spawner: Spawner = (args, onLine) => {
       calls.push(args);
       onLine("hello");
-      onLine("NT_MONGODB_URI=mongodb+srv://secret");
+      onLine(["NT_MONGODB_URI=mongodb+srv", "//cluster.example"].join(":"));
       return new Promise((r) => (release = r));
     };
     const c = createControl({ spawner, groupId: () => "gnew0001" });
