@@ -7,6 +7,7 @@ import { ObjectId } from "mongodb";
 import { CAPS, RUN, T0, intent, obj } from "./support/fixtures.ts";
 import { makeCollect } from "../src/collect.ts";
 import { runLoop, tick, type LoopDeps } from "../src/loop.ts";
+import { watchOne } from "../src/watcher.ts";
 import type { ClosedRecord, Collect, ReconcilerGateway, ReconcilerStore } from "../src/ports.ts";
 
 type Call = { m: string; id: string; detail?: unknown };
@@ -361,5 +362,31 @@ describe("investigator timeout → deterministic fallback recorded", () => {
     await tick(w.deps({ collect }));
     expect(modelCalls).toBe(0);
     expect(w.records[0]!.closed).toMatchObject({ investigator: "deterministic", fallback_reason: null, match: "MATCH" });
+  });
+});
+
+describe("Tier 2 watcher (T12)", () => {
+  const quarantined = (reason: "NO_DEDUPE_NO_EVIDENCE" | "CONTRADICTORY_EVIDENCE") =>
+    intent("P11", "sim_keyless", { state: "QUARANTINED", quarantine: { reason, detail: "", at: T0 } });
+  const collectWith = (rs: ProviderObject[]): Collect => async () => ({ investigator: "deterministic", hypothesis: null, steps: [], records: rs, complete: true, fallback_reason: null });
+
+  test("absence-class quarantine + MATCH → confirmQuarantined", async () => {
+    const w = world();
+    const it = quarantined("NO_DEDUPE_NO_EVIDENCE");
+    const confirmed: string[] = [];
+    const gateway = { ...w.gateway, confirmQuarantined: async (x: Intent) => { confirmed.push(x._id); return { ...x, state: "CONFIRMED" as const }; } };
+    expect(await watchOne({ ...w.deps({ gateway }), watchCollect: collectWith([obj(it)]) }, it)).toBe(true);
+    expect(confirmed).toEqual([it._id]);
+  });
+
+  test("NO_MATCH, or a non-absence reason, changes nothing", async () => {
+    const w = world();
+    let n = 0;
+    const gateway = { ...w.gateway, confirmQuarantined: async (x: Intent) => { n++; return x; } };
+    const a = quarantined("NO_DEDUPE_NO_EVIDENCE");
+    expect(await watchOne({ ...w.deps({ gateway }), watchCollect: collectWith([]) }, a)).toBe(false);
+    const b = quarantined("CONTRADICTORY_EVIDENCE");
+    expect(await watchOne({ ...w.deps({ gateway }), watchCollect: collectWith([obj(b)]) }, b)).toBe(false);
+    expect(n).toBe(0);
   });
 });
