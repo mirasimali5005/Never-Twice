@@ -25,3 +25,15 @@ export { buildFrozenRequest, idempotencyKeyFor, providerFor } from "./frozen.ts"
 export { goodwillGrantId, goodwillGuard, holdGoodwill } from "./authority.ts";
 export { adoptExisting, quarantineReserved, type T11Reason } from "./adopt.ts";
 export { buildIntent, propose } from "./reserve.ts";
+export { barrier, barrierAfterMs } from "./barrier.ts";
+export { mutation } from "./mutation.ts";
+export { acquireLease, markDispatching, reconLeaseMs, takeOverExpired, type MarkResult } from "./lease.ts";
+export { failNoEffect, markUnknown, quarantine } from "./outcomes.ts";
+export { confirmQuarantined, settle, type Evidence } from "./settle.ts";
+export { dispatch, hashMatches, send } from "./dispatch.ts";
+export { lastResult } from "./transition.ts";
+export { createGateway, createGatewayFromEnv, configFromEnv, withDefaultHooks, EVIDENCE_LIST_MARGIN_MS, type Gateway, type GatewayEnv } from "./gateway.ts";
+export { applyResendResult, recordLicence, resend, MAX_ATTEMPTS } from "./resend.ts";
+export { freezeGrant, releaseReserved } from "./human.ts";
+export { scanInvariants, type InvariantReport, type InvariantViolation as InvariantFinding } from "./invariants.ts";
+export { readOnlyProviderView, type ProviderReadView } from "./read-view.ts";

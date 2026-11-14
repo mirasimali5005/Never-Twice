@@ -10,7 +10,14 @@ export type GatewayHooks = {
 
 export const NO_HOOKS: GatewayHooks = { barrier: () => {}, mutation: () => false };
 
-export type GatewayConfig = { leaseMs: number; dispatchTimeoutMs: number; keyMarginMs: number; stripeEnabled: boolean };
+export type GatewayConfig = {
+  leaseMs: number;
+  dispatchTimeoutMs: number;
+  keyMarginMs: number;
+  stripeEnabled: boolean;
+  /** NT_INVESTIGATOR_TIMEOUT_MS; default 45000. Part of the reconciler's lease on OUTCOME_UNKNOWN. */
+  investigatorTimeoutMs?: number;
+};
 
 export type GatewayDeps = {
   db: NtDb;
@@ -19,7 +26,13 @@ export type GatewayDeps = {
   providers: Partial<Record<ProviderId, PaymentProvider>>;
   config: GatewayConfig;
   hooks?: GatewayHooks;
+  /** Who the audit events name as actor. Default: "reconciler" when workerId starts with "reconciler", else "gateway". */
+  actorKind?: "gateway" | "reconciler";
 };
+
+export function actorOf(deps: GatewayDeps): { kind: "gateway" | "reconciler"; id: string } {
+  return { kind: deps.actorKind ?? (deps.workerId.startsWith("reconciler") ? "reconciler" : "gateway"), id: deps.workerId };
+}
 
 export function hooksOf(deps: GatewayDeps): GatewayHooks {
   return deps.hooks ?? NO_HOOKS;

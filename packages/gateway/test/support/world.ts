@@ -26,7 +26,11 @@ export function capsOnlyProvider(id: ProviderId, dedupes: boolean): PaymentProvi
   };
 }
 
-export function depsFor(db: NtDb, runId: string, opts: { mutation?: string; stripeEnabled?: boolean; barriers?: string[] } = {}): GatewayDeps {
+export function depsFor(
+  db: NtDb,
+  runId: string,
+  opts: { mutation?: string; stripeEnabled?: boolean; barriers?: string[]; providers?: GatewayDeps["providers"]; workerId?: string; leaseMs?: number } = {},
+): GatewayDeps {
   const hooks: GatewayHooks = {
     barrier: (name) => { opts.barriers?.push(name); },
     mutation: (id) => opts.mutation === id,
@@ -34,13 +38,13 @@ export function depsFor(db: NtDb, runId: string, opts: { mutation?: string; stri
   return {
     db,
     runId,
-    workerId: "test-runner",
-    providers: {
+    workerId: opts.workerId ?? "test-runner",
+    providers: opts.providers ?? {
       sim_payout: capsOnlyProvider("sim_payout", true),
       sim_keyless: capsOnlyProvider("sim_keyless", false),
       stripe_refund: capsOnlyProvider("stripe_refund", true),
     },
-    config: { leaseMs: 8000, dispatchTimeoutMs: 3000, keyMarginMs: 60000, stripeEnabled: opts.stripeEnabled ?? false },
+    config: { leaseMs: opts.leaseMs ?? 8000, dispatchTimeoutMs: 3000, keyMarginMs: 60000, stripeEnabled: opts.stripeEnabled ?? false },
     hooks,
   };
 }

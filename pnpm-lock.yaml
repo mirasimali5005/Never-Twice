@@ -201,6 +201,12 @@ importers:
       '@nt/db':
         specifier: workspace:*
         version: link:../db
+      '@nt/providers':
+        specifier: workspace:*
+        version: link:../providers
+      '@nt/recovery':
+        specifier: workspace:*
+        version: link:../recovery
       mongodb:
         specifier: 7.9.0
         version: 7.9.0
