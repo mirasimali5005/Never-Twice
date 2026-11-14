@@ -118,7 +118,11 @@ importers:
 
   packages/recovery: {}
 
-  packages/rules: {}
+  packages/rules:
+    dependencies:
+      '@nt/contracts':
+        specifier: workspace:*
+        version: link:../contracts
 
 packages:
 
