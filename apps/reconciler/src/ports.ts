@@ -37,7 +37,7 @@ export interface ReconcilerGateway {
   /** T8a: appends the licence to attempts with majority acknowledgement, BEFORE any byte. null: not licensed now → send nothing. */
   recordLicence(it: Intent, licence: "L1_SAME_KEY", ctx: { investigationId: ObjectId }): Promise<Intent | null>;
   /** assertHash; the same frozen bytes under the same key. No database write. */
-  resend(it2: Intent): Promise<DispatchResult>;
+  resend(it2: Intent, opts?: { unlicensed?: boolean }): Promise<DispatchResult>;
   /** T6 | T7 | T8b (backoff) | T9. */
   applyResendResult(it2: Intent, res: DispatchResult): Promise<Intent | null>;
   /** Read-only provider access for the investigator (no createPaymentOrRefund). */

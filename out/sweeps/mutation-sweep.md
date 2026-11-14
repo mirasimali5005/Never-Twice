@@ -75,3 +75,10 @@ Each scenario is one fresh world (in-memory replica set, simulator on an ephemer
   - intents: 6 (CONFIRMED 6)
 
 Environment: node v24.3.0, darwin/arm64, mongodb-memory-server replica set and simulator per scenario, Stripe off. Wall time 1.2 min.
+
+## M3 end to end (after the reconciler fix, 14 November 2026)
+
+The reconciler's apply() now has the caller side of the M3 site (labelled mutant only). Run ra5wet0k on the Atlas sandbox,
+S0 with F-DEMO, real reconciler with NT_MUTATION=M3: P11 (keyless rail, nothing found) was re-sent without a licence; after
+the held original was released the auditor reported **SAFETY: FAIL — C1 duplicate (2 provider payments for P11) and C4
+unrecorded**. M3 is now detected end to end, not only through the harness.

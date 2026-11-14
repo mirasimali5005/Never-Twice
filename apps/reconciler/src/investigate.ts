@@ -79,6 +79,13 @@ export async function apply(d: InvestigateDeps, decision: RecoveryDecision, it: 
       return { decision: decision.kind, intent: after };
     }
     case "QUARANTINE": {
+      // Mutation M3 (labelled mutant only, NT_MUTATION=M3): treat "nothing found" as permission to send again, without a
+      // licence. The gateway's resend accepts `unlicensed` only under M3 (its own guard); this is the caller side of that site.
+      if (process.env["NT_MUTATION"] === "M3" && (decision.reason === "NO_DEDUPE_NO_EVIDENCE" || decision.reason === "KEY_WINDOW_EXPIRED")) {
+        const res = await d.gateway.resend(it, { unlicensed: true });
+        const after = await d.gateway.applyResendResult(it, res);
+        return { decision: decision.kind, intent: after, resend: res.kind, licensed: false };
+      }
       const after = await d.gateway.quarantine(it, decision.reason, decision.detail); // T9
       return { decision: decision.kind, intent: after };
     }
