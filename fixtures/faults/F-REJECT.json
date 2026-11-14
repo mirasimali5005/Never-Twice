@@ -1,0 +1,14 @@
+{
+  "id": "F-REJECT",
+  "description": "First payout request: definitive 400 payee_closed.",
+  "faults": [
+    {
+      "match": {
+        "ordinal": 1
+      },
+      "fault": "REJECT",
+      "code": "payee_closed",
+      "times": 1
+    }
+  ]
+}

@@ -1,0 +1,13 @@
+{
+  "id": "F-DROP-RESPONSE",
+  "description": "First payout request: committed, then no response.",
+  "faults": [
+    {
+      "match": {
+        "ordinal": 1
+      },
+      "fault": "DROP_RESPONSE_AFTER_APPLY",
+      "times": 1
+    }
+  ]
+}

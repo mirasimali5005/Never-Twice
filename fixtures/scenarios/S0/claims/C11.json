@@ -1,0 +1,16 @@
+{
+  "form": "nt-compensation-request@1",
+  "submitted_via": "northern-tern web form",
+  "fields": {
+    "full_name": "Leila Haddad",
+    "email": "leila.haddad@example.com",
+    "booking_reference": "PC1D6V",
+    "flight_number": "NT212",
+    "flight_date": "2026-11-10",
+    "route": "Montreal (YUL) to Calgary (YYC)",
+    "disruption_type": "Denied boarding",
+    "passengers_on_this_request": ["Leila Haddad"],
+    "description": "I was checked in with a seat assignment and was at the gate on time. The agent told me the flight was oversold and I was not allowed to board. I did not volunteer. I was put on the next flight and got to Calgary a bit over three hours later than planned. I understand denied boarding compensation is due quickly, so please confirm.",
+    "preferred_contact": "email"
+  }
+}

@@ -1,0 +1,13 @@
+{
+  "id": "F-LATE-COMMIT",
+  "description": "First payout request: held, commits on /admin/faults/release.",
+  "faults": [
+    {
+      "match": {
+        "ordinal": 1
+      },
+      "fault": "LATE_COMMIT_ON_RELEASE",
+      "times": 1
+    }
+  ]
+}

@@ -1,0 +1,16 @@
+{
+  "form": "nt-compensation-request@1",
+  "submitted_via": "northern-tern web form",
+  "fields": {
+    "full_name": "Amara Okafor",
+    "email": "amara.okafor@example.com",
+    "booking_reference": "QK7R2M",
+    "flight_number": "NT101",
+    "flight_date": "2026-11-10",
+    "route": "Toronto (YYZ) to Vancouver (YVR)",
+    "disruption_type": "Cancelled",
+    "passengers_on_this_request": ["Amara Okafor"],
+    "description": "My flight NT101 was cancelled less than an hour before departure. I was rebooked on a later flight and reached Vancouver about seven and a half hours after I was meant to. I travel with a wheelchair and had booked wheelchair assistance; nobody from the assistance team came to the new gate, so I waited in my chair at the gate area for most of the afternoon without being able to get food or reach a washroom on my own. I am asking for the compensation I am owed under the APPR, and I would like someone to look at what happened with my assistance request.",
+    "preferred_contact": "email"
+  }
+}

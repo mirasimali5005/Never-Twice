@@ -33,6 +33,15 @@ importers:
         specifier: 4.13.18
         version: 4.13.18
 
+  apps/provider-sim:
+    dependencies:
+      '@hono/node-server':
+        specifier: 2.1.8
+        version: 2.1.8(hono@4.13.18)
+      hono:
+        specifier: 4.13.18
+        version: 4.13.18
+
   apps/reconciler: {}
 
   apps/runner: {}
@@ -46,6 +55,10 @@ importers:
       zod:
         specifier: 4.6.7
         version: 4.6.7
+    devDependencies:
+      '@types/node':
+        specifier: 24.19.2
+        version: 24.19.2
 
   packages/db:
     dependencies:
