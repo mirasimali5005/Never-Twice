@@ -8,7 +8,8 @@
     ".": "./src/index.ts",
     "./pure": "./src/pure/index.ts",
     "./investigator": "./src/investigator/index.ts",
-    "./recall": "./src/recall/index.ts"
+    "./recall": "./src/recall/index.ts",
+    "./probes": "./src/probes/index.ts"
   },
   "scripts": {
     "typecheck": "tsc --noEmit -p tsconfig.json"
