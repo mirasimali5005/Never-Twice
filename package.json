@@ -11,7 +11,7 @@
   },
   "scripts": {
     "typecheck": "pnpm -r --workspace-concurrency=1 run typecheck",
-    "lint:boundaries": "node -e \"console.error('TO IMPLEMENT: lint:boundaries (task H2)');process.exit(1)\"",
+    "lint:boundaries": "vitest run --project unit tests/boundaries.test.ts",
     "test": "vitest run --project unit",
     "test:int": "vitest run --project int",
     "test:e2e": "vitest run --project e2e",
@@ -38,7 +38,7 @@
     "demo:late-commit": "node -e \"console.error('TO IMPLEMENT: demo:late-commit (task H4)');process.exit(1)\"",
     "demo:replay": "node -e \"console.error('TO IMPLEMENT: demo:replay (task H4)');process.exit(1)\"",
     "demo:tty": "node --env-file-if-exists=.env scripts/tty.ts",
-    "check:safety": "node -e \"console.error('TO IMPLEMENT: check:safety (task H1)');process.exit(1)\""
+    "check:safety": "node --env-file-if-exists=.env scripts/check-safety.ts"
   },
   "devDependencies": {
     "@types/node": "24.19.2",
