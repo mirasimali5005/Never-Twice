@@ -1,13 +1,18 @@
 // B1-INT-03 (withTxn) and B1-INT-04 (dbNow), AGENT_TASKS.md B1 field 14.
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { ObjectId } from "mongodb";
+import type { AuditEvent } from "@nt/contracts";
 import { CasMiss, dbNow, openNtDb, tryTxn, withTxn, type NtDb } from "../src/index.ts";
 import { startTestReplSet, type TestReplSet } from "../src/testing.ts";
 
 let rs: TestReplSet;
 let ntdb: NtDb;
 const RUN = "rtxntest";
-const audit = (type: string) => ({ _id: new ObjectId(), run_id: RUN, at: new Date(), actor: { kind: "gateway", id: "t" }, type });
+const audit = (note: string): AuditEvent => ({
+  _id: new ObjectId(), run_id: RUN, at: new Date(), actor: { kind: "gateway", id: "t" }, type: "ANOMALY",
+  intent_id: null, effect_key: null, claim_id: null, from_state: null, to_state: null, rule_citation: null, policy_version: null,
+  detail: { note },
+});
 
 beforeAll(async () => {
   rs = await startTestReplSet();

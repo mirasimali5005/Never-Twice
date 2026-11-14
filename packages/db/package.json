@@ -12,6 +12,7 @@
     "typecheck": "tsc --noEmit -p tsconfig.json"
   },
   "dependencies": {
+    "@nt/contracts": "workspace:*",
     "mongodb": "7.9.0"
   },
   "devDependencies": {

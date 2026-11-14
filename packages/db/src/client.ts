@@ -5,7 +5,8 @@ import { collectionsOf, type NtCollections } from "./collections.ts";
 
 export type Role = "gateway" | "agent" | "investigator" | "desk" | "default";
 
-// TODO(A2): replace with @nt/contracts type (the env schema of ARCHITECTURE.md §6.8)
+/** The database variables this package reads. Every @nt/contracts RoleEnv<R> (loadEnv output) satisfies it structurally;
+ *  it is kept local because db roles (gateway, agent, investigator, desk) are not the contracts' process roles. */
 export type RoleEnv = {
   NT_MONGODB_URI?: string | undefined;
   NT_MONGODB_URI_GATEWAY?: string | undefined;

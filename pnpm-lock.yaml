@@ -62,6 +62,9 @@ importers:
 
   packages/db:
     dependencies:
+      '@nt/contracts':
+        specifier: workspace:*
+        version: link:../contracts
       mongodb:
         specifier: 7.9.0
         version: 7.9.0

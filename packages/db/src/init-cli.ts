@@ -4,7 +4,8 @@
 import { closeAll, connect, dbNameFrom } from "./client.ts";
 import { initDatabase, initVectorIndexes } from "./init.ts";
 
-// TODO(A2): replace process.env reads with loadEnv("harness") from @nt/contracts
+// db:init reads only NT_MONGODB_URI and NT_DB_NAME. It does not call loadEnv("script") from @nt/contracts because that
+// schema also requires simulator and timing variables db:init has no use for; the URI is validated by the driver.
 const env = process.env;
 const args = process.argv.slice(2).filter((a) => a !== "--");
 const vector = args.includes("--vector");

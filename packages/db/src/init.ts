@@ -2,7 +2,8 @@
 // validators with collMod only when they differ, and creates only missing indexes. Never inside a transaction.
 // Never drops a collection or a database.
 import type { Db, Document, IndexDirection } from "mongodb";
-import { COLLECTIONS, COLLECTION_NAMES, ENTITLEMENT_TYPES, INTENT_STATES, PROVIDER_IDS, type CollectionName } from "./collections.ts";
+import { ENTITLEMENT_TYPES, INTENT_STATES, PROVIDER_IDS } from "@nt/contracts";
+import { COLLECTIONS, COLLECTION_NAMES, type CollectionName } from "./collections.ts";
 
 const VALIDATION = { validationLevel: "strict", validationAction: "error" } as const;
 

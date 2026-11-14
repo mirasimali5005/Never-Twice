@@ -1,9 +1,17 @@
-// The ten collections of HANDOVER.md §8 and minimal structural document types.
-//
-// @nt/contracts (task A2) is not merged yet. The types below are deliberately loose: they name only the
-// fields this package reads or that every caller relies on, and allow the rest. Each carries a TODO(A2)
-// marker and is to be replaced by the contracts type once A2 is frozen. No contract logic lives here.
-import type { Collection, Db, Document, ObjectId } from "mongodb";
+// The ten collections of HANDOVER.md §8 with the document types of @nt/contracts (task A2, frozen at IC0).
+// No contract logic lives here: state, entitlement and provider enums are re-used from @nt/contracts.
+import type { Collection, Db, Document } from "mongodb";
+import type {
+  AuditEvent,
+  AuthorityGrant,
+  Booking,
+  Claim,
+  ExecutionRun,
+  Intent,
+  InvestigationRecord,
+  Obligation,
+} from "@nt/contracts";
+export { ENTITLEMENT_TYPES, INTENT_STATES, PROVIDER_IDS, type IntentState } from "@nt/contracts";
 
 export const COLLECTIONS = {
   bookings: "bookings",
@@ -22,74 +30,17 @@ export type CollectionKey = keyof typeof COLLECTIONS;
 export type CollectionName = (typeof COLLECTIONS)[CollectionKey];
 export const COLLECTION_NAMES: readonly CollectionName[] = Object.values(COLLECTIONS);
 
-// TODO(A2): replace with @nt/contracts type (IntentState)
-export const INTENT_STATES = [
-  "RESERVED",
-  "DISPATCHING",
-  "OUTCOME_UNKNOWN",
-  "CONFIRMED",
-  "FAILED_NO_EFFECT",
-  "QUARANTINED",
-  "RELEASED",
-] as const;
-// TODO(A2): replace with @nt/contracts type (IntentState)
-export type IntentState = (typeof INTENT_STATES)[number];
-
-// TODO(A2): replace with @nt/contracts type (EntitlementType)
-export const ENTITLEMENT_TYPES = ["APPR_DELAY", "APPR_DENIED_BOARDING", "APPR_REFUND_COMP", "TICKET_REFUND", "GOODWILL"] as const;
-// TODO(A2): replace with @nt/contracts type (ProviderId)
-export const PROVIDER_IDS = ["sim_payout", "sim_keyless", "stripe_refund"] as const;
-
-// TODO(A2): replace with @nt/contracts type (Booking)
-export type BookingDoc = Document & { _id: string; run_id: string; booking_ref: string; flight_no: string };
-// TODO(A2): replace with @nt/contracts type (Claim)
-export type ClaimDoc = Document & { _id: string; run_id: string; claim_id: string; status: string };
-// TODO(A2): replace with @nt/contracts type (Obligation)
-export type ObligationDoc = Document & {
-  _id: string;
-  run_id: string;
-  effect_key: string;
-  status: string;
-  amount_minor: number;
-  currency: string;
-  payee_ref: string;
-};
-// TODO(A2): replace with @nt/contracts type (PaymentIntent)
-export type IntentDoc = Document & {
-  _id: string;
-  run_id: string;
-  effect_key: string;
-  state: IntentState;
-  amount_minor: number;
-  currency: "CAD";
-  lease: { owner: string; expires_at: Date } | null;
-  lease_epoch: number;
-  draws_on: string | null;
-};
-// TODO(A2): replace with @nt/contracts type (AuthorityGrant)
-export type GrantDoc = Document & {
-  _id: string;
-  run_id: string;
-  grant_minor: number;
-  held_minor: number;
-  settled_minor: number;
-  frozen: boolean;
-};
-// TODO(A2): replace with @nt/contracts type (AuditEvent)
-export type AuditDoc = Document & {
-  _id: ObjectId;
-  run_id: string;
-  at: Date;
-  actor: { kind: string; id: string };
-  type: string;
-};
-// TODO(A2): replace with @nt/contracts type (ExecutionRun)
-export type RunDoc = Document & { _id: string; group_id?: string; status?: string };
-// TODO(A2): replace with @nt/contracts type (InvestigationRecord)
-export type InvestigationDoc = Document & { _id: ObjectId; run_id: string; intent_id: string };
-// TODO(A2): replace with @nt/contracts type (Policy)
+export type BookingDoc = Booking;
+export type ClaimDoc = Claim;
+export type ObligationDoc = Obligation;
+export type IntentDoc = Intent;
+export type GrantDoc = AuthorityGrant;
+export type AuditDoc = AuditEvent;
+export type RunDoc = ExecutionRun;
+export type InvestigationDoc = InvestigationRecord;
+/** @nt/contracts has fixture shapes for policies (ApprPolicy, GoodwillPolicy) but no stored-document type; kept open. */
 export type PolicyDoc = Document & { _id: string };
-// TODO(A2): replace with @nt/contracts type (ProbeSpec)
+/** Tier 3 probe specifications (HANDOVER.md §11.4); no contracts type; kept open. */
 export type ProbeDoc = Document & { _id: string };
 
 export type NtCollections = {
